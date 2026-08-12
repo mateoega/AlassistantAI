@@ -8,7 +8,9 @@ API de Gemini (`@google/genai`), modelo de la familia **Flash** con capacidad de
 
 ## Qué va acá
 
-- **Análisis de fotos**: arma el pedido a Gemini con las imágenes del vehículo y un prompt que pide describir el estado observable (carrocería, interior, neumáticos, tablero) y señalar inconsistencias (fotos que no parecen ser del mismo auto, daño no declarado, desgaste que no coincide con el kilometraje).
+- **Análisis de fotos**: arma el pedido a Gemini con las imágenes del vehículo y un prompt que pide describir el estado observable y señalar inconsistencias (fotos que no parecen ser del mismo vehículo, daño no declarado, desgaste que no coincide con el uso declarado).
+
+  **El prompt tiene que adaptarse al tipo de vehículo.** No se mira lo mismo en una moto que en un camión, y el uso no siempre se mide en kilómetros. La publicación ya trae el tipo y su ficha específica cargados desde el Sprint 1 — el prompt se arma con esos datos, leyendo el catálogo, no con una lista de tipos escrita en el código. Ver [`../../docs/modelo_datos.md`](../../docs/modelo_datos.md).
 - **Estimación de precio**: combina los datos declarados por el vendedor, el resultado del análisis de fotos y referencias de mercado (proveedor todavía a definir, ver `../../docs/sprint0.md`) para proponer un rango de precio con su justificación.
 - El parseo de la respuesta de Gemini a un formato que el backend pueda guardar y el frontend pueda mostrar.
 

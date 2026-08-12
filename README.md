@@ -1,8 +1,8 @@
 # AIassistant
 
-Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos usados. Analiza las fotos del auto, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
+Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 0 — base del proyecto.** Todavía no hay código. Esta es la estructura, la arquitectura decidida y la documentación sobre la que se va a construir.
+**Estado actual: Sprint 1 — base multivehículo y flujo de publicación.** Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -11,7 +11,7 @@ Plataforma que usa inteligencia artificial para dar más confianza al comprar y 
 ```
                         Usuario
                            │
-                           │  sube fotos + datos del auto
+                           │  sube fotos + datos del vehículo
                            ▼
               ┌────────────────────────┐
               │  FRONTEND (Next.js)    │   lo que ve el usuario: pantallas
@@ -25,7 +25,7 @@ Plataforma que usa inteligencia artificial para dar más confianza al comprar y 
                   │                ▼
                   │      ┌────────────────────┐
                   │      │  SUPABASE          │
-                  │      │  ├─ Postgres       │  autos, publicaciones, análisis
+                  │      │  ├─ Postgres       │  tipos, publicaciones, análisis
                   │      │  ├─ Storage        │  las fotos
                   │      │  └─ Auth           │  login de usuarios
                   │      └────────────────────┘
@@ -42,13 +42,13 @@ Plataforma que usa inteligencia artificial para dar más confianza al comprar y 
 
 ### Por qué está armado así
 
-- **El frontend solo habla con el backend.** Nunca llama directo a Gemini ni a Supabase. Una sola puerta de entrada es más fácil de entender, de depurar y de asegurar. Además, las claves de API quedan del lado del servidor, donde nadie las puede leer.
+- **El frontend habla con el backend.** Nunca llama a Gemini, ni usa la clave de servicio de Supabase. Una sola puerta de entrada es más fácil de entender, de depurar y de asegurar, y las claves privadas quedan del lado del servidor. Hay dos excepciones acotadas y deliberadas: el **login** (lo maneja la librería de Supabase en el navegador con la clave pública) y la **subida de fotos** (van directo a Supabase Storage para no hacerlas viajar dos veces). Ambas están protegidas por las reglas de acceso de Supabase y registradas en la bitácora.
 - **El módulo de IA vive dentro del backend**, no es un servicio aparte. Se despliega junto con él. Si algún día necesita escalar por su cuenta, se separa; hoy sería complejidad sin beneficio.
 - **Supabase reemplaza tres cosas** que normalmente hay que montar y mantener por separado: base de datos, almacenamiento de archivos y autenticación. Para un prototipo que maneja fotos, es la opción con menos fricción.
 
 ### Dónde entra la IA — dos usos distintos
 
-1. **Análisis de fotos.** Las imágenes se envían a Gemini, que tiene capacidad de visión. Devuelve el estado observable del vehículo y señales de inconsistencia: fotos que parecen de autos distintos, daños no declarados, desgaste que no cuadra con el kilometraje informado.
+1. **Análisis de fotos.** Las imágenes se envían a Gemini, que tiene capacidad de visión. Devuelve el estado observable del vehículo y señales de inconsistencia: fotos que parecen de vehículos distintos, daños no declarados, desgaste que no cuadra con el kilometraje u horas de uso informadas. El análisis se adapta al tipo de vehículo — no se mira lo mismo en una moto que en un camión.
 2. **Estimación de precio.** Combina los datos declarados, lo detectado en las fotos y referencias de mercado, y devuelve un rango con su justificación en lenguaje claro.
 
 ---
@@ -60,7 +60,12 @@ AIassistant/
 ├── docs/                      documentación del proyecto
 │   ├── vision_general.md      qué es, para quién, qué problema resuelve
 │   ├── roadmap.md             sprints planificados, de prototipo a producto
-│   └── sprint0.md             qué se decidió acá y qué quedó pendiente
+│   ├── modelo_datos.md        cómo se guardan los vehículos y sus tipos
+│   ├── sprint0.md             qué se decidió acá y qué quedó pendiente
+│   └── sprint1.md             decisiones del Sprint 1
+├── supabase/
+│   ├── migrations/            el esquema de la base, en archivos SQL
+│   └── seed.sql               tipos de vehículo y provincias iniciales
 ├── diseño/
 │   ├── logo/                  archivos del logo
 │   └── paleta_colores.md      colores, tipografía, tono visual
@@ -95,15 +100,42 @@ Cada carpeta de código tiene su propio `README.md` explicando qué va ahí y qu
 
 ---
 
-## Cómo empezar (cuando haya código)
+## Cómo empezar
 
-Todavía no hay nada que ejecutar. Cuando el Sprint 1 agregue el primer código, el arranque va a ser:
+### 1. Crear el proyecto en Supabase
 
-1. Copiar `.env.example` a `.env` y completar las claves.
-2. Instalar dependencias en `app/frontend/` y `app/backend/`.
-3. Levantar el backend y el frontend.
+Crear un proyecto nuevo (plan gratis) en [supabase.com](https://supabase.com). Después, en el panel:
 
-Los pasos exactos se documentan acá cuando existan. **Nunca subas el archivo `.env` al repositorio** — contiene claves privadas y ya está bloqueado en `.gitignore`.
+- **SQL Editor** → pegar y ejecutar, **en orden**, cada archivo de [`supabase/migrations/`](supabase/migrations/), y al final [`supabase/seed.sql`](supabase/seed.sql). Pasos detallados en [`supabase/README.md`](supabase/README.md).
+- **Authentication → Providers** → verificar que "Email" esté habilitado. Para probar más rápido, se puede desactivar "Confirm email" mientras se desarrolla.
+
+### 2. Configurar las claves
+
+Copiar `.env.example` a `.env` en la raíz del proyecto y completar `SUPABASE_URL` y `SUPABASE_ANON_KEY` (panel de Supabase → Settings → API). El resto puede quedar vacío por ahora.
+
+Es un único `.env` para todo el proyecto: lo leen tanto el backend como el frontend.
+
+**Nunca subas el archivo `.env` al repositorio** — contiene claves privadas y ya está bloqueado en `.gitignore`.
+
+### 3. Levantar el backend
+
+```bash
+cd app/backend && npm install && npm run dev
+```
+
+Queda escuchando en `http://localhost:4000`. Para comprobarlo, abrir `http://localhost:4000/api/health`.
+
+### 4. Levantar el frontend
+
+En otra terminal:
+
+```bash
+cd app/frontend && npm install && npm run dev
+```
+
+Abrir `http://localhost:3000`, crear una cuenta y publicar el primer vehículo.
+
+> Los dos tienen que estar corriendo al mismo tiempo: el frontend le pide los datos al backend.
 
 ---
 
