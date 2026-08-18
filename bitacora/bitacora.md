@@ -265,3 +265,28 @@ El Sprint 2 se cerró con la IA **sin probar de punta a punta**: las claves esta
 **La lección de proceso, que es la misma del 2026-08-08 con el celular:** escribirlo y que compile no es lo mismo que verificarlo. Un sprint entero de IA pasó los controles de tipos con un modelo que ya no existía.
 
 **Consecuencia para el futuro:** el modelo de IA es una dependencia externa que se mueve sola, sin avisar y sin romper la compilación. Conviene revisarlo cada vez que se retome el proyecto después de un tiempo, antes de suponer que un fallo es del código propio.
+
+
+## 2026-08-17 — Datos de prueba: un cargador propio, con fotos reales de licencia libre
+
+Antes de arrancar el Sprint 3 se cargaron **unas 70 publicaciones de prueba** en la base, con un script nuevo en [`../app/backend/scripts/`](../app/backend/scripts/README.md). La base tenía dos avisos inventados a mano, y con eso no se puede probar nada de lo que viene.
+
+**Por qué ahora:** el Sprint 3 es la estimación de precio. Estimar es comparar, y comparar necesita **varios avisos del mismo modelo en años y kilometrajes distintos**. Con dos publicaciones sueltas, cualquier cosa que se construya va a parecer que funciona sin que haya forma de saber si acierta. Por eso el catálogo tiene seis Toyota Corolla, seis Hilux, tres Kangoo, tres CB 190R — y dos casos deliberadamente fuera de mercado (un Corolla 2015 con muy pocos kilómetros al precio de uno mucho más nuevo, y una Hilux con 341.000 km a precio de remate) que son los que tienen que hacer ruido cuando la estimación exista.
+
+**Las fotos salen de Wikimedia Commons**, que las publica con licencia libre. No son fotos del vehículo exacto de cada aviso: son del mismo modelo, a veces de otro país. Se registran autor y licencia de cada una en `fotos-usadas.json`.
+
+**Alternativas consideradas para las fotos:** (a) *imágenes generadas con un color y el texto "foto de prueba"* — descartada porque el análisis de IA del Sprint 2 no tendría nada real que mirar, y probar el análisis contra una placa gris no prueba nada; (b) *fotos sacadas de sitios de venta* — descartada por licencia: son de otros, y este repositorio se publica.
+
+**Excepción a la regla de la clave de servicio.** [`../app/CLAUDE.md`](../app/CLAUDE.md) dice que la clave de servicio de Supabase se usa solo para guardar los análisis de IA. Este script la usa también, y es la única excepción: crea publicaciones a nombre de cuatro vendedores distintos, y las reglas de acceso — con razón — no dejan publicar a nombre de otro. Es una herramienta de desarrollo que se corre a mano, no se despliega y ningún usuario la puede invocar. Queda anotado acá para que no se lea como un descuido.
+
+**Por qué es un script y no un `seed*.sql` más:** el SQL no puede subir fotos a Storage ni crear cuentas. Se puede volver a correr todas las veces que haga falta sin duplicar nada: el id de cada publicación se calcula a partir de su clave, así que la segunda corrida actualiza las mismas filas.
+
+**Lo que apareció al correrlo:** Wikimedia corta el paso cuando se le piden muchas cosas seguidas (error 429). La primera corrida dejó 42 avisos sin fotos. Se agregó espera y reintento, y una regla: si un aviso se queda sin fotos, entra como **borrador** en vez de aparecer publicado y vacío — la aplicación no deja publicar sin fotos desde el Sprint 1.6, y los datos de prueba no tienen por qué ser la excepción.
+
+**Cómo quedó la base:** las 71 publicaciones están cargadas, y **48 tienen fotos y se ven** (46 publicadas y 2 vendidas): 24 autos, 14 camionetas, 7 utilitarios, 3 motos y 1 camión. Las 21 restantes quedaron como borrador sin fotos — la descarga se cortó a propósito a mitad de camino, porque con lo cargado ya alcanza para probar y terminar habría llevado media hora más de espera. Los tipos que quedaron sin representación en el muro son **cuatriciclos y buses**, y motos y camiones quedaron flojos. Para completarlos, más adelante y sin rehacer nada:
+
+```bash
+npm run seed:demo -- --solo cb190-2019,outlander-2019,o500-2015
+```
+
+**Regla que quedó del corte:** ninguna publicación visible se quedó sin fotos. El script degrada a borrador la que no consiguió ninguna, y las siete que habían quedado publicadas y vacías por la corrida fallida se corrigieron.

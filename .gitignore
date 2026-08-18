@@ -31,5 +31,6 @@ desktop.ini
 
 # Caché
 .cache/
+app/backend/scripts/.cache-fotos/
 .turbo/
 *.tsbuildinfo

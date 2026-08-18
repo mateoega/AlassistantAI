@@ -37,6 +37,18 @@ La forma más simple, sin instalar nada:
 
 Si el equipo instala la CLI de Supabase más adelante, `supabase db push` hace lo mismo automáticamente.
 
+## Cómo llenarla con publicaciones de prueba
+
+Los archivos de esta carpeta cargan los **catálogos** (tipos, provincias, ciudades, marcas), no publicaciones: la base queda armada pero vacía, y así no se puede probar casi nada.
+
+Para llenarla con vehículos de prueba hay un cargador aparte, en [`../app/backend/scripts/`](../app/backend/scripts/README.md). Desde `app/backend`:
+
+```bash
+npm run seed:demo
+```
+
+Está separado de los `seed*.sql` porque hace dos cosas que el SQL no puede: subir fotos a Storage y crear publicaciones a nombre de varios vendedores distintos.
+
 ## Cómo aplicar una migración nueva
 
 Si la base ya está armada y aparece un archivo nuevo en `migrations/`, va solo ese: SQL Editor → New query → pegar el contenido → ejecutar. Los anteriores ya están aplicados y no se vuelven a correr.

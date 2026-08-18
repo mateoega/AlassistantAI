@@ -79,7 +79,8 @@ AIassistant/
 │   ├── CLAUDE.md              contexto del proyecto para Claude Code
 │   ├── frontend/              lo que ve el usuario (pantallas)
 │   └── backend/               la lógica que procesa datos
-│       └── src/ia/            los prompts y la llamada a Gemini
+│       ├── src/ia/            los prompts y la llamada a Gemini
+│       └── scripts/           carga de vehículos de prueba (no es la app)
 ├── README.md                  este archivo
 ├── .gitignore                 qué archivos NO se suben al repositorio
 └── .env.example               plantilla de variables de entorno
@@ -142,6 +143,16 @@ cd app/frontend && npm install && npm run dev
 Abrir `http://localhost:3000`, crear una cuenta y publicar el primer vehículo.
 
 > Los dos tienen que estar corriendo al mismo tiempo: el frontend le pide los datos al backend.
+
+### 5. (Opcional) Llenar la base con vehículos de prueba
+
+Con la base recién creada el muro está vacío, y así casi nada se puede probar. Este comando carga unas 70 publicaciones de prueba, con fotos reales de licencia libre:
+
+```bash
+cd app/backend && npm run seed:demo
+```
+
+Detalle de qué carga y cómo cambiarlo en [`app/backend/scripts/README.md`](app/backend/scripts/README.md).
 
 ---
 
