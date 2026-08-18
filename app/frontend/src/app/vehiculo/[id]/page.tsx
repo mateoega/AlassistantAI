@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
+import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { Badge, Button, Card, Notice, Spinner, StatusBadge } from '@/components/ui';
 import {
   formatDate,
@@ -277,6 +278,10 @@ export default function VehiculoPage() {
               </dl>
             </Card>
           )}
+
+          {/* El asistente de IA. Sin fotos no tiene nada que mirar, así que no
+              se ofrece — pasa solo en borradores a medio hacer. */}
+          {listing.photos.length > 0 && <AnalysisPanel listingId={listing.id} />}
 
           <Card className="space-y-3 p-5">
             <div>

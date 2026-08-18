@@ -32,8 +32,10 @@ Abre en `http://localhost:3000`. **El backend tiene que estar levantado también
 | `/publicar` | Carga de una publicación: fotos primero, datos mínimos, y los campos propios del tipo plegados como opcionales. |
 | `/publicar/[id]` | Edición de una publicación propia. Usa el mismo formulario que la de crear. |
 | `/mis-publicaciones` | Las publicaciones propias en lista, con editar, publicar y borrar. |
-| `/vehiculo/[id]` | Detalle: galería, datos, ficha específica del tipo y vendedor. |
+| `/vehiculo/[id]` | Detalle: galería, datos, ficha específica del tipo, **análisis de IA** y vendedor. |
 | `/perfil` | Nombre y teléfono de contacto del vendedor. |
+
+El **asistente** no tiene pantalla propia: es un panel que se abre desde un botón flotante y está disponible en todas las rutas.
 
 ## Estructura
 
@@ -49,11 +51,15 @@ src/
   components/
     SessionProvider.tsx  mantiene la sesión disponible en toda la app
     SiteHeader.tsx
+    MobileNav.tsx        barra de navegación inferior, solo en celular
     ListingForm.tsx      el formulario, compartido por crear y editar
     DynamicField.tsx     dibuja un campo específico leyendo el catálogo
     SuggestInput.tsx     campo con sugerencias (marca y ciudad), texto libre
     PhotoUploader.tsx    sube fotos a Supabase Storage
     ListingCard.tsx
+    AnalysisPanel.tsx    el análisis de IA de una publicación
+    AssistantProvider.tsx  guarda la conversación al navegar entre pantallas
+    AssistantChat.tsx    el panel del asistente, disponible en toda la app
     ui.tsx               botones, campos, avisos, campo numérico con miles
   lib/
     supabase.ts          cliente del navegador (login y fotos)
@@ -69,6 +75,10 @@ src/
 **Nada de rojo ni naranja, ni siquiera en errores.** Es una decisión de identidad, no un descuido — ver [`../../diseño/paleta_colores.md`](../../diseño/paleta_colores.md). Los avisos usan el azul secundario (`brand-deep`), el borde y la jerarquía tipográfica. El componente `Notice` de `ui.tsx` ya lo resuelve; usarlo en vez de inventar estilos nuevos.
 
 **Los botones y enlaces usan `brand-deep` (`#1565C0`), no `brand` (`#2E9EFF`).** El azul principal es demasiado claro para llevar texto encima y no se lee bien. `brand` queda para bordes activos, foco y acentos. Y ningún color se llama `base`: Tailwind ya usa `text-base` para el tamaño de fuente.
+
+**El asistente no puede tapar la barra de navegación inferior.** En celular el botón flotante se levanta por encima de ella (`bottom-20 sm:bottom-6`). El panel abierto sí la cubre entero, a propósito: tiene su propio botón de cerrar. Es el problema de espacio que costó el Sprint 1.6 — verificarlo en 375px de ancho, no solo escribirlo.
+
+**Lo que muestra la IA es orientativo y hay que decirlo.** El panel de análisis aclara que no reemplaza una revisión mecánica y que todavía no compara precios de mercado. No es texto de relleno: es lo que separa una segunda opinión de una tasación, y está en [`vision_general.md`](../../docs/vision_general.md).
 
 ## Qué habla directo con Supabase y qué no
 

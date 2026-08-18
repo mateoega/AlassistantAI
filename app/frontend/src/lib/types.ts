@@ -91,6 +91,59 @@ export interface SpecDisplay {
   value: string;
 }
 
+/**
+ * El análisis de IA de una publicación.
+ *
+ * Es una herramienta para quien COMPRA: describe lo que se ve en las fotos y
+ * lo que no cierra con lo declarado. No dice si el precio está bien ni si
+ * conviene comprar — eso necesita referencias de mercado y llega en el
+ * Sprint 3. La forma la define app/backend/src/ia/types.ts.
+ */
+export type Confidence = 'alta' | 'media' | 'baja';
+
+export interface ObservedAspect {
+  aspecto: string;
+  observacion: string;
+}
+
+export interface Inconsistency {
+  que: string;
+  por_que_importa: string;
+  confianza: Confidence;
+}
+
+export interface VehicleAnalysis {
+  resumen: string;
+  estado_observado: ObservedAspect[];
+  inconsistencias: Inconsistency[];
+  falta_ver: string[];
+  preguntas_al_vendedor: string[];
+}
+
+/** Un aviso encontrado por el asistente al buscar entre las publicaciones. */
+export interface ListingSearchResult {
+  id: string;
+  titulo: string;
+  tipo: string | null;
+  precio: number;
+  moneda: 'ARS' | 'USD';
+  kilometros: number;
+  anio: number;
+  ubicacion: string;
+}
+
+export type AnalysisStatus = 'running' | 'done' | 'failed';
+
+export interface AnalysisRecord {
+  status: AnalysisStatus;
+  result: VehicleAnalysis | null;
+  error_message: string | null;
+  model: string | null;
+  updated_at: string;
+  /** Las fotos o los datos cambiaron desde que se hizo: puede no corresponder. */
+  is_stale: boolean;
+}
+
 export interface Listing {
   id: string;
   seller_id: string;

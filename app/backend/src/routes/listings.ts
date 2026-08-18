@@ -12,6 +12,7 @@ import {
   type ListingScope,
 } from '../services/listings.js';
 import { LISTING_STATUSES, type ListingStatus } from '../validation/listing-input.js';
+import { getAnalysis, startAnalysis } from '../services/analysis.js';
 
 export const listingsRouter = Router();
 
@@ -70,6 +71,27 @@ listingsRouter.post('/:id/status', async (req, res) => {
   res.json({
     listing: await setListingStatus(supabase, requireId(req.params.id), status as ListingStatus),
   });
+});
+
+/**
+ * El análisis de IA de una publicación.
+ *
+ * Es una herramienta del COMPRADOR: cualquiera que pueda ver el aviso puede
+ * pedir su análisis, no solo el dueño. Quién puede ver qué lo siguen decidiendo
+ * las reglas de acceso de la base, no este archivo.
+ *
+ *   GET  → el análisis guardado, si hay. `null` si nadie lo pidió todavía.
+ *   POST → lo dispara. Responde enseguida, con el análisis "corriendo": el
+ *          navegador vuelve a preguntar con el GET hasta que esté listo.
+ */
+listingsRouter.get('/:id/analysis', async (req, res) => {
+  const { supabase } = auth(req);
+  res.json({ analysis: await getAnalysis(supabase, requireId(req.params.id)) });
+});
+
+listingsRouter.post('/:id/analysis', async (req, res) => {
+  const { supabase } = auth(req);
+  res.status(202).json({ analysis: await startAnalysis(supabase, requireId(req.params.id)) });
 });
 
 listingsRouter.delete('/:id', async (req, res) => {

@@ -189,3 +189,79 @@ Correr `npm run build` mientras el servidor de desarrollo está levantado destru
 ### Lo que sigue
 
 **Sprint 2 — Análisis de fotos con IA.** Es lo único que diferencia esta plataforma de cualquier otro clasificado. Todo lo que necesita ya está guardado: las fotos, el tipo de vehículo y su ficha específica. El prompt tiene que adaptarse al tipo leyendo el catálogo, no con una lista escrita en el código.
+
+## 2026-08-12 — La IA es un asistente del comprador, no una herramienta del vendedor
+
+Al arrancar el Sprint 2 se replanteó para quién es la IA. El roadmap la planteaba como una función del sistema: "análisis de fotos", una etiqueta que se le pega a la publicación. Se decidió que sea **un asistente del comprador**, en dos piezas: un botón "Analizar" en cada aviso, y un chat disponible en toda la aplicación que sabe qué vehículo hay en pantalla y puede buscar entre las publicaciones.
+
+**Por qué:** el que compra es el que está solo. El vendedor ya tiene control sobre su aviso — elige las fotos, escribe la descripción, pone el precio. El que mira tiene que decidir con lo que le muestran, y no tiene forma de contrastarlo. Ahí es donde una segunda opinión cambia algo. Además resuelve un problema de incentivos que la versión orientada al vendedor tenía de raíz: una herramienta que le señala defectos a quien publica es una herramienta que quien publica no va a querer usar.
+
+**Qué implica:** cualquiera que pueda ver un aviso puede pedir su análisis, no solo el dueño. El resultado se guarda una vez y lo aprovechan todos los que miren esa publicación.
+
+**Alternativas consideradas:** (a) *análisis privado del vendedor* — descartada porque el comprador no ganaba nada y se perdía el diferencial de la plataforma; (b) *que el vendedor decida si mostrarlo* — descartada porque un aviso con el análisis oculto pasa a ser sospechoso por omisión, y había que construir la lógica del interruptor para empeorar la señal.
+
+## 2026-08-12 — El análisis no dictamina si conviene comprar
+
+El análisis describe lo que se ve y señala lo que no cierra, pero **no dice si es una buena oportunidad ni si el precio está bien**. Está prohibido explícitamente en el prompt, porque un modelo opina de precios igual si no se le aclara.
+
+**Por qué:** todavía no tiene contra qué comparar. Las referencias de precios de mercado llegan en el Sprint 3. Un veredicto sin esos datos sería una opinión con cara de dato — y la confianza es exactamente lo que la plataforma vende. El resto del análisis (qué se ve, qué falta ver, qué preguntar) es útil igual y no depende de conocer el mercado.
+
+**Se retoma en el Sprint 3**, cuando la estimación de precio le dé la base que hoy no tiene.
+
+## 2026-08-12 — El backend empieza a usar la clave de servicio de Supabase
+
+Hasta el Sprint 1, el backend trabajaba siempre con la identidad real de cada usuario, para que las reglas de acceso de la base se aplicaran solas. Con el Sprint 2 aparece la primera excepción: **los análisis de IA se escriben con la clave de servicio**, y la tabla `listing_analyses` no tiene ninguna política de escritura.
+
+**Por qué:** el análisis es una afirmación de la plataforma sobre un vehículo, no un dato que carga un usuario. Si cualquiera pudiera escribir en esa tabla desde el navegador con la clave pública, un vendedor podría inventarse el análisis de su propio aviso. Eso no es un agujero cualquiera: es exactamente la confianza que la plataforma vende.
+
+**Lo que NO cambió:** las lecturas siguen yendo por el cliente del usuario, así que nadie ve el análisis de un borrador ajeno. La clave de servicio tiene un solo uso permitido en todo el proyecto y está documentado en `app/backend/src/lib/supabase.ts`.
+
+## 2026-08-12 — El análisis se guarda con una huella de lo que analizó
+
+El resultado se guarda (una fila por publicación) y se reusa. Si cambian las fotos **o los datos declarados**, queda marcado como viejo y se ofrece rehacerlo.
+
+**Por qué la huella incluye los datos y no solo las fotos:** si el vendedor corrige el kilometraje, un análisis que decía "el desgaste no cierra con los km declarados" quedó tan obsoleto como si hubiera cambiado una imagen. Mostrarlo como vigente sería justamente el tipo de inconsistencia que la plataforma promete detectar.
+
+**Por qué se guarda en vez de recalcular:** cada análisis cuesta plata y tarda entre diez y treinta segundos. Recalcular por visitante haría que un aviso popular costara una fortuna y cargara lento.
+
+**Detalle que salió de esto:** el análisis corre en segundo plano y el navegador pregunta cada tres segundos hasta que está. No es adorno — si dos compradores aprietan el botón a la vez, el segundo se engancha al que ya está corriendo en vez de pagar un segundo análisis.
+
+## 2026-08-12 — La conversación del asistente no se guarda
+
+El chat mantiene el hilo mientras dura la visita y se pierde al cerrar la pestaña. No hay tabla de conversaciones.
+
+**Por qué:** guardar conversaciones es tabla de mensajes con sus reglas de acceso, pantalla de historial y datos personales que custodiar — buena parte de lo que cuesta la mensajería del Sprint 5. Para validar si el asistente es útil no hace falta.
+
+**Sí se cuidó que la conversación sobreviva a la navegación** entre pantallas: el estado vive en el layout y no dentro del panel. Sin eso, entrar a mirar el vehículo del que se estaba hablando borraba el hilo, y el asistente dejaba de sentirse un acompañante.
+
+## 2026-08-12 — El buscador que usa el asistente se escribió pensando en el Sprint 4
+
+Para que el asistente pueda responder "mostrame motos hasta dos millones", se construyó una búsqueda con filtros (tipo, marca, precio, año, kilómetros, provincia) en `app/backend/src/services/listing-search.ts`.
+
+**Por qué se hizo así y no a la medida del chat:** es la misma consulta que va a necesitar la pantalla de búsqueda del Sprint 4, con otra puerta de entrada. Escribirla acotada al chat implicaba escribirla dos veces.
+
+**Se ejecuta con la sesión del usuario**, no con la clave de servicio: las reglas de acceso siguen mandando aunque el pedido venga de un modelo. Un borrador ajeno no aparece ni aunque el modelo lo pida explícitamente.
+
+## 2026-08-12 — El módulo de IA se mudó de `app/ia/` a `app/backend/src/ia/`
+
+Desvío respecto de la estructura que definió el Sprint 0.
+
+**Por qué:** Node busca las librerías partiendo de la carpeta del archivo que las importa. Desde `app/ia/`, un `import` de `@google/genai` no encontraba nada, porque las dependencias están instaladas en `app/backend/`. Mantenerlo afuera obligaba a darle a la carpeta su propio `package.json`, su propio `npm install` y su propia compilación — tres piezas más para que se desincronicen, en un módulo de cinco archivos y en un equipo que priorizó simplicidad desde el principio.
+
+**Lo que se preservó:** sigue siendo su propia carpeta, con su propio README y su responsabilidad clara. El Sprint 0 ya decía que el módulo de IA "vive dentro del backend y se despliega junto con él"; lo que cambió es dónde está esa carpeta, no la arquitectura.
+
+## 2026-08-17 — La IA quedó verificada andando, y aparecieron dos fallas que solo se ven ejecutando
+
+El Sprint 2 se cerró con la IA **sin probar de punta a punta**: las claves estaban vacías y la migración sin aplicar. Se completó esa verificación con Gemini contestando de verdad. Aparecieron dos fallas, las dos invisibles hasta ese momento porque el proyecto compilaba perfecto con ambas.
+
+**El modelo de Gemini estaba dado de baja.** El código pedía `gemini-2.5-flash` y Google ya no lo entrega: contesta que el modelo "ya no está disponible" y que hay que usar `gemini-3.6-flash`. Se cambió el modelo por defecto en `app/backend/src/config/env.ts`.
+
+**El chat perdía la firma de las llamadas a herramientas.** Desde Gemini 3, cuando el modelo pide usar una herramienta la respuesta viene acompañada de una firma interna que hay que devolverle intacta en la vuelta siguiente. El código rearmaba ese paso desde cero y la perdía, así que Google rechazaba el pedido entero. En pantalla se veía como "ocurrió un problema en el servidor" apenas el asistente intentaba buscar publicaciones — un mensaje que no decía nada del motivo real. Corregido en `app/backend/src/ia/chat.ts`: ahora se reenvía la respuesta del modelo tal cual vino.
+
+**Por qué las dos aparecieron juntas y no antes:** la firma es un requisito que introdujo Gemini 3 y que el modelo anterior no tenía. Actualizar el modelo por obligación destapó la segunda falla. Ninguna de las dos es un error de razonamiento del código del sprint: las dos son consecuencia de que el proveedor de IA se movió debajo del proyecto.
+
+**Qué se verificó, ahora sí:** el análisis del Toyota Supra de prueba detectó que las tres fotos son de autos distintos sacados de internet con patentes extranjeras, que el modelo de las fotos (MK4) no puede ser de 1983, y que el precio y el kilometraje son valores irreales — respetando la restricción de no opinar sobre el precio. El chat ejecutó la búsqueda contra la base real y contestó correctamente que no hay autos en pesos por debajo del monto pedido.
+
+**La lección de proceso, que es la misma del 2026-08-08 con el celular:** escribirlo y que compile no es lo mismo que verificarlo. Un sprint entero de IA pasó los controles de tipos con un modelo que ya no existía.
+
+**Consecuencia para el futuro:** el modelo de IA es una dependencia externa que se mueve sola, sin avisar y sin romper la compilación. Conviene revisarlo cada vez que se retome el proyecto después de un tiempo, antes de suponer que un fallo es del código propio.

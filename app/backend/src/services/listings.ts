@@ -3,13 +3,16 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { PHOTOS_BUCKET, photoPublicUrl } from '../config/env.js';
 import { HttpError } from '../lib/http-error.js';
 import { getVehicleTypeById, listVehicleTypes } from './catalog.js';
+import { describeSpecs, type SpecDisplay } from './spec-display.js';
 import { validateSpecs } from '../validation/specs.js';
 import {
   assertPhotosBelongTo,
   type ListingInput,
   type ListingStatus,
 } from '../validation/listing-input.js';
-import type { SpecValue, VehicleType, VehicleTypeField } from '../types.js';
+import type { SpecValue, VehicleType } from '../types.js';
+
+export type { SpecDisplay };
 
 /**
  * Todo lo que se hace acá pasa por el cliente de Supabase del usuario que hizo
@@ -425,37 +428,3 @@ function presentListing(row: ListingRow, typesById: Map<string, VehicleType>) {
   };
 }
 
-export interface SpecDisplay {
-  key: string;
-  label: string;
-  value: string;
-}
-
-function describeSpecs(
-  specs: Record<string, SpecValue>,
-  fields: VehicleTypeField[],
-): SpecDisplay[] {
-  return fields
-    .filter((field) => specs[field.key] !== undefined && specs[field.key] !== null)
-    .map((field) => ({
-      key: field.key,
-      label: field.label,
-      value: formatSpecValue(field, specs[field.key] as SpecValue),
-    }));
-}
-
-function formatSpecValue(field: VehicleTypeField, value: SpecValue): string {
-  if (field.data_type === 'boolean') {
-    return value ? 'Sí' : 'No';
-  }
-
-  if (field.data_type === 'select') {
-    const option = (field.options ?? []).find((candidate) => candidate.value === value);
-    return option?.label ?? String(value);
-  }
-
-  const text =
-    typeof value === 'number' ? new Intl.NumberFormat('es-AR').format(value) : String(value);
-
-  return field.unit ? `${text} ${field.unit}` : text;
-}

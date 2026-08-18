@@ -32,7 +32,7 @@ No es un sprint nuevo: es terminar lo que el Sprint 1 dejó a medias. Salió de 
 - ✅ **"Mis publicaciones" con pantalla propia.** Pasó de ser una pestaña escondida a la ruta `/mis-publicaciones`, enlazada desde el encabezado, en formato lista y con editar, publicar y borrar a mano. La pantalla principal quedó solo como muro público.
 - ✅ **Catálogo de marcas** por tipo de vehículo, con sugerencias al escribir. Se decidió **no** hacer el catálogo de modelos: son cientos por marca, cambian todos los años y no había forma de cargarlos con datos verificables. El modelo sigue siendo texto libre, que es donde menos duele — "Volkswagen / VW" pasa siempre, "Gol / gol" casi nunca.
 
-## Sprint 1.6 — Que el flujo cierre de verdad (actual)
+## Sprint 1.6 — Que el flujo cierre de verdad ✅
 
 Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba completo para el que **publica**, pero para el que **mira** terminaba sin salida.
 
@@ -43,11 +43,17 @@ Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba 
 - ✅ **Paginación del muro.** Cortaba en 100 publicaciones sin avisarle a nadie.
 - ✅ **Limpieza de fotos huérfanas.** Las fotos de formularios abandonados ya no se acumulan en Storage.
 
-## Sprint 2 — Análisis de fotos con IA
+## Sprint 2 — El asistente de IA para el comprador ✅ (actual)
 
-El módulo de IA recibe las fotos cargadas en el Sprint 1 y las analiza con Gemini: estado observable del vehículo y detección de inconsistencias. El resultado se muestra al usuario.
+> **Desviación respecto de lo planeado.** Este sprint iba a ser "análisis de fotos": una función del sistema que le pega una etiqueta a la publicación. Al arrancarlo se replanteó para quién es la IA y pasó a ser **un asistente del comprador**. El motivo está en la [bitácora](../bitacora/bitacora.md) (2026-08-12): el que compra es el que está solo, y una herramienta que le señala defectos a quien publica es una herramienta que quien publica no va a usar.
 
-Con el alcance ampliado, el análisis debe **razonar según el tipo de vehículo**: qué mirar en una moto no es lo mismo que en un camión, y el prompt tiene que adaptarse usando el tipo y los campos específicos que ya guarda la publicación.
+- ✅ **Botón "Analizar" en cada publicación.** Cualquiera que pueda ver el aviso puede pedirlo, no solo el dueño. Devuelve qué se ve en las fotos, qué no cierra con lo declarado, qué no se puede evaluar y qué preguntarle al vendedor.
+- ✅ **El análisis razona según el tipo de vehículo**, leyendo el catálogo. Un tipo cargado desde el panel de Supabase se analiza correctamente sin tocar código — es la misma regla por la que el formulario se dibuja solo.
+- ✅ **El resultado se guarda** y se reusa. Si cambian las fotos o los datos declarados, queda marcado como viejo y se ofrece rehacerlo.
+- ✅ **Chat del asistente en toda la aplicación.** Sabe qué aviso hay en pantalla, puede citar su análisis y puede buscar entre las publicaciones reales. La conversación sobrevive a la navegación entre pantallas pero no se guarda: vive mientras dura la visita.
+- ✅ **Búsqueda de publicaciones con filtros** (tipo, marca, precio, año, kilómetros, provincia), construida como herramienta del asistente. **Adelanta el motor del Sprint 4** — falta la pantalla, no la consulta.
+
+**Lo que a propósito NO hace:** no dice si conviene comprar ni si el precio está bien. Todavía no tiene referencias de mercado contra qué compararlo, y un veredicto sin datos sería una opinión con cara de dato. Se retoma en el Sprint 3.
 
 ## Sprint 3 — Estimación de precio
 
@@ -55,11 +61,15 @@ Se suma la estimación de precio de mercado, combinando los datos declarados, el
 
 Igual que el análisis, la estimación depende del tipo: las referencias de mercado de motos y de camiones son distintas, y probablemente vengan de fuentes distintas.
 
+**Es lo que destraba lo que el Sprint 2 dejó explícitamente afuera:** hoy tanto el análisis como el chat tienen prohibido opinar sobre si un precio es razonable, porque no tienen con qué compararlo. Con las referencias de mercado cargadas, esa restricción se levanta.
+
 ## Sprint 4 — Búsqueda, filtros y vista de comprador
 
 La visualización pública de publicaciones se adelantó al Sprint 1. Lo que queda acá es todo lo que necesita quien **busca** un vehículo, no quien lo publica:
 
 - Búsqueda por texto y filtros: **tipo de vehículo** primero, más marca, año, rango de precio y ubicación. También filtrado por campos específicos de cada tipo (por ejemplo, cilindrada en motos).
+
+  **Parte de esto ya está hecho.** El Sprint 2 construyó el motor de búsqueda (`app/backend/src/services/listing-search.ts`) para que el asistente pudiera buscar avisos, con todos esos filtros menos el de campos específicos. Lo que falta acá es la pantalla, no la consulta.
 - **Favoritos** — guardar los vehículos que a uno le interesaron y volver a verlos en una pantalla propia. Requiere una tabla nueva; es la primera funcionalidad pensada para el comprador y no para el vendedor.
 
 ## Sprint 5 — Mensajería interna

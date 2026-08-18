@@ -2,7 +2,7 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 1 — base multivehículo y flujo de publicación.** Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 2 — el asistente de IA para el comprador.** Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -46,10 +46,13 @@ Plataforma que usa inteligencia artificial para dar más confianza al comprar y 
 - **El módulo de IA vive dentro del backend**, no es un servicio aparte. Se despliega junto con él. Si algún día necesita escalar por su cuenta, se separa; hoy sería complejidad sin beneficio.
 - **Supabase reemplaza tres cosas** que normalmente hay que montar y mantener por separado: base de datos, almacenamiento de archivos y autenticación. Para un prototipo que maneja fotos, es la opción con menos fricción.
 
-### Dónde entra la IA — dos usos distintos
+### Dónde entra la IA — un asistente para el que compra
 
-1. **Análisis de fotos.** Las imágenes se envían a Gemini, que tiene capacidad de visión. Devuelve el estado observable del vehículo y señales de inconsistencia: fotos que parecen de vehículos distintos, daños no declarados, desgaste que no cuadra con el kilometraje u horas de uso informadas. El análisis se adapta al tipo de vehículo — no se mira lo mismo en una moto que en un camión.
-2. **Estimación de precio.** Combina los datos declarados, lo detectado en las fotos y referencias de mercado, y devuelve un rango con su justificación en lenguaje claro.
+La IA de AIassistant trabaja **para quien compra, no para quien vende**. El que publica ya controla su aviso: elige las fotos, escribe la descripción, pone el precio. El que mira tiene que decidir con lo que le muestran. Ahí es donde una segunda opinión cambia algo.
+
+1. **Análisis de una publicación.** Cualquiera que pueda ver un aviso puede pedirlo. Las fotos se envían a Gemini junto con los datos declarados, y vuelve: qué se ve, qué no cierra (fotos que parecen de vehículos distintos, daños no declarados, desgaste que no cuadra con el kilometraje), qué no se puede evaluar con esas fotos y qué preguntarle al vendedor. **El análisis se adapta al tipo de vehículo** — no se mira lo mismo en una moto que en un camión —, y lo hace leyendo el catálogo, no con una lista escrita en el código.
+2. **Chat del asistente.** Disponible en toda la aplicación. Sabe qué aviso hay en pantalla, puede citar su análisis y puede buscar entre las publicaciones que están a la venta.
+3. **Estimación de precio** *(Sprint 3, todavía no)*. Hasta que existan las referencias de mercado, el asistente tiene explícitamente prohibido opinar sobre si un precio es razonable: sería una opinión con cara de dato.
 
 ---
 
@@ -62,7 +65,8 @@ AIassistant/
 │   ├── roadmap.md             sprints planificados, de prototipo a producto
 │   ├── modelo_datos.md        cómo se guardan los vehículos y sus tipos
 │   ├── sprint0.md             qué se decidió acá y qué quedó pendiente
-│   └── sprint1.md             decisiones del Sprint 1
+│   ├── sprint1.md             decisiones del Sprint 1
+│   └── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL
 │   └── seed.sql               tipos de vehículo y provincias iniciales
@@ -74,8 +78,8 @@ AIassistant/
 ├── app/                       el código de la aplicación
 │   ├── CLAUDE.md              contexto del proyecto para Claude Code
 │   ├── frontend/              lo que ve el usuario (pantallas)
-│   ├── backend/               la lógica que procesa datos
-│   └── ia/                    análisis de fotos, precios
+│   └── backend/               la lógica que procesa datos
+│       └── src/ia/            los prompts y la llamada a Gemini
 ├── README.md                  este archivo
 ├── .gitignore                 qué archivos NO se suben al repositorio
 └── .env.example               plantilla de variables de entorno
@@ -111,7 +115,9 @@ Crear un proyecto nuevo (plan gratis) en [supabase.com](https://supabase.com). D
 
 ### 2. Configurar las claves
 
-Copiar `.env.example` a `.env` en la raíz del proyecto y completar `SUPABASE_URL` y `SUPABASE_ANON_KEY` (panel de Supabase → Settings → API). El resto puede quedar vacío por ahora.
+Copiar `.env.example` a `.env` en la raíz del proyecto y completar `SUPABASE_URL` y `SUPABASE_ANON_KEY` (panel de Supabase → Settings → API).
+
+Para que funcione el asistente de IA hacen falta además `GEMINI_API_KEY` ([se saca acá](https://aistudio.google.com/apikey)) y `SUPABASE_SERVICE_KEY` (mismo panel de Supabase). Sin ellas todo lo demás anda igual: el asistente avisa que no está configurado en vez de romper el arranque.
 
 Es un único `.env` para todo el proyecto: lo leen tanto el backend como el frontend.
 

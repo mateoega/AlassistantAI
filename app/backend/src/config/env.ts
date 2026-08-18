@@ -43,10 +43,37 @@ export function normalizeSupabaseUrl(raw: string): string {
   return url;
 }
 
+/** Vacío se trata como "no configurada", no como cadena vacía. */
+function optional(name: string): string | null {
+  return process.env[name]?.trim() || null;
+}
+
 export const env = {
   port: Number(process.env.PORT?.trim() || 4000),
   supabaseUrl: normalizeSupabaseUrl(required('SUPABASE_URL')),
   supabaseAnonKey: required('SUPABASE_ANON_KEY'),
+
+  /**
+   * Estas tres son OPCIONALES a propósito: el backend tiene que arrancar sin
+   * ellas, como promete `.env.example`. Sin ellas todo el flujo de
+   * publicaciones funciona igual; lo único que no anda es el asistente de IA,
+   * y las rutas que lo usan avisan qué falta completar en vez de romper el
+   * arranque del servidor.
+   */
+  geminiApiKey: optional('GEMINI_API_KEY'),
+
+  /**
+   * Modelo de la familia Flash con capacidad de visión. Se deja configurable
+   * para poder cambiarlo sin tocar código cuando Google publique uno nuevo.
+   */
+  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.6-flash',
+
+  /**
+   * Clave de servicio: se saltea las reglas de acceso de la base. Su ÚNICO uso
+   * en todo el proyecto es guardar los análisis de IA, que ningún usuario
+   * puede escribir. Ver `lib/supabase.ts` y la migración 008.
+   */
+  supabaseServiceKey: optional('SUPABASE_SERVICE_KEY'),
 
   /**
    * De dónde se aceptan pedidos. En desarrollo, el frontend de Next.js.

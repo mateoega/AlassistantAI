@@ -60,6 +60,8 @@ Se sumaron dos tonos de fondo (`surface` y `border`) que no están en el documen
 
 **No se construyó (a propósito):** todo lo relacionado con IA — la carpeta `app/ia/` sigue vacía y `GEMINI_API_KEY` todavía no se usa.
 
+> *Nota posterior:* la IA se construyó en el Sprint 2 y esa carpeta se mudó a `app/backend/src/ia/`. El motivo está en [`sprint2.md`](sprint2.md).
+
 ## Pendientes explícitos (no se decidieron en este sprint)
 
 - **Proveedor de datos de mercado** para la estimación de precio (Sprint 3). Sigue pendiente del Sprint 0, y ahora con una arista nueva: las referencias de mercado de motos y de camiones son distintas y probablemente vengan de fuentes distintas.

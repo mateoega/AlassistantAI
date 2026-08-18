@@ -24,4 +24,14 @@ export class HttpError extends Error {
   static notFound(message = 'No se encontró lo que buscabas.'): HttpError {
     return new HttpError(404, message);
   }
+
+  /**
+   * Algo que el servidor ofrece pero que en esta instalación no está listo —
+   * típicamente, una clave de API sin completar. No es culpa de quien hizo el
+   * pedido, así que el mensaje explica qué falta configurar en vez de sonar a
+   * error del usuario.
+   */
+  static unavailable(message: string, details?: string[]): HttpError {
+    return new HttpError(503, message, details);
+  }
 }

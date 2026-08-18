@@ -15,6 +15,10 @@ migrations/
   20260807000005_kilometers_and_cities.sql
                                 solo kilómetros, campos opcionales, tabla de ciudades
   20260808000001_brands.sql     marcas y a qué tipo de vehículo corresponde cada una
+  20260808000002_listing_states.sql
+                                estados vendido y pausado
+  20260811000001_listing_analyses.sql
+                                el análisis de IA de cada publicación
 seed.sql                        los 7 tipos de vehículo iniciales y las 24 provincias
 seed_cities.sql                 las localidades principales de cada provincia
 seed_brands.sql                 las marcas habituales del mercado argentino
@@ -29,9 +33,13 @@ La forma más simple, sin instalar nada:
 1. Entrar al panel de Supabase → **SQL Editor** → **New query**.
 2. Copiar y pegar el contenido de cada archivo de `migrations/`, **en orden**, y ejecutar uno por uno.
 3. Al final, hacer lo mismo con los archivos de datos, en este orden: `seed.sql`, `seed_cities.sql` y `seed_brands.sql`.
-4. Verificar en **Table Editor** que aparecieron las seis tablas y que `vehicle_types` tiene 7 filas.
+4. Verificar en **Table Editor** que aparecieron las tablas y que `vehicle_types` tiene 7 filas.
 
 Si el equipo instala la CLI de Supabase más adelante, `supabase db push` hace lo mismo automáticamente.
+
+## Cómo aplicar una migración nueva
+
+Si la base ya está armada y aparece un archivo nuevo en `migrations/`, va solo ese: SQL Editor → New query → pegar el contenido → ejecutar. Los anteriores ya están aplicados y no se vuelven a correr.
 
 ## Reglas
 

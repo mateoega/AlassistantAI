@@ -12,18 +12,24 @@ Plataforma que ayuda a comprar y vender vehículos de **todo el rubro automotor*
 
 ```
 frontend (Next.js) → backend (Express) → Supabase (Postgres + Storage + Auth)
-                            └──► módulo ia/ → API de Gemini
+                            └──► backend/src/ia/ → API de Gemini
 ```
 
 - **`frontend/`** — pantallas, componentes, llamadas a la API del backend. Nunca llama a Gemini ni usa la clave de servicio de Supabase. **Dos excepciones deliberadas:** el login (librería de Supabase con la clave pública `anon`) y la subida de fotos a Storage. Todo lo demás pasa por el backend.
-- **`backend/`** — rutas de la API, validación, orquesta las llamadas al módulo `ia/` y a Supabase. Valida la ficha `specs` de cada publicación contra el catálogo de campos del tipo de vehículo.
-- **`ia/`** — la lógica que arma los prompts, llama a Gemini con las fotos, y parsea la respuesta. Vive dentro del backend conceptualmente (se despliega junto con él).
+- **`backend/`** — rutas de la API, validación, orquesta las llamadas al módulo de IA y a Supabase. Valida la ficha `specs` de cada publicación contra el catálogo de campos del tipo de vehículo.
+- **`backend/src/ia/`** — la lógica que arma los prompts, llama a Gemini con las fotos, y parsea la respuesta. Tiene su propio [README](backend/src/ia/README.md). *Estaba en `app/ia/` hasta el Sprint 2; se movió porque Node no encontraba sus librerías desde ahí.*
 
 Detalle completo en el `README.md` de la raíz del proyecto.
 
 ## Estado actual
 
-Sprint 1 — base multivehículo y flujo completo de publicación (login, muro, carga con fotos, detalle). Sin IA todavía: eso es Sprint 2. Ver [`../docs/roadmap.md`](../docs/roadmap.md).
+Sprint 2 — el asistente de IA para el comprador, sobre la base multivehículo del Sprint 1. Ver [`../docs/roadmap.md`](../docs/roadmap.md).
+
+Dos piezas: el **botón "Analizar"** en cada publicación (mira las fotos junto con los datos declarados) y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
+
+**La IA trabaja para el comprador, no para el vendedor.** Es la decisión que define este sprint y la que explica el tono de los prompts. Si aparece una función de IA pensada para ayudar a quien publica, contradice el diseño — ver [`../bitacora/bitacora.md`](../bitacora/bitacora.md), 2026-08-12.
+
+**El análisis no dictamina si conviene comprar ni opina de precios.** Es a propósito: no tiene referencias de mercado hasta el Sprint 3, y está pedido explícitamente en el prompt. No sacar esa restricción sin haber cargado esas referencias.
 
 ## Convenciones
 
@@ -39,3 +45,5 @@ Sprint 1 — base multivehículo y flujo completo de publicación (login, muro, 
 - Antes de agregar una dependencia nueva, preferir la opción más simple — este proyecto prioriza simplicidad sobre escalabilidad en esta etapa.
 - Cualquier decisión de arquitectura o tecnología que se tome, registrarla en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 - **Nunca escribir código que dependa de una lista de tipos de vehículo hardcodeada.** Los tipos y sus campos se leen siempre del catálogo en la base (`vehicle_types` y `vehicle_type_fields`). Si aparece un `if (tipo === 'auto')` o un `switch` por tipo en el código, el diseño se rompió: agregar un tipo nuevo tiene que funcionar cargando filas en el catálogo, sin redesplegar.
+- **Los prompts de IA también se arman desde el catálogo.** La regla anterior no se detiene en el formulario: el prompt del análisis recibe el tipo y sus campos leídos de la base, y deja que el modelo razone según eso. No se escriben instrucciones del estilo "si es una moto, mirá la cadena". Ver [`backend/src/ia/vehicle-context.ts`](backend/src/ia/vehicle-context.ts).
+- **La clave de servicio de Supabase tiene un solo uso permitido:** guardar los análisis de IA, en una tabla que ningún usuario puede escribir. Todo lo demás va con el cliente del usuario, para que las reglas de acceso de la base se apliquen siempre. Ver [`backend/src/lib/supabase.ts`](backend/src/lib/supabase.ts).
