@@ -9,6 +9,9 @@ scripts/
   demo-vehicles.ts   el catálogo de vehículos: qué se carga (solo datos)
   seed-demo.ts       el que lo carga en Supabase (habla con la base y con Wikimedia)
   fotos-usadas.json  qué foto se usó en cada aviso, con su autor y su licencia
+  verificar-estimacion.ts
+                     corre la estimación de precio del Sprint 3 contra la base
+                     real y muestra qué le da a cada aviso
   .cache-fotos/      fotos ya descargadas, para no volver a pedírselas a Wikimedia
                      (no se sube al repositorio)
 ```
@@ -31,6 +34,16 @@ Otras formas de correrlo:
 | `npm run seed:demo -- --solo corolla-2015,hilux-2020` | Carga o rehace solo esos avisos. |
 | `npm run seed:demo -- --borrar` | Borra **solo** las publicaciones de prueba. |
 | `npm run seed:demo -- --borrar-todo` | Borra **todas** las publicaciones de la base, sean de prueba o no. |
+
+## Verificar la estimación de precio
+
+```bash
+npm run verificar:estimacion
+```
+
+Corre la estimación **real** —el mismo código que usa la API— contra todas las publicaciones de la base, y muestra el rango que le da a cada una y cuánto se desvía el precio pedido. Se le puede pasar un texto para filtrar: `npm run verificar:estimacion corolla`.
+
+Sirve para ver de un vistazo si el motor está diciendo algo razonable. Los dos casos plantados a propósito en los datos de prueba son la prueba de fuego: el Corolla 2015 con pocos kilómetros a precio de uno mucho más nuevo tiene que salir marcado **por encima** del rango, y la Hilux con 341.000 km, **por debajo**. Si esos dos no hacen ruido, el motor no sirve.
 
 **Se puede correr todas las veces que haga falta.** El id de cada publicación se calcula a partir de su `key`, así que volver a correrlo actualiza las mismas filas en vez de llenar la base de duplicados.
 

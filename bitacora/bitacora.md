@@ -319,3 +319,17 @@ Antes de escribir el Sprint 3 se evaluaron las cuatro fuentes de precios que exi
 **Consecuencia de proceso.** De esta decisión salió [`../docs/para_mas_adelante.md`](../docs/para_mas_adelante.md): un solo lugar para todo lo que se posterga hasta tener señales de uso real, con el motivo de cada postergación y **la señal concreta que la destraba**. Se escribió así a pedido de Mateo y para que la lista no se convierta en un depósito de deseos: un punto sin señal que lo dispare no se puede decidir nunca. Se le mudaron los pendientes que estaban sueltos al final del roadmap y los dos que arrastraba el Sprint 0 — modelo de negocio y alcance legal.
 
 **Un punto de esa lista conviene no dejarlo para el final:** el descargo de responsabilidad sobre las estimaciones. Es texto, no desarrollo, y hay que resolverlo antes de que la use gente que no conocemos, no después.
+
+## 2026-08-21 — La estimación quedó verificada andando, y las migraciones ahora las aplica Claude
+
+**La primera capa de la estimación funciona.** Se corrió contra la base real y los dos casos que se habían plantado a propósito en los datos de prueba salieron marcados: el Corolla 2015 con pocos kilómetros pedido a USD 27.000 aparece **64% por encima** del rango estimado, y la Hilux con 341.000 km, **20% por debajo**. Los avisos con precio de mercado caen dentro del rango, con desvíos de entre 0% y 3%.
+
+**Se cambió cómo se aplican las migraciones.** Hasta hoy había que entrar al panel de Supabase y pegar el SQL a mano. Mateo se logueó una vez en el navegador integrado y de ahí en adelante las aplica la herramienta sola. Quedó escrito como skill en `.claude/skills/migracion-supabase/`.
+
+Dos cosas que se aprendieron haciéndolo y quedaron anotadas ahí, porque no son obvias: **el portapapeles del sistema no llega al navegador integrado** (copiar y pegar deja el editor vacío), y **tipear el SQL tampoco sirve**, porque el editor cierra paréntesis y comillas solo y corrompe la consulta. Lo que funciona es escribir directo en el editor pasando el archivo codificado.
+
+**Lo que no cambia:** Claude no ingresa credenciales. Si la sesión se cae, se corta y se le pide a Mateo que se loguee.
+
+**Los coeficientes de depreciación terminaron en la base y no en el código.** Estaban escritos como una lista de tipos de vehículo dentro del servicio de estimación, que es exactamente lo que `app/CLAUDE.md` prohíbe: agregar un tipo nuevo no puede obligar a tocar código. Ahora son dos columnas de `vehicle_types` (migración 20260821000001). El efecto secundario es mejor que la corrección: cuando haya datos reales, esos números se van a poder ajustar sin desplegar nada.
+
+**Quedó un script de verificación** (`npm run verificar:estimacion`) que corre la estimación real contra toda la base y muestra qué le da a cada aviso. No es un test automático: es la forma de mirar de un vistazo si el motor está diciendo algo razonable, y de comprobar que los dos casos plantados siguen haciendo ruido después de cada cambio.
