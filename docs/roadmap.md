@@ -60,7 +60,7 @@ Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba 
 En la pantalla de cada vehículo aparece un **precio de referencia**: qué se está pidiendo por vehículos parecidos, dónde queda este entre ellos y con qué se comparó, aviso por aviso. Detalle en [`sprint3.md`](sprint3.md).
 
 - ✅ **Estimación a partir de las publicaciones propias**, corregidas por año y por kilómetros. Funciona para los siete tipos de vehículo.
-- ✅ **Referencia de una fuente externa gratuita**, cargada a una tabla propia por un script. Es la pieza intercambiable: contratar una guía profesional más adelante es cambiar el script que la llena, no la estimación que la lee.
+- ✅ **Referencia de una fuente externa gratuita**, cargada a una tabla propia por un script. Es la pieza intercambiable: contratar una guía profesional más adelante es cambiar el script que la llena, no la estimación que la lee. **Se muestra pero no juzga el precio pedido**: al medirlo, dejarla decidir marcaba fuera de mercado a uno de cada dos avisos.
 - ✅ **Se levantó la restricción del Sprint 2**: el análisis de fotos y el chat ya pueden hablar de precios — pero solo cuando existe una estimación para ese vehículo. El permiso viene del dato, no de una instrucción del prompt.
 - ⛔ **La tabla de valuación de la DNRPA se evaluó y se descartó**, por calidad del dato y no por esfuerzo: no se puede saber a qué año corresponde cada precio. El motivo está en [`sprint3.md`](sprint3.md).
 

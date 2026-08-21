@@ -30,9 +30,15 @@ Decisiones que quedaron adentro:
 - **Entran las publicaciones vendidas.** Un aviso que efectivamente se vendió es la señal de precio más fuerte que hay.
 - **Se calcula en el momento y no se guarda.** A diferencia del análisis de fotos, no cuesta plata ni tarda. Guardarlo traería el problema de saber cuándo quedó viejo, y queda viejo con cada aviso nuevo — que es justamente lo que tiene que reflejar.
 
-### Capa 2 — Una fuente de precios externa
+### Capa 2 — Una fuente de precios externa, que informa pero no juzga
 
-Cuando no hay avisos parecidos suficientes, la estimación sale de una tabla de referencias cargada desde afuera. Cuando sí los hay, la referencia externa se muestra **al lado** del rango propio, no mezclada con él: la fuente publica el valor del modelo, no el de este vehículo, y **no está ajustada por kilómetros**.
+La referencia externa **se muestra siempre que exista, y nunca decide si el precio pedido está bien o mal.** Aparece al lado del rango propio, y también cuando no alcanzó para estimar — ahí es lo único que hay, y sigue siendo información útil.
+
+**Esa restricción no estaba en el diseño original: la impusieron los números.** Al principio, cuando no había avisos parecidos suficientes, la estimación salía de la fuente externa. Al correrlo contra la base, **22 de 47 publicaciones quedaban marcadas fuera de mercado** —contra 5 de 27 comparando solo entre avisos propios— y aparecían casos imposibles: una Frontier 2020 marcada 106% por encima.
+
+El motivo es que la fuente publica valores sistemáticamente más bajos que los precios que se piden, y bastante más bajos en camionetas. Sin una tercera fuente no se puede saber cuál tiene razón. Lo que sí se sabe es que acusar a uno de cada dos vendedores de pedir de más, con un dato que no está ajustado por kilómetros ni por estado, es el daño que esta plataforma existe para evitar.
+
+**El costo:** la cobertura baja de 47 a 27 publicaciones con estimación. Se paga con gusto — un rango equivocado se corrige, una acusación equivocada se la come el vendedor.
 
 **Vive en una tabla nuestra y no se consulta en vivo.** La fuente gratuita corta a los pocos pedidos por minuto, así que la carga la hace un script a mano ([`cargar-referencias.ts`](../app/backend/scripts/README.md)). Si la fuente desaparece, lo cargado sigue sirviendo.
 
@@ -94,6 +100,14 @@ npm run verificar:estimacion
 ```
 
 Corre la estimación real contra toda la base y muestra qué le da a cada aviso. Los dos casos plantados a propósito en los datos de prueba son la prueba de fuego: el Corolla 2015 con pocos kilómetros pedido al precio de uno mucho más nuevo tiene que salir **por encima** del rango, y la Hilux con 341.000 km, **por debajo**.
+
+## Cómo se verificó la pantalla sin poder iniciar sesión
+
+La aplicación pide sesión y la herramienta no ingresa credenciales de nadie. Para poder verificar igual, el componente está partido en dos: **el que pide los datos y el que dibuja** (`PriceEstimatePanel` y `PriceEstimateView`).
+
+Eso permite renderizar la pantalla con estimaciones **reales capturadas del backend**, sin fabricar publicaciones ni iniciar sesión. Los cuatro casos que hay que mirar cuando se toque esto son: con comparables, fuera de rango, solo con referencia externa, y sin estimación.
+
+Se verificó además que **no hay rojo ni naranja en ningún estado** —incluido el de precio fuera de rango, que es donde más tienta romper la regla de identidad— y que no hay desborde horizontal a 375px de ancho.
 
 ## Pendientes que deja el sprint
 
