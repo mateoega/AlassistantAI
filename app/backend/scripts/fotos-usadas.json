@@ -39,9 +39,66 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:Introduction_Amarok_Kmar-2.jpg"
     }
   ],
-  "cb190-2019": [],
-  "cb190-2021": [],
-  "cb190-2023": [],
+  "cb190-2019": [
+    {
+      "archivo": "File:Honda CB750 racer 1970.jpg",
+      "autor": "Rikita",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB750_racer_1970.jpg"
+    },
+    {
+      "archivo": "File:Honda CB750 racer 1972.jpg",
+      "autor": "Rikita",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB750_racer_1972.jpg"
+    },
+    {
+      "archivo": "File:Bagaimanapun juga HONDA lebih unggul - IIMS 2019.jpg",
+      "autor": "F1fans",
+      "licencia": "CC BY 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Bagaimanapun_juga_HONDA_lebih_unggul_-_IIMS_2019.jpg"
+    }
+  ],
+  "cb190-2021": [
+    {
+      "archivo": "File:1974 Honda CB 750 Four, Deutsches Zweirad- und NSU-Museum Neckarsulm .jpg",
+      "autor": "Zweiradmuseum Neckarsulm",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:1974_Honda_CB_750_Four,_Deutsches_Zweirad-_und_NSU-Museum_Neckarsulm_.jpg"
+    },
+    {
+      "archivo": "File:Honda CB 190R Repsol.jpg",
+      "autor": "RL GNZLZ",
+      "licencia": "CC BY-SA 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB_190R_Repsol.jpg"
+    },
+    {
+      "archivo": "File:CB 125 F in Pakistan.jpg",
+      "autor": "Hasan HH",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:CB_125_F_in_Pakistan.jpg"
+    }
+  ],
+  "cb190-2023": [
+    {
+      "archivo": "File:Honda CB 750 Advertisement March 1976 (USA).jpg",
+      "autor": "SenseiAlan",
+      "licencia": "CC BY 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB_750_Advertisement_March_1976_(USA).jpg"
+    },
+    {
+      "archivo": "File:Honda CB 500 Four (5).jpg",
+      "autor": "Cjp24",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB_500_Four_(5).jpg"
+    },
+    {
+      "archivo": "File:Honda CB 500 Four (3).jpg",
+      "autor": "Cjp24",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_CB_500_Four_(3).jpg"
+    }
+  ],
   "civic-2018": [
     {
       "archivo": "File:2018 Honda Civic Saloon Front.jpg",
@@ -402,7 +459,26 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:2019_Nissan_Frontier_Pro-4X,_Rear_Right,_07-20-2020.jpg"
     }
   ],
-  "gamma-250-2020": [],
+  "gamma-250-2020": [
+    {
+      "archivo": "File:PDB 1iu4 EBI.jpg",
+      "autor": "Jawahar Swaminathan and MSD staff at the European Bioinformatics Institute",
+      "licencia": "Public domain",
+      "pagina": "https://commons.wikimedia.org/wiki/File:PDB_1iu4_EBI.jpg"
+    },
+    {
+      "archivo": "File:1993 Toyota Celica Turbo 4WD.jpg",
+      "autor": "Rally Paradise",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:1993_Toyota_Celica_Turbo_4WD.jpg"
+    },
+    {
+      "archivo": "File:Motor KIA Pro Cee'd GT Track.JPG",
+      "autor": "Thilo Parg",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Motor_KIA_Pro_Cee%27d_GT_Track.JPG"
+    }
+  ],
   "gol-2013": [
     {
       "archivo": "File:Volkswagen - 1960 - 14 hp - 4 cyl - Kolkata 2013-01-13 3441.JPG",
@@ -683,8 +759,46 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:Renault_Kwid_Outsider_2020.jpg"
     }
   ],
-  "marcopolo-2013": [],
-  "ninja300-2018": [],
+  "marcopolo-2013": [
+    {
+      "archivo": "File:COOMOTOR 1800DD.jpg",
+      "autor": "Daniel Tovar",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:COOMOTOR_1800DD.jpg"
+    },
+    {
+      "archivo": "File:Paradiso G7 1800DD.jpg",
+      "autor": "Lucas de Souza - Campos - RJ",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Paradiso_G7_1800DD.jpg"
+    },
+    {
+      "archivo": "File:Paradiso G7 1050 - 1001.jpg",
+      "autor": "Lucas de Souza - Campos - RJ",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Paradiso_G7_1050_-_1001.jpg"
+    }
+  ],
+  "ninja300-2018": [
+    {
+      "archivo": "File:Kawasaki Ninja H2.jpg",
+      "autor": "Rikita",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kawasaki_Ninja_H2.jpg"
+    },
+    {
+      "archivo": "File:Kawasaki Ninja 250 2018.jpg",
+      "autor": "Rikita",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kawasaki_Ninja_250_2018.jpg"
+    },
+    {
+      "archivo": "File:Kawasaki Ninja on trailer.jpg",
+      "autor": "Cjp24",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Kawasaki_Ninja_on_trailer.jpg"
+    }
+  ],
   "onix-2021": [
     {
       "archivo": "File:Chevrolet Onix 013.jpg",
@@ -705,9 +819,60 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:2021_Chevrolet_Onix_1.0T_Premier_(Chile)_front_view.jpg"
     }
   ],
-  "outlander-2019": [],
-  "outlander-2022": [],
-  "partner-2019": [],
+  "outlander-2019": [
+    {
+      "archivo": "File:Can-Am Outlander Max XT-P 1000R (1).jpg",
+      "autor": "Reise Reise",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Can-Am_Outlander_Max_XT-P_1000R_(1).jpg"
+    },
+    {
+      "archivo": "File:Can-Am Outlander Max XT-P 1000R (2).jpg",
+      "autor": "Reise Reise",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Can-Am_Outlander_Max_XT-P_1000R_(2).jpg"
+    },
+    {
+      "archivo": "File:Can-Am Outlander 6x6 Pro+ 1000 T.jpg",
+      "autor": "Reise Reise",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Can-Am_Outlander_6x6_Pro%2B_1000_T.jpg"
+    }
+  ],
+  "outlander-2022": [
+    {
+      "archivo": "File:Helsinki Police Department Can-am Outlander all-terrain vehicle.jpg",
+      "autor": "Antti Leppänen",
+      "licencia": "CC BY 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Helsinki_Police_Department_Can-am_Outlander_all-terrain_vehicle.jpg"
+    },
+    {
+      "archivo": "File:Janske Lazne 2022 P87 Cerna hora Can-Am Outlander.jpg",
+      "autor": "Fallaner",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Janske_Lazne_2022_P87_Cerna_hora_Can-Am_Outlander.jpg"
+    }
+  ],
+  "partner-2019": [
+    {
+      "archivo": "File:Peugeot Partner - Flickr - dave 7.jpg",
+      "autor": "dave_7 from Canada",
+      "licencia": "CC BY 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Peugeot_Partner_-_Flickr_-_dave_7.jpg"
+    },
+    {
+      "archivo": "File:Peugeot Partner Police (32671438648).jpg",
+      "autor": "Guillaume Vachey from Chalon sur Saone, France",
+      "licencia": "CC0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Peugeot_Partner_Police_(32671438648).jpg"
+    },
+    {
+      "archivo": "File:Peugeot Partner, douane française, Keskastel 2019.jpg",
+      "autor": "Kevin.B",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Peugeot_Partner,_douane_fran%C3%A7aise,_Keskastel_2019.jpg"
+    }
+  ],
   "peugeot208-2019": [
     {
       "archivo": "File:Peugeot 208 GT-Line Genf 2019 1Y7A5126.jpg",
@@ -808,7 +973,26 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:Ford_Ranger_Stormtrak_(T6,_P375)_1X7A0319.jpg"
     }
   ],
-  "rouser-2020": [],
+  "rouser-2020": [
+    {
+      "archivo": "File:KTM Quad 990.jpg",
+      "autor": "Stefan Krause, Germany",
+      "licencia": "CC BY 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:KTM_Quad_990.jpg"
+    },
+    {
+      "archivo": "File:KTM Quad 990 neutral.jpg",
+      "autor": "Stefan Krause, Germany",
+      "licencia": "CC BY 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:KTM_Quad_990_neutral.jpg"
+    },
+    {
+      "archivo": "File:MakingOff KTM Quad.jpg",
+      "autor": "Stefan Krause, Germany",
+      "licencia": "CC BY 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:MakingOff_KTM_Quad.jpg"
+    }
+  ],
   "s10-2019": [
     {
       "archivo": "File:Chevrolet S10 Blazer - Flickr - dave 7.jpg",
@@ -869,8 +1053,22 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:Dacia_1304_Pick-Up_Single_Cab_Nazad.jpg"
     }
   ],
-  "skua-2018": [],
-  "skua-2021": [],
+  "skua-2018": [
+    {
+      "archivo": "File:Motomel Skua 250 PRO.jpg",
+      "autor": "Bruno Rene Vargas",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Motomel_Skua_250_PRO.jpg"
+    }
+  ],
+  "skua-2021": [
+    {
+      "archivo": "File:Motomel Skua 250 PRO.jpg",
+      "autor": "Bruno Rene Vargas",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Motomel_Skua_250_PRO.jpg"
+    }
+  ],
   "sprinter-2017": [
     {
       "archivo": "File:Mercedes-Benz Sprinter Platform.jpg",
@@ -891,7 +1089,20 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:Mercedes_Benz_Sprinter_Camper.jpg"
     }
   ],
-  "tector-2015": [],
+  "tector-2015": [
+    {
+      "archivo": "File:Iveco Bus Urbanway 10 Tector 7 RNTP 2015 Eurexpo Lyon Chassieu Exposition.JPG",
+      "autor": "Ibou69100",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Iveco_Bus_Urbanway_10_Tector_7_RNTP_2015_Eurexpo_Lyon_Chassieu_Exposition.JPG"
+    },
+    {
+      "archivo": "File:Un peu d'eau dans mon V.I.N.jpg",
+      "autor": "Dacia 1410 Sport",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Un_peu_d%27eau_dans_mon_V.I.N.jpg"
+    }
+  ],
   "tector-2018": [
     {
       "archivo": "File:Mot. Iveco Crossway.jpg",
@@ -920,9 +1131,208 @@
       "pagina": "https://commons.wikimedia.org/wiki/File:2021_Fiat_Toro_Freedom_1.8_4X2_-_(3).jpg"
     }
   ],
-  "trx420-2018": [],
-  "vespa-2022": [],
-  "ybr125-2017": [],
-  "ybr125-2020": [],
-  "zb110-2019": []
+  "trx420-2018": [
+    {
+      "archivo": "File:Honda TRX 420 FM 2012.jpg",
+      "autor": "Qwerty242",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_TRX_420_FM_2012.jpg"
+    },
+    {
+      "archivo": "File:Honda TRX 680 FA Lempäälän VPK Kokonaisturvallisuus 2015.JPG",
+      "autor": "MKFI",
+      "licencia": "Public domain",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Honda_TRX_680_FA_Lemp%C3%A4%C3%A4l%C3%A4n_VPK_Kokonaisturvallisuus_2015.JPG"
+    },
+    {
+      "archivo": "File:700xx.jpg",
+      "autor": "Monkeybusiness1245",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:700xx.jpg"
+    }
+  ],
+  "vespa-2022": [
+    {
+      "archivo": "File:HK SKD 將軍澳南 TKO South 日出康城 Lohas Park Malibu car parking July 2022 Px3 03.jpg",
+      "autor": "PepiDsailanbobo",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:HK_SKD_%E5%B0%87%E8%BB%8D%E6%BE%B3%E5%8D%97_TKO_South_%E6%97%A5%E5%87%BA%E5%BA%B7%E5%9F%8E_Lohas_Park_Malibu_car_parking_July_2022_Px3_03.jpg"
+    }
+  ],
+  "ybr125-2017": [
+    {
+      "archivo": "File:Yamaha YBR125ED JPN 2014 model Feb 22 2017.jpg",
+      "autor": "Tatawidepine",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Yamaha_YBR125ED_JPN_2014_model_Feb_22_2017.jpg"
+    }
+  ],
+  "ybr125-2020": [
+    {
+      "archivo": "File:Yamaha YBR-125 Kiev1.JPG",
+      "autor": "Kyrylo Danylchenko (Nchurmdaz at en.wikipedia)",
+      "licencia": "Public domain",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Yamaha_YBR-125_Kiev1.JPG"
+    },
+    {
+      "archivo": "File:Yamaha YBR125 (Fuel Injection - EU Spec).JPG",
+      "autor": "Nevilleg",
+      "licencia": "Public domain",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Yamaha_YBR125_(Fuel_Injection_-_EU_Spec).JPG"
+    },
+    {
+      "archivo": "File:Yamaha YBR 125 Full modelo 2011.jpg",
+      "autor": "Gabriel79",
+      "licencia": "CC BY-SA 3.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Yamaha_YBR_125_Full_modelo_2011.jpg"
+    }
+  ],
+  "zb110-2019": [
+    {
+      "archivo": "File:Zanella ZB 110 LT.jpg",
+      "autor": "Just a Man",
+      "licencia": "CC BY 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Zanella_ZB_110_LT.jpg"
+    }
+  ],
+  "atego-2016": [
+    {
+      "archivo": "File:Heidelberg - Feuerwehr Mercedes-Benz Atego HD 2411 2016-01-10 16-25-35.JPG",
+      "autor": "Photographs by Radosław Drożdżewski (User:Zwiadowca21)",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Heidelberg_-_Feuerwehr_Mercedes-Benz_Atego_HD_2411_2016-01-10_16-25-35.JPG"
+    },
+    {
+      "archivo": "File:Walldorf - Feuerwehr - Mercedes Benz Atego 1628 - 2016-08-28 15-38-37.jpg",
+      "autor": "Photographs by Radosław Drożdżewski (User:Zwiadowca21)",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Walldorf_-_Feuerwehr_-_Mercedes_Benz_Atego_1628_-_2016-08-28_15-38-37.jpg"
+    },
+    {
+      "archivo": "File:Ilvesheim - Feuerwehr Ilvesheim - Mercedes-Benz Atego 1529 - 2016-05-08 16-43-44.jpg",
+      "autor": "Photographs by Radosław Drożdżewski (User:Zwiadowca21)",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ilvesheim_-_Feuerwehr_Ilvesheim_-_Mercedes-Benz_Atego_1529_-_2016-05-08_16-43-44.jpg"
+    }
+  ],
+  "atego-2019": [
+    {
+      "archivo": "File:Mercedes Benz Atego 815.jpg",
+      "autor": "NigerTZai",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Mercedes_Benz_Atego_815.jpg"
+    },
+    {
+      "archivo": "File:Waibstadt - Feuerwehr - Mercedes-Benz Atego 1225 - HD-WI 112 - 2019-06-16 10-33-48.jpg",
+      "autor": "Photographs by Radosław Drożdżewski (User:Zwiadowca21)",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Waibstadt_-_Feuerwehr_-_Mercedes-Benz_Atego_1225_-_HD-WI_112_-_2019-06-16_10-33-48.jpg"
+    },
+    {
+      "archivo": "File:Waibstadt - Feuerwehr - Mercedes-Benz Atego 1225 - HD-WI 112 - 2019-06-16 10-34-00.jpg",
+      "autor": "Photographs by Radosław Drożdżewski (User:Zwiadowca21)",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Waibstadt_-_Feuerwehr_-_Mercedes-Benz_Atego_1225_-_HD-WI_112_-_2019-06-16_10-34-00.jpg"
+    }
+  ],
+  "scania-2020": [
+    {
+      "archivo": "File:Scania R450 truck - 2020-01-31 IZE-096.jpg",
+      "autor": "Zachi Evenor",
+      "licencia": "CC BY 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Scania_R450_truck_-_2020-01-31_IZE-096.jpg"
+    },
+    {
+      "archivo": "File:Scania R450.jpg",
+      "autor": "Bene Riobó",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Scania_R450.jpg"
+    },
+    {
+      "archivo": "File:Truck Spotting on the A58 E312 Direction Kruiningen-Netherlands 17 04 2020. (49784484646).jpg",
+      "autor": "Rab Lawrence from Aberdeen/Scotland",
+      "licencia": "CC BY 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Truck_Spotting_on_the_A58_E312_Direction_Kruiningen-Netherlands_17_04_2020._(49784484646).jpg"
+    }
+  ],
+  "cargo-2014": [
+    {
+      "archivo": "File:Ford Cargo 916 2014 (14115191608).jpg",
+      "autor": "order_242 from Chile",
+      "licencia": "CC BY-SA 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ford_Cargo_916_2014_(14115191608).jpg"
+    },
+    {
+      "archivo": "File:Ford Cargo 1933 2014 (14115303917).jpg",
+      "autor": "order_242 from Chile",
+      "licencia": "CC BY-SA 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ford_Cargo_1933_2014_(14115303917).jpg"
+    },
+    {
+      "archivo": "File:Ford Cargo 1519 2014 (14260988524).jpg",
+      "autor": "order_242 from Chile",
+      "licencia": "CC BY-SA 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ford_Cargo_1519_2014_(14260988524).jpg"
+    }
+  ],
+  "o500-2015": [
+    {
+      "archivo": "File:TJ 0791 at Senayan.jpg",
+      "autor": "Tni fans111",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:TJ_0791_at_Senayan.jpg"
+    },
+    {
+      "archivo": "File:Global Motors Mercedes-Benz O500 Bus.jpg",
+      "autor": "Brian60908",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Global_Motors_Mercedes-Benz_O500_Bus.jpg"
+    },
+    {
+      "archivo": "File:和欣客運 KKA-7628.jpg",
+      "autor": "捷利",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:%E5%92%8C%E6%AC%A3%E5%AE%A2%E9%81%8B_KKA-7628.jpg"
+    }
+  ],
+  "daily-2018": [
+    {
+      "archivo": "File:Iveco Daily, Chatham Bus Station, 17 January 2018.jpg",
+      "autor": "Davey2010",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Iveco_Daily,_Chatham_Bus_Station,_17_January_2018.jpg"
+    },
+    {
+      "archivo": "File:IVECO Daily Blue Power.jpg",
+      "autor": "Schipperhds",
+      "licencia": "CC BY-SA 4.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:IVECO_Daily_Blue_Power.jpg"
+    },
+    {
+      "archivo": "File:Iveco Daily Natural Gas - Vienna Autoshow 2018.jpg",
+      "autor": "Dispvas2018",
+      "licencia": "CC0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Iveco_Daily_Natural_Gas_-_Vienna_Autoshow_2018.jpg"
+    }
+  ],
+  "agrale-2016": [
+    {
+      "archivo": "File:Agrale MA 8.5 Neobus Thunder 2002 (16796066083).jpg",
+      "autor": "order_242 from Chile",
+      "licencia": "CC BY-SA 2.0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Agrale_MA_8.5_Neobus_Thunder_2002_(16796066083).jpg"
+    },
+    {
+      "archivo": "File:Ruta 8214 Salvador Modasa Apolo Agrale MA 9.0 TCA.jpg",
+      "autor": "Fabco09",
+      "licencia": "CC0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ruta_8214_Salvador_Modasa_Apolo_Agrale_MA_9.0_TCA.jpg"
+    },
+    {
+      "archivo": "File:Ruta 8714 040325 Esmirla Zevallos S.A. Modasa Apolo Agrale MA 9.0 TCA.jpg",
+      "autor": "Fabco09",
+      "licencia": "CC0",
+      "pagina": "https://commons.wikimedia.org/wiki/File:Ruta_8714_040325_Esmirla_Zevallos_S.A._Modasa_Apolo_Agrale_MA_9.0_TCA.jpg"
+    }
+  ]
 }

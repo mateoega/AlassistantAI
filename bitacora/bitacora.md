@@ -290,3 +290,13 @@ npm run seed:demo -- --solo cb190-2019,outlander-2019,o500-2015
 ```
 
 **Regla que quedó del corte:** ninguna publicación visible se quedó sin fotos. El script degrada a borrador la que no consiguió ninguna, y las siete que habían quedado publicadas y vacías por la corrida fallida se corrigieron.
+
+## 2026-08-21 — El catálogo de prueba quedó completo: 71 avisos, todos con fotos
+
+Se terminó la carga que la entrada anterior había dejado a mitad de camino. La base tiene ahora **71 publicaciones y ninguna sin fotos**: 66 publicadas, 2 vendidas, 2 pausadas y 1 borrador. Los siete tipos de vehículo están representados — 25 autos, 14 camionetas, 11 motos, 7 utilitarios, 6 camiones, 4 buses y 4 cuatriciclos.
+
+**Qué faltaba y por qué:** la corrida del 17 se cortó a propósito con 48 avisos visibles, porque Wikimedia frena los pedidos seguidos y terminar iba a llevar media hora más de espera. Quedaban sin representación cuatriciclos y buses, y flojos motos y camiones — justamente los tipos donde el análisis de IA tiene que comportarse distinto. Se completó con corridas parciales (`--solo`), que es para lo que existe esa opción.
+
+**El único cambio en el repositorio es `fotos-usadas.json`**, que ahora registra autor y licencia de las fotos de las 71 publicaciones. El script no cambió: hizo lo que ya sabía hacer.
+
+**Con esto queda destrabado el Sprint 3.** Estimar un precio es compararlo contra avisos parecidos, y recién ahora hay varios avisos del mismo modelo en años y kilometrajes distintos en todos los tipos, más los dos casos fuera de mercado que se cargaron a propósito para que hagan ruido cuando la estimación exista.
