@@ -426,3 +426,13 @@ La aplicación pide sesión y la herramienta no ingresa credenciales. Para poder
 Se verificó: los cuatro casos (con comparables, fuera de rango, solo con referencia externa, y sin estimación), que no hay rojo ni naranja en ningún estado —incluido el de precio fuera de rango, que es donde más tienta romper la regla—, y que no hay desborde horizontal en 375px.
 
 **La división quedó**, porque es la que permite volver a mirar los cuatro casos sin fabricar publicaciones cada vez.
+
+## 2026-08-21 — La IA hablando de precios, verificada contra Gemini de verdad
+
+Siguiendo la lección del 2026-08-17 —que compile no es que ande—, se probó el asistente contra Gemini real, en los dos casos que importan.
+
+**Con estimación** (el Corolla 2015 sobrevaluado, que pide USD 27.000): citó el rango estimado de USD 15.000 a 17.600, dijo que el precio está 65% por encima, y cuando se le preguntó explícitamente si conviene comprarlo contestó que *"si te conviene o no comprarlo es una decisión personal"*. Mencionó el kilometraje bajo como factor, sin sacar conclusión.
+
+**Sin estimación** (el camión Scania, que no tiene con qué compararse): contestó que *"no tengo la estimación de precio de la plataforma para este Scania, así que no sabría decirte con certeza si los US$ 95.000 están bien"*, y ofreció lo que sí puede hacer — analizar las fotos, buscar camiones parecidos.
+
+**Es exactamente el comportamiento buscado, y por el motivo buscado.** No se calló porque una regla del prompt se lo prohibiera: se calló porque no había dato. Es la diferencia entre una restricción que alguien puede borrar sin darse cuenta y una que se sostiene sola.
