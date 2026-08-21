@@ -199,7 +199,6 @@ export interface ExternalReference {
 
 export interface PriceEstimateAvailable {
   disponible: true;
-  origen: 'comparables' | 'referencia';
   moneda: 'ARS' | 'USD';
   minimo: number;
   maximo: number;
@@ -218,6 +217,8 @@ export interface PriceEstimateUnavailable {
   disponible: false;
   motivo: string;
   comparables_encontrados: number;
+  /** Lo que dice la fuente externa, aunque no alcance para estimar. */
+  referencia_externa: ExternalReference | null;
 }
 
 export type PriceEstimate = PriceEstimateAvailable | PriceEstimateUnavailable;

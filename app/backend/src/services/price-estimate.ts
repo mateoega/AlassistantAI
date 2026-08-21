@@ -143,15 +143,6 @@ export interface ReferenciaExterna {
 
 export interface EstimacionDisponible {
   disponible: true;
-
-  /**
-   * De dónde salió el rango:
-   *   'comparables' → de los avisos publicados en la plataforma (ajustados por
-   *                   año y kilómetros). Es el mejor caso.
-   *   'referencia'  → no había avisos parecidos suficientes y se usó la fuente
-   *                   externa, que no ajusta por kilómetros.
-   */
-  origen: 'comparables' | 'referencia';
   moneda: 'ARS' | 'USD';
   minimo: number;
   maximo: number;
@@ -173,6 +164,12 @@ export interface EstimacionNoDisponible {
   disponible: false;
   motivo: string;
   comparables_encontrados: number;
+  /**
+   * Lo que dice la fuente externa, si lo dice. Se devuelve aunque no haya
+   * estimación: es información útil por sí sola, y no implica ningún juicio
+   * sobre el precio pedido.
+   */
+  referencia_externa: ReferenciaExterna | null;
 }
 
 interface FilaReferencia {
@@ -215,6 +212,7 @@ export async function estimarPrecio(
       disponible: false,
       motivo: 'Esta publicación no tiene un tipo de vehículo válido, así que no hay con qué compararla.',
       comparables_encontrados: 0,
+      referencia_externa: null,
     };
   }
 
@@ -253,6 +251,7 @@ export async function estimarPrecio(
       motivo:
         'No se pudo obtener la cotización del dólar para comparar precios entre monedas distintas. Probá de nuevo en un rato.',
       comparables_encontrados: mismaFamilia.length,
+      referencia_externa: null,
     };
   }
 
@@ -272,19 +271,29 @@ export async function estimarPrecio(
     );
   }
 
-  // Camino de respaldo: no hay con qué comparar acá adentro, pero una fuente de
-  // afuera sabe cuánto vale este modelo. Vale menos que lo anterior y se dice.
-  if (referencia) {
-    return desdeReferencia(referencia, aviso, precioPedidoUsd, comparables, cotizacion);
-  }
-
+  // NO hay camino de respaldo que juzgue el precio con la referencia externa.
+  //
+  // Se probó y se sacó, con los números a la vista: dejando que la fuente
+  // externa fijara el rango, 22 de 47 publicaciones quedaban marcadas fuera de
+  // mercado, contra 5 de 27 comparando solo entre avisos propios. Y aparecían
+  // casos imposibles — una Frontier 2020 marcada 106% por encima.
+  //
+  // El motivo es que la fuente publica valores sistemáticamente más bajos que
+  // los precios que se piden, y más todavía en camionetas. Sin una tercera
+  // fuente no se puede saber cuál de los dos tiene razón; lo que sí se sabe es
+  // que acusar a uno de cada dos vendedores de pedir de más, con ese dato, es
+  // exactamente el error que esta plataforma no se puede permitir.
+  //
+  // Así que la referencia se devuelve igual, para mostrarla, pero sin sacar
+  // ninguna conclusión sobre el precio pedido.
   return {
     disponible: false,
     motivo:
       comparables.length === 0
-        ? 'Todavía no hay otras publicaciones de este modelo con las que comparar, y ninguna fuente de precios que consultamos lo tiene cargado.'
+        ? 'Todavía no hay otras publicaciones de este modelo con las que comparar el precio.'
         : `Hay ${comparables.length} ${comparables.length === 1 ? 'publicación parecida' : 'publicaciones parecidas'} y hacen falta al menos ${MINIMO_COMPARABLES} para estimar un precio con algo de fundamento.`,
     comparables_encontrados: comparables.length,
+    referencia_externa: referencia,
   };
 }
 
@@ -335,55 +344,6 @@ async function buscarReferencia(
     moneda: aviso.currency,
     anio_fuente: masCercana.year,
     versiones: masCercana.versions,
-  };
-}
-
-/**
- * La estimación cuando lo único que hay es la fuente externa.
- *
- * El rango sale de la diferencia entre versiones del mismo modelo (un Corolla
- * 2019 no vale lo mismo en XEI que en SEG). Si la fuente no distingue
- * versiones, se abre un 10% a cada lado para no fingir exactitud.
- *
- * La confianza nunca es "alta" por este camino: falta el ajuste por
- * kilómetros, que es justamente lo que más mueve el precio de un usado.
- */
-function desdeReferencia(
-  referencia: ReferenciaExterna,
-  aviso: Aviso,
-  precioPedidoUsd: number,
-  comparables: Comparable[],
-  cotizacion: Cotizacion | null,
-): EstimacionDisponible {
-  const central = referencia.valor;
-  const minimo = referencia.minimo ?? Math.round(central * 0.9);
-  const maximo = referencia.maximo ?? Math.round(central * 1.1);
-
-  const enUsd = (monto: number): number =>
-    aviso.currency === 'USD' ? monto : monto / (cotizacion?.pesos_por_dolar ?? 1);
-
-  return {
-    disponible: true,
-    origen: 'referencia',
-    moneda: aviso.currency,
-    minimo,
-    maximo,
-    central,
-    // Con dos o más versiones detrás, la fuente al menos promedió algo; con una
-    // sola, es un dato suelto.
-    confianza: referencia.versiones >= 2 ? 'media' : 'baja',
-    precio_pedido: Number(aviso.price),
-    posicion:
-      precioPedidoUsd > enUsd(maximo)
-        ? 'por_encima'
-        : precioPedidoUsd < enUsd(minimo)
-          ? 'por_debajo'
-          : 'dentro',
-    desvio_porcentual: Math.round(((precioPedidoUsd - enUsd(central)) / enUsd(central)) * 100),
-    comparables,
-    referencia_externa: referencia,
-    cotizacion,
-    calculado_en: new Date().toISOString(),
   };
 }
 
@@ -500,7 +460,6 @@ function calcular(
 
   return {
     disponible: true,
-    origen: 'comparables',
     moneda,
     minimo: aMoneda(minimo),
     maximo: aMoneda(maximo),

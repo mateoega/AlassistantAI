@@ -354,3 +354,75 @@ La primera versión pedía **tres** comparables. Al verificarla contra la base r
 **Y porque para motos, camiones, buses y cuatriciclos no hay alternativa.** No existe fuente externa gratuita para esos tipos: o se comparan contra los pocos avisos propios, o no tienen estimación en todo el sprint. Con el cambio, las tres Honda CB 190R pasaron a tener estimación, y el precio pedido de cada una cae dentro del rango.
 
 **La lección de proceso:** el número que había puesto la herramienta era defendible y estaba mal para este caso. La diferencia la hizo medirlo contra datos reales, no discutirlo. Por eso quedó el script `npm run verificar:estimacion`: cada vez que se toque un umbral, se vuelve a correr.
+
+## 2026-08-21 — Sprint 3 terminado: la estimación de precio, y una capa que se descartó
+
+Quedó construido, cargado y verificado. El detalle completo está en [`../docs/sprint3.md`](../docs/sprint3.md); acá van las decisiones que no son obvias leyendo el código.
+
+### La tabla de referencias es el contrato, no el proveedor
+
+La fuente externa no se consulta en vivo: un script la baja a una tabla propia (`market_references`) y la aplicación lee de ahí. El motivo inmediato es que la fuente gratuita corta a los pocos pedidos por minuto y no se puede consultar cada vez que alguien mira un aviso.
+
+El motivo de fondo es mejor: **esa tabla es la pieza intercambiable que se prometió al decidir no pagar por datos.** La columna `source` dice de dónde salió cada fila. Contratar InfoAuto más adelante es escribir otro script que llene la misma tabla — la estimación no se entera.
+
+Efecto secundario que no se buscaba: si la fuente desaparece mañana, lo ya cargado sigue sirviendo.
+
+### La capa 3 se probó y se descartó, y el motivo es de calidad, no de esfuerzo
+
+La tabla de valuación de la DNRPA iba a cubrir camiones y buses, que es donde no hay nada gratuito. Se bajó y se intentó leer antes de escribir el cargador.
+
+**No se puede saber a qué año corresponde cada precio.** Cada fila trae una serie de valores por año, pero las filas no arrancan todas en la misma columna: "COROLLA 2.0 SEG CVT" empieza en 54.392.000 y el mismo modelo "MY21" —modelo 2021— empieza en 38.807.100. Al extraer el texto del PDF se pierde la posición de las columnas, así que asignar años sería adivinar, y adivinar mal siempre para el mismo lado.
+
+Sumado a lo que ya se sabía —son valuaciones fiscales, con entradas congeladas hace años—, cargarla habría puesto delante de un comprador un número con cara de dato oficial calculado sobre un año equivocado.
+
+**Es la misma decisión que se viene tomando desde el Sprint 2**, aplicada a un dato en vez de a una opinión: antes que mostrar algo que parece un dato sin serlo, no se muestra nada. El costo está asumido y escrito: camiones, buses y cuatriciclos dependen solo de los avisos propios.
+
+**Cómo se supo:** probándola. Escribir el cargador primero y descubrirlo después habría costado un día y habría dejado la tentación de usarlo igual.
+
+### El permiso de la IA para hablar de precios viene del dato, no del prompt
+
+Al levantar la restricción del Sprint 2 había una forma fácil y una correcta. La fácil era sacar la regla del prompt. La correcta fue **pasarle la estimación junto con los datos del vehículo, y las reglas de cómo hablar de precios en el mismo bloque**: si no hay estimación, no viaja nada y la prohibición del Sprint 2 sigue vigente para ese vehículo.
+
+La diferencia importa porque los prompts se editan y las reglas sueltas sobreviven a su motivo. Con esto, la única forma de que la IA opine de precios es que haya un precio calculado. Quedó anotado en `app/CLAUDE.md` como regla: **no agregar al prompt un permiso suelto para opinar de precios.**
+
+### Un efecto colateral que hubo que resolver: el análisis guardado envejece distinto
+
+El análisis de fotos se guarda y se reusa. Ahora que puede mencionar el precio, un análisis hecho cuando el aviso estaba "20% por encima" queda viejo si hoy está dentro del rango.
+
+Se resolvió metiendo la estimación en la huella del análisis, **pero en grueso**: la posición y la decena de desvío, no el valor exacto. Con el valor exacto, cada publicación nueva de un modelo habría invalidado todos los análisis de ese modelo, y cada análisis cuesta plata.
+
+### La clave de servicio pasa a tener dos usos, y la lista es cerrada
+
+El cargador de referencias necesita escribir en una tabla que —igual que los análisis de IA— **ningún usuario puede escribir desde la aplicación**: un precio de referencia es una afirmación de la plataforma, no un dato que carga alguien.
+
+`app/CLAUDE.md` decía "un solo uso permitido". Ahora dice dos, con la lista completa a la vista y la aclaración de que sumar un tercero es una decisión de arquitectura que va a la bitácora. Se prefirió eso antes que dejar la regla desactualizada, que es como las reglas dejan de cumplirse.
+
+### Qué encontró la carga
+
+De los 40 modelos publicados en la plataforma, la fuente externa conoce 20. Los 19 que no conoce son **motos, camiones, buses y cuatriciclos** — y el script no tiene ninguna lista de tipos de vehículo: simplemente busca, no encuentra y sigue. La regla del proyecto se sostuvo sola.
+
+## 2026-08-21 — La referencia externa informa, pero no juzga: lo dijeron los números
+
+Al terminar la capa 2 quedó una decisión tomada por medición y no por criterio previo, y es la más importante del sprint.
+
+**El diseño original decía:** si no hay avisos parecidos suficientes, estimar con la fuente externa. Parecía obvio — es más cobertura, y la fuente es gratis y anda.
+
+**Lo que mostró correrlo contra la base:** con la fuente externa fijando el rango, **22 de 47 publicaciones quedaban marcadas fuera de mercado**. Comparando solo entre avisos propios eran 5 de 27. Y aparecían casos imposibles: una Nissan Frontier 2020 marcada 106% por encima, una Amarok 2021 marcada 117%.
+
+**El motivo:** la fuente publica valores sistemáticamente más bajos que los precios que se piden, y bastante más bajos en camionetas. No se puede saber cuál de los dos tiene razón sin una tercera fuente — nuestros propios datos de prueba también son inventados.
+
+**La decisión:** la referencia externa **se muestra pero no juzga**. Se sigue devolviendo y se sigue mostrando en pantalla, incluso cuando no alcanza para estimar — es información útil por sí sola. Lo que no hace más es decidir si el precio pedido está bien o mal.
+
+**Por qué así y no bajando el umbral o corrigiendo la fuente:** porque el error que se estaba por cometer no era de precisión, era de tipo. Acusar a uno de cada dos vendedores de pedir de más, con un dato que no está ajustado por kilómetros ni por estado, es exactamente el daño que esta plataforma existe para evitar. Un rango equivocado se corrige; una acusación equivocada se la come el vendedor.
+
+**Lo que costó:** la cobertura vuelve de 47 a 27 publicaciones estimadas. Se paga con gusto.
+
+**La lección, que es la tercera vez que aparece en este proyecto:** la diferencia la hizo correrlo y mirar los números, no razonarlo. El diseño era defendible en el papel y estaba mal.
+
+### Cómo se verificó la pantalla sin poder iniciar sesión
+
+La aplicación pide sesión y la herramienta no ingresa credenciales. Para poder verificar igual, el componente se partió en dos: el que pide los datos y el que dibuja. Con eso se pudo renderizar la pantalla con estimaciones **reales** capturadas del backend, en una página temporal que se borró después.
+
+Se verificó: los cuatro casos (con comparables, fuera de rango, solo con referencia externa, y sin estimación), que no hay rojo ni naranja en ningún estado —incluido el de precio fuera de rango, que es donde más tienta romper la regla—, y que no hay desborde horizontal en 375px.
+
+**La división quedó**, porque es la que permite volver a mirar los cuatro casos sin fabricar publicaciones cada vez.

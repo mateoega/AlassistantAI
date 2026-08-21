@@ -30,15 +30,9 @@ export function describePriceEstimate(estimacion: Estimacion): string | null {
     `El vendedor pide ${formatear(estimacion.precio_pedido)} ${moneda}.`,
   ];
 
-  if (estimacion.origen === 'comparables') {
-    lineas.push(
-      `Sale de comparar con ${estimacion.comparables.length} publicaciones parecidas de la propia plataforma, corregidas por año y kilómetros.`,
-    );
-  } else {
-    lineas.push(
-      'Sale de una fuente de precios externa, porque no hay suficientes publicaciones parecidas acá. Ese valor NO está ajustado por kilómetros.',
-    );
-  }
+  lineas.push(
+    `Sale de comparar con ${estimacion.comparables.length} publicaciones parecidas de la propia plataforma, corregidas por año y kilómetros.`,
+  );
 
   if (estimacion.confianza === 'baja') {
     lineas.push(

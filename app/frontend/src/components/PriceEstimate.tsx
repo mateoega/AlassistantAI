@@ -55,6 +55,18 @@ export function PriceEstimatePanel({ listingId }: { listingId: string }) {
     return null;
   }
 
+  return <PriceEstimateView estimate={estimate} />;
+}
+
+/**
+ * La parte visual, separada de la que pide los datos.
+ *
+ * Están separadas para poder mirar cómo se ve cada caso sin tener que iniciar
+ * sesión ni fabricar publicaciones: se le pasa una estimación y dibuja. Los
+ * casos que hay que revisar cuando se toque esto son cuatro — con
+ * comparables, solo con referencia externa, fuera de rango, y sin estimación.
+ */
+export function PriceEstimateView({ estimate }: { estimate: Estimate }) {
   return (
     <Card className="space-y-4 p-5">
       <header className="space-y-1">
@@ -64,15 +76,27 @@ export function PriceEstimatePanel({ listingId }: { listingId: string }) {
         </p>
       </header>
 
-      {estimate.disponible ? <Disponible estimate={estimate} /> : <NoDisponible motivo={estimate.motivo} />}
+      {estimate.disponible ? <Disponible estimate={estimate} /> : <NoDisponible estimate={estimate} />}
     </Card>
   );
 }
 
-function NoDisponible({ motivo }: { motivo: string }) {
+/**
+ * Cuando no alcanza para estimar.
+ *
+ * Si hay una referencia externa, se muestra igual — pero SIN decir si el
+ * precio pedido está bien o mal. Se midió: dejando que esa fuente juzgara el
+ * precio, uno de cada dos avisos quedaba marcado fuera de mercado, con casos
+ * imposibles. Mostrar el dato y no sacar conclusiones es lo honesto. Ver la
+ * bitácora del 2026-08-21.
+ */
+function NoDisponible({ estimate }: { estimate: Extract<Estimate, { disponible: false }> }) {
   return (
-    <div className="space-y-2 border-t border-line pt-4">
-      <p className="text-sm text-body">{motivo}</p>
+    <div className="space-y-3 border-t border-line pt-4">
+      <p className="text-sm text-body">{estimate.motivo}</p>
+
+      {estimate.referencia_externa && <Referencia referencia={estimate.referencia_externa} />}
+
       <p className="text-xs text-muted">
         A medida que se publiquen más vehículos de este modelo, va a poder estimarse.
       </p>
@@ -134,17 +158,20 @@ function Referencia({
       <h3 className="text-sm font-semibold text-ink">Según una fuente externa</h3>
       <p className="text-sm text-body">
         {formatPrice(referencia.valor, referencia.moneda)}
-        {referencia.minimo !== null && referencia.maximo !== null && (
-          <span className="text-muted">
-            {' '}
-            (de {formatPrice(referencia.minimo, referencia.moneda)} a{' '}
-            {formatPrice(referencia.maximo, referencia.moneda)} según la versión)
-          </span>
-        )}
+        {referencia.minimo !== null &&
+          referencia.maximo !== null &&
+          referencia.maximo > referencia.minimo && (
+            <span className="text-muted">
+              {' '}
+              (de {formatPrice(referencia.minimo, referencia.moneda)} a{' '}
+              {formatPrice(referencia.maximo, referencia.moneda)} según la versión)
+            </span>
+          )}
       </p>
       <p className="text-xs text-muted">
         Valor del modelo {referencia.anio_fuente} publicado por {referencia.fuente}. No está
-        ajustado por kilómetros.
+        ajustado por kilómetros ni por el estado del vehículo, así que no sirve para juzgar el
+        precio pedido: es una referencia más.
       </p>
     </section>
   );
@@ -177,10 +204,6 @@ function Comparables({ comparables }: { comparables: EstimateComparable[] }) {
 /** Una línea que explica de dónde salió el número, sin tecnicismos. */
 function comoSeCalculo(estimate: Extract<Estimate, { disponible: true }>): string {
   const cantidad = estimate.comparables.length;
-
-  if (estimate.origen === 'referencia') {
-    return 'No hay suficientes avisos parecidos publicados acá, así que sale de una fuente de precios externa.';
-  }
 
   const base =
     cantidad === 2
