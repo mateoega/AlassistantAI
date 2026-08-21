@@ -16,16 +16,13 @@ Cada punto está escrito igual: **qué es**, **por qué no ahora** y **qué señ
 
 **Qué señal lo dispara.** Que la estimación de precio se use de verdad — gente entrando, mirando avisos y pidiendo la estimación — y que se vea que las fuentes gratuitas se quedan cortas. Ahí el costo pasa a ser una inversión con un número al lado en vez de una apuesta.
 
-## 2. Precios de referencia para motos, camiones y buses
+## 2. Precios de referencia para camiones, buses y cuatriciclos
 
-**Qué es.** Hoy la estimación se apoya en dos fuentes externas gratuitas, y ninguna cubre bien esos tipos:
+**Qué es.** La estimación del Sprint 3 se apoya en dos fuentes: las publicaciones de la propia plataforma y [Arg Autos](https://argautos.com/docs/api). Arg Autos cubre autos, camionetas y utilitarios, pero **no camiones, buses ni cuatriciclos**. En esos tipos, si no hay al menos dos avisos parecidos publicados, no hay estimación.
 
-- **[Arg Autos](https://argautos.com/docs/api)** cubre autos, camionetas y utilitarios con buena calidad, pero **no expone motos, camiones ni buses** en su API pública (los datos de motos existen en su base; los endpoints todavía no están publicados).
-- **[La tabla de valuación de la DNRPA](https://www.dnrpa.gov.ar/valuacion/valuaciones.php)** sí cubre todo lo que se patenta en el país, pero son **valuaciones fiscales para calcular aranceles de transferencia, no precios de mercado**, y la calidad es despareja: al revisar la tabla vigente del 01/08/2026 aparecieron entradas congeladas hace años (una moto de 110cc con valor 0km de $49.100) al lado de otras realistas.
+**Por qué no ahora.** La fuente gratuita que los cubriría —[la tabla de valuación de la DNRPA](https://www.dnrpa.gov.ar/valuacion/valuaciones.php)— se probó durante el Sprint 3 y **se descartó por calidad del dato**, no por esfuerzo: al extraer el PDF se pierde la posición de las columnas y no se puede saber a qué año corresponde cada precio, y encima son valuaciones fiscales con entradas congeladas hace años. El detalle está en [`sprint3.md`](sprint3.md). Cargarla habría puesto un número con cara de dato oficial sobre un año probablemente equivocado.
 
-**Por qué no ahora.** Para esos tipos, la comparación contra las publicaciones de la propia plataforma es la referencia menos mala que existe gratis, y mejora sola a medida que entran avisos. Pagar una fuente para cubrir motos y camiones antes de saber si alguien publica motos y camiones es invertir a ciegas.
-
-**Qué señal lo dispara.** Que haya volumen real de publicaciones en esos tipos, o que la estimación quede visiblemente peor ahí que en autos. Se resuelve con el punto 1, o pidiéndole a Arg Autos acceso a sus datos de motos.
+**Qué señal lo dispara.** Que haya volumen real de publicaciones en esos tipos —en cuyo caso la capa 1 se arregla sola—, o que se contrate la fuente del punto 1, que sí los cubre. La tabla `market_references` ya está preparada para recibir otra fuente sin tocar la estimación.
 
 ## 3. Asegurar la fuente gratuita que hoy se usa
 

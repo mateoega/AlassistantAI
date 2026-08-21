@@ -12,6 +12,9 @@ scripts/
   verificar-estimacion.ts
                      corre la estimación de precio del Sprint 3 contra la base
                      real y muestra qué le da a cada aviso
+  cargar-referencias.ts
+                     baja de una fuente externa los precios de referencia de
+                     los modelos que hay publicados
   .cache-fotos/      fotos ya descargadas, para no volver a pedírselas a Wikimedia
                      (no se sube al repositorio)
 ```
@@ -75,3 +78,23 @@ Wikimedia es un servicio gratuito: el script le habla despacio y, si pide espera
 El proyecto tiene una regla (ver [`../../CLAUDE.md`](../../CLAUDE.md)): la clave de servicio de Supabase se usa **solo** para guardar los análisis de IA. Este script es la excepción consciente y única.
 
 El motivo: crea publicaciones a nombre de cuatro vendedores distintos, y las reglas de acceso de la base — con razón — no dejan publicar a nombre de otro. La alternativa sería iniciar sesión como cada uno de los cuatro. Como es una herramienta de desarrollo que no se despliega, no la puede invocar ningún usuario y no queda expuesta en ninguna pantalla, se aceptó el atajo.
+
+## Cargar los precios de referencia
+
+```bash
+npm run cargar:referencias
+```
+
+Busca en una fuente externa cuánto vale cada modelo que hay publicado en la plataforma y lo guarda en la tabla `market_references`. Es lo que le da a la estimación del Sprint 3 una referencia que no depende de nuestros propios avisos.
+
+| Comando | Qué hace |
+|---|---|
+| `npm run cargar:referencias` | Carga los modelos que todavía no tienen referencias. |
+| `npm run cargar:referencias -- --solo corolla` | Solo los modelos cuyo nombre contenga ese texto. |
+| `npm run cargar:referencias -- --rehacer` | Vuelve a bajar todo, incluso lo ya cargado. |
+
+**Tarda, y es a propósito.** La fuente es gratuita y corta a los pocos pedidos por minuto, así que el script le habla despacio y espera lo que le pida. **Se puede cortar y volver a correr**: arranca por los modelos que todavía no tienen referencias.
+
+**Solo carga lo que hace falta**: las combinaciones de marca y modelo que existen hoy en las publicaciones. No tiene sentido bajarse el mercado entero para estimar setenta avisos.
+
+Si la fuente no conoce una marca —no tiene camiones ni motos—, la búsqueda vuelve vacía y ese modelo se saltea solo. No hay ninguna lista de tipos de vehículo en el código.

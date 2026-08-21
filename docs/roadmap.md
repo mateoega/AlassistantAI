@@ -55,21 +55,16 @@ Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba 
 
 **Lo que a propósito NO hace:** no dice si conviene comprar ni si el precio está bien. Todavía no tiene referencias de mercado contra qué compararlo, y un veredicto sin datos sería una opinión con cara de dato. Se retoma en el Sprint 3.
 
-## Sprint 3 — Estimación de precio
+## Sprint 3 — Estimación de precio ✅
 
-Se suma la estimación de precio de mercado, combinando los datos declarados, el análisis de fotos del Sprint 2 y referencias de mercado.
+En la pantalla de cada vehículo aparece un **precio de referencia**: qué se está pidiendo por vehículos parecidos, dónde queda este entre ellos y con qué se comparó, aviso por aviso. Detalle en [`sprint3.md`](sprint3.md).
 
-**Es lo que destraba lo que el Sprint 2 dejó explícitamente afuera:** hoy tanto el análisis como el chat tienen prohibido opinar sobre si un precio es razonable, porque no tienen con qué compararlo. Con las referencias de mercado cargadas, esa restricción se levanta.
+- ✅ **Estimación a partir de las publicaciones propias**, corregidas por año y por kilómetros. Funciona para los siete tipos de vehículo.
+- ✅ **Referencia de una fuente externa gratuita**, cargada a una tabla propia por un script. Es la pieza intercambiable: contratar una guía profesional más adelante es cambiar el script que la llena, no la estimación que la lee.
+- ✅ **Se levantó la restricción del Sprint 2**: el análisis de fotos y el chat ya pueden hablar de precios — pero solo cuando existe una estimación para ese vehículo. El permiso viene del dato, no de una instrucción del prompt.
+- ⛔ **La tabla de valuación de la DNRPA se evaluó y se descartó**, por calidad del dato y no por esfuerzo: no se puede saber a qué año corresponde cada precio. El motivo está en [`sprint3.md`](sprint3.md).
 
-**De dónde salen las referencias** — decidido el 2026-08-21 tras evaluar las fuentes del mercado argentino, con el criterio de no invertir plata antes de saber si la aplicación se usa:
-
-1. **Las publicaciones de la propia plataforma.** Es la única referencia que cubre los siete tipos de vehículo desde el primer día, son precios que alguien está pidiendo hoy en la Argentina, y mejora sola a medida que entran avisos.
-2. **[Arg Autos](https://argautos.com/docs/api)**, API pública y gratuita, como ancla externa para autos, camionetas y utilitarios.
-3. **[La tabla de valuación de la DNRPA](https://www.dnrpa.gov.ar/valuacion/valuaciones.php)** solo donde no hay nada mejor — camiones y buses — y presentada como lo que es: un valor oficial de referencia, no un precio de mercado.
-
-Igual que el análisis, la estimación depende del tipo: las referencias de motos y de camiones son distintas y vienen de fuentes distintas.
-
-**La fuente de precios se construye como una pieza intercambiable**, para que contratar una guía profesional más adelante no obligue a reescribir el sprint. Esa contratación y el resto de lo postergado están en [`para_mas_adelante.md`](para_mas_adelante.md).
+**Lo que sigue sin hacer:** camiones, buses y cuatriciclos dependen solo de los avisos propios, porque no hay fuente externa gratuita y legible que los cubra. Y el **descargo de responsabilidad legal** sobre las estimaciones sigue sin definirse — ver [`para_mas_adelante.md`](para_mas_adelante.md).
 
 ## Sprint 4 — Búsqueda, filtros y vista de comprador
 

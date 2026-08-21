@@ -23,13 +23,15 @@ Detalle completo en el `README.md` de la raíz del proyecto.
 
 ## Estado actual
 
-Sprint 2 — el asistente de IA para el comprador, sobre la base multivehículo del Sprint 1. Ver [`../docs/roadmap.md`](../docs/roadmap.md).
+Sprint 3 — la estimación de precio de mercado, sobre el asistente de IA del Sprint 2. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint3.md`](../docs/sprint3.md).
 
-Dos piezas: el **botón "Analizar"** en cada publicación (mira las fotos junto con los datos declarados) y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
+Tres piezas: el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
 
 **La IA trabaja para el comprador, no para el vendedor.** Es la decisión que define este sprint y la que explica el tono de los prompts. Si aparece una función de IA pensada para ayudar a quien publica, contradice el diseño — ver [`../bitacora/bitacora.md`](../bitacora/bitacora.md), 2026-08-12.
 
-**El análisis no dictamina si conviene comprar ni opina de precios.** Es a propósito: no tiene referencias de mercado hasta el Sprint 3, y está pedido explícitamente en el prompt. No sacar esa restricción sin haber cargado esas referencias.
+**El análisis no dictamina si conviene comprar.** Eso sigue prohibido y no depende de tener datos: es una decisión de quien compra.
+
+**Sobre precios sí puede hablar, pero solo cuando se le pasa la estimación.** Desde el Sprint 3, la estimación de la plataforma viaja junto con los datos del vehículo. Si no hay estimación, no se le pasa nada y vuelve a regir la restricción del Sprint 2. **No agregar al prompt un permiso suelto para opinar de precios**: el permiso tiene que venir del dato. Ver [`backend/src/ia/price-context.ts`](backend/src/ia/price-context.ts).
 
 ## Convenciones
 
@@ -46,4 +48,8 @@ Dos piezas: el **botón "Analizar"** en cada publicación (mira las fotos junto 
 - Cualquier decisión de arquitectura o tecnología que se tome, registrarla en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 - **Nunca escribir código que dependa de una lista de tipos de vehículo hardcodeada.** Los tipos y sus campos se leen siempre del catálogo en la base (`vehicle_types` y `vehicle_type_fields`). Si aparece un `if (tipo === 'auto')` o un `switch` por tipo en el código, el diseño se rompió: agregar un tipo nuevo tiene que funcionar cargando filas en el catálogo, sin redesplegar.
 - **Los prompts de IA también se arman desde el catálogo.** La regla anterior no se detiene en el formulario: el prompt del análisis recibe el tipo y sus campos leídos de la base, y deja que el modelo razone según eso. No se escriben instrucciones del estilo "si es una moto, mirá la cadena". Ver [`backend/src/ia/vehicle-context.ts`](backend/src/ia/vehicle-context.ts).
-- **La clave de servicio de Supabase tiene un solo uso permitido:** guardar los análisis de IA, en una tabla que ningún usuario puede escribir. Todo lo demás va con el cliente del usuario, para que las reglas de acceso de la base se apliquen siempre. Ver [`backend/src/lib/supabase.ts`](backend/src/lib/supabase.ts).
+- **La clave de servicio de Supabase tiene usos contados, y esta lista es la lista completa:**
+  1. Guardar los **análisis de IA**, en una tabla que ningún usuario puede escribir.
+  2. Los **scripts de desarrollo que se corren a mano** y no se despliegan: el cargador de datos de prueba (`scripts/seed-demo.ts`) y el de referencias de precio (`scripts/cargar-referencias.ts`). Ninguno de los dos lo puede invocar un usuario.
+
+  Todo lo demás va con el cliente del usuario, para que las reglas de acceso de la base se apliquen siempre. Agregar un tercer uso es una decisión de arquitectura: va a la bitácora. Ver [`backend/src/lib/supabase.ts`](backend/src/lib/supabase.ts).

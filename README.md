@@ -2,7 +2,7 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 2 — el asistente de IA para el comprador.** Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 3 — la estimación de precio de mercado.** Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -52,7 +52,7 @@ La IA de AIassistant trabaja **para quien compra, no para quien vende**. El que 
 
 1. **Análisis de una publicación.** Cualquiera que pueda ver un aviso puede pedirlo. Las fotos se envían a Gemini junto con los datos declarados, y vuelve: qué se ve, qué no cierra (fotos que parecen de vehículos distintos, daños no declarados, desgaste que no cuadra con el kilometraje), qué no se puede evaluar con esas fotos y qué preguntarle al vendedor. **El análisis se adapta al tipo de vehículo** — no se mira lo mismo en una moto que en un camión —, y lo hace leyendo el catálogo, no con una lista escrita en el código.
 2. **Chat del asistente.** Disponible en toda la aplicación. Sabe qué aviso hay en pantalla, puede citar su análisis y puede buscar entre las publicaciones que están a la venta.
-3. **Estimación de precio** *(Sprint 3, todavía no)*. Hasta que existan las referencias de mercado, el asistente tiene explícitamente prohibido opinar sobre si un precio es razonable: sería una opinión con cara de dato.
+3. **Estimación de precio** *(Sprint 3)*. Un rango de lo que se está pidiendo por vehículos parecidos, con la lista de avisos con los que se comparó a la vista. No dice si conviene comprar: dice contra qué se comparó y qué dio. Desde este sprint, el asistente puede hablar de precios — pero solo cuando existe una estimación para ese vehículo.
 
 ---
 
@@ -67,6 +67,7 @@ AIassistant/
 │   ├── sprint0.md             qué se decidió acá y qué quedó pendiente
 │   ├── sprint1.md             decisiones del Sprint 1
 │   ├── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
+│   ├── sprint3.md             decisiones del Sprint 3 (la estimación de precio)
 │   └── para_mas_adelante.md   lo postergado hasta ver si la app se usa, y qué lo destraba
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL

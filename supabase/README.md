@@ -22,6 +22,8 @@ migrations/
   20260821000001_depreciacion_por_tipo.sql
                                 cuánto pierde valor por año y por km cada tipo
                                 de vehículo (lo usa la estimación de precio)
+  20260821000002_referencias_de_mercado.sql
+                                precios de referencia de fuentes externas
 seed.sql                        los 7 tipos de vehículo iniciales y las 24 provincias
 seed_cities.sql                 las localidades principales de cada provincia
 seed_brands.sql                 las marcas habituales del mercado argentino
