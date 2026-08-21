@@ -14,11 +14,14 @@ interface VehicleTypeRow {
   name: string;
   name_plural: string;
   sort_order: number;
+  annual_depreciation: string | number;
+  wear_per_10k_km: string | number;
   fields: VehicleTypeField[] | null;
 }
 
 const VEHICLE_TYPE_SELECT = `
   id, slug, name, name_plural, sort_order,
+  annual_depreciation, wear_per_10k_km,
   fields:vehicle_type_fields (
     id, key, label, data_type, options, unit,
     is_required, min_value, max_value, help_text, sort_order
@@ -125,6 +128,9 @@ export async function listBrands(): Promise<Brand[]> {
 function toVehicleType(row: VehicleTypeRow): VehicleType {
   return {
     ...row,
+    // Postgres devuelve los `numeric` como texto para no perder precisión.
+    annual_depreciation: Number(row.annual_depreciation),
+    wear_per_10k_km: Number(row.wear_per_10k_km),
     // El orden de los campos embebidos no está garantizado por la consulta,
     // y el formulario los muestra en el orden que define el catálogo.
     fields: [...(row.fields ?? [])].sort((a, b) => a.sort_order - b.sort_order),

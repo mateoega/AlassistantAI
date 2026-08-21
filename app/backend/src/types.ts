@@ -32,6 +32,19 @@ export interface VehicleType {
   name: string;
   name_plural: string;
   sort_order: number;
+
+  /**
+   * Cuánto valor pierde por año un vehículo de este tipo (0.08 = 8% anual) y
+   * cuánto pierde por cada 10.000 km. Los usa la estimación de precio del
+   * Sprint 3 para comparar avisos de años y kilometrajes distintos.
+   *
+   * Viven en el catálogo y no en el código a propósito: un tipo de vehículo
+   * nuevo tiene que funcionar cargando una fila, sin redesplegar. Ver la
+   * migración 20260821000001.
+   */
+  annual_depreciation: number;
+  wear_per_10k_km: number;
+
   fields: VehicleTypeField[];
 }
 

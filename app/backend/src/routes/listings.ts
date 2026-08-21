@@ -13,6 +13,7 @@ import {
 } from '../services/listings.js';
 import { LISTING_STATUSES, type ListingStatus } from '../validation/listing-input.js';
 import { getAnalysis, startAnalysis } from '../services/analysis.js';
+import { estimarPrecio } from '../services/price-estimate.js';
 
 export const listingsRouter = Router();
 
@@ -92,6 +93,21 @@ listingsRouter.get('/:id/analysis', async (req, res) => {
 listingsRouter.post('/:id/analysis', async (req, res) => {
   const { supabase } = auth(req);
   res.status(202).json({ analysis: await startAnalysis(supabase, requireId(req.params.id)) });
+});
+
+/**
+ * GET /api/listings/:id/estimacion
+ *
+ * Cuánto piden por vehículos parecidos, y dónde queda este entre ellos.
+ *
+ * Es una herramienta del comprador, igual que el análisis: la puede pedir
+ * cualquiera que vea el aviso, no solo el dueño. A diferencia del análisis, se
+ * calcula en el momento y no se guarda — no cuesta plata, y cambia cada vez
+ * que se publica un aviso parecido.
+ */
+listingsRouter.get('/:id/estimacion', async (req, res) => {
+  const { supabase } = auth(req);
+  res.json({ estimacion: await estimarPrecio(supabase, requireId(req.params.id)) });
 });
 
 listingsRouter.delete('/:id', async (req, res) => {
