@@ -57,11 +57,19 @@ Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba 
 
 ## Sprint 3 — Estimación de precio
 
-Se suma la estimación de precio de mercado, combinando los datos declarados, el análisis de fotos del Sprint 2 y referencias de mercado (proveedor de datos todavía a definir — ver [`sprint0.md`](sprint0.md)).
-
-Igual que el análisis, la estimación depende del tipo: las referencias de mercado de motos y de camiones son distintas, y probablemente vengan de fuentes distintas.
+Se suma la estimación de precio de mercado, combinando los datos declarados, el análisis de fotos del Sprint 2 y referencias de mercado.
 
 **Es lo que destraba lo que el Sprint 2 dejó explícitamente afuera:** hoy tanto el análisis como el chat tienen prohibido opinar sobre si un precio es razonable, porque no tienen con qué compararlo. Con las referencias de mercado cargadas, esa restricción se levanta.
+
+**De dónde salen las referencias** — decidido el 2026-08-21 tras evaluar las fuentes del mercado argentino, con el criterio de no invertir plata antes de saber si la aplicación se usa:
+
+1. **Las publicaciones de la propia plataforma.** Es la única referencia que cubre los siete tipos de vehículo desde el primer día, son precios que alguien está pidiendo hoy en la Argentina, y mejora sola a medida que entran avisos.
+2. **[Arg Autos](https://argautos.com/docs/api)**, API pública y gratuita, como ancla externa para autos, camionetas y utilitarios.
+3. **[La tabla de valuación de la DNRPA](https://www.dnrpa.gov.ar/valuacion/valuaciones.php)** solo donde no hay nada mejor — camiones y buses — y presentada como lo que es: un valor oficial de referencia, no un precio de mercado.
+
+Igual que el análisis, la estimación depende del tipo: las referencias de motos y de camiones son distintas y vienen de fuentes distintas.
+
+**La fuente de precios se construye como una pieza intercambiable**, para que contratar una guía profesional más adelante no obligue a reescribir el sprint. Esa contratación y el resto de lo postergado están en [`para_mas_adelante.md`](para_mas_adelante.md).
 
 ## Sprint 4 — Búsqueda, filtros y vista de comprador
 
@@ -80,11 +88,6 @@ Es un sprint propio y no un agregado: necesita tabla de conversaciones y mensaje
 
 ---
 
-## Más adelante (sin definir todavía)
+## Más adelante — una vez validada la app
 
-- **Administración de tipos de vehículo desde la propia app.** Hoy un tipo nuevo se carga desde el panel de Supabase; más adelante debería poder hacerlo alguien del equipo desde una pantalla de administración.
-- Catálogo de marcas y modelos por tipo de vehículo (hoy la marca se escribe libre).
-- Sistema de mensajería entre comprador y vendedor
-- Verificación de documentación legal del vehículo
-- Historial de mantenimiento
-- Versión mobile
+Todo lo que se decidió **no hacer hasta ver si la aplicación se usa** vive en [`para_mas_adelante.md`](para_mas_adelante.md), con el motivo de cada postergación y la señal concreta que la destraba: la fuente de precios paga, la cobertura de precios de motos y camiones, el modelo de negocio, el alcance legal y las mejoras de producto que hoy no bloquean nada.

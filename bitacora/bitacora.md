@@ -300,3 +300,22 @@ Se terminó la carga que la entrada anterior había dejado a mitad de camino. La
 **El único cambio en el repositorio es `fotos-usadas.json`**, que ahora registra autor y licencia de las fotos de las 71 publicaciones. El script no cambió: hizo lo que ya sabía hacer.
 
 **Con esto queda destrabado el Sprint 3.** Estimar un precio es compararlo contra avisos parecidos, y recién ahora hay varios avisos del mismo modelo en años y kilometrajes distintos en todos los tipos, más los dos casos fuera de mercado que se cargaron a propósito para que hagan ruido cuando la estimación exista.
+
+## 2026-08-21 — De dónde salen los precios de referencia, y por qué hoy no se paga por ellos
+
+Antes de escribir el Sprint 3 se evaluaron las cuatro fuentes de precios que existen para el mercado argentino. Se probaron de verdad, no se leyeron folletos: es la lección del 17 de agosto, cuando un sprint entero pasó los controles con un modelo de IA que ya no existía.
+
+**Lo que se encontró:**
+
+- **InfoAuto** es la guía oficial del país hace 25 años y cubre los siete tipos con una sola fuente. No publica API ni precios: hay que negociar un contrato de empresa.
+- **La tabla de valuación de la DNRPA** es gratis, oficial y cubre todo lo que se patenta en el país — camiones y buses incluidos. Se bajó la tabla vigente (01/08/2026, 217 páginas) y se leyó: trae marca, modelo, tipo y precio año por año desde 0km hasta 2002, en texto que se puede procesar. **Pero son valuaciones fiscales para calcular aranceles de transferencia, no precios de mercado**, y la calidad es despareja: hay entradas congeladas hace años (una moto de 110cc con valor 0km de $49.100) al lado de otras realistas.
+- **Arg Autos** es una API pública y gratuita. Se probó de punta a punta: devolvió 58 versiones del Corolla, y el SEG CVT 2015 dio USD 11.976, que es un precio realista. Cubre autos, camionetas y utilitarios; no expone motos, camiones ni buses.
+- **MercadoLibre quedó descartada.** Su API de búsqueda ya no es anónima — devuelve 403 sin credenciales — y usar sus precios para alimentar un clasificado que les compite es un problema de términos de uso antes que técnico.
+
+**La decisión: tres capas, ninguna paga.** La propia base como referencia principal (es la única que cubre los siete tipos desde el día uno y son precios que alguien pide hoy), Arg Autos como ancla externa donde llega, y la DNRPA solo para camiones y buses, presentada como valor oficial de referencia y no como precio de mercado.
+
+**Por qué no se contrata InfoAuto ahora:** no está definido cómo monetiza la plataforma, así que un costo fijo mensual no tiene contra qué justificarse. Primero se pone online y se mira si entra gente y la usa. La estimación se construye para funcionar sin fuente paga, y **con la fuente de precios como pieza intercambiable**, para que contratarla después no obligue a reescribir el sprint.
+
+**Consecuencia de proceso.** De esta decisión salió [`../docs/para_mas_adelante.md`](../docs/para_mas_adelante.md): un solo lugar para todo lo que se posterga hasta tener señales de uso real, con el motivo de cada postergación y **la señal concreta que la destraba**. Se escribió así a pedido de Mateo y para que la lista no se convierta en un depósito de deseos: un punto sin señal que lo dispare no se puede decidir nunca. Se le mudaron los pendientes que estaban sueltos al final del roadmap y los dos que arrastraba el Sprint 0 — modelo de negocio y alcance legal.
+
+**Un punto de esa lista conviene no dejarlo para el final:** el descargo de responsabilidad sobre las estimaciones. Es texto, no desarrollo, y hay que resolverlo antes de que la use gente que no conocemos, no después.

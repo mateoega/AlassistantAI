@@ -66,7 +66,8 @@ AIassistant/
 │   ├── modelo_datos.md        cómo se guardan los vehículos y sus tipos
 │   ├── sprint0.md             qué se decidió acá y qué quedó pendiente
 │   ├── sprint1.md             decisiones del Sprint 1
-│   └── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
+│   ├── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
+│   └── para_mas_adelante.md   lo postergado hasta ver si la app se usa, y qué lo destraba
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL
 │   └── seed.sql               tipos de vehículo y provincias iniciales
