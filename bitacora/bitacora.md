@@ -333,3 +333,24 @@ Dos cosas que se aprendieron haciéndolo y quedaron anotadas ahí, porque no son
 **Los coeficientes de depreciación terminaron en la base y no en el código.** Estaban escritos como una lista de tipos de vehículo dentro del servicio de estimación, que es exactamente lo que `app/CLAUDE.md` prohíbe: agregar un tipo nuevo no puede obligar a tocar código. Ahora son dos columnas de `vehicle_types` (migración 20260821000001). El efecto secundario es mejor que la corrección: cuando haya datos reales, esos números se van a poder ajustar sin desplegar nada.
 
 **Quedó un script de verificación** (`npm run verificar:estimacion`) que corre la estimación real contra toda la base y muestra qué le da a cada aviso. No es un test automático: es la forma de mirar de un vistazo si el motor está diciendo algo razonable, y de comprobar que los dos casos plantados siguen haciendo ruido después de cada cambio.
+
+## 2026-08-21 — Cuántos avisos parecidos hacen falta para estimar: se midió antes de decidir
+
+La primera versión pedía **tres** comparables. Al verificarla contra la base real, solo 10 de 68 publicaciones recibían estimación. Antes de tocar el número se midieron las dos palancas posibles, en vez de elegir por intuición:
+
+| | Avisos con estimación | ¿Detecta los casos plantados? |
+|---|---|---|
+| Mínimo 3, ventana ±4 años | 10 de 68 | Sí (+64%, −20%) |
+| Mínimo 3, ventana ±6 | 12 de 68 | Sí |
+| Mínimo 2, ventana ±4 | 21 de 68 | Sí |
+| **Mínimo 2, ventana ±6** | **27 de 68** | Sí (+65%, −21%) |
+
+**Lo que mostró la medición:** el cuello de botella no eran los años, era el mínimo. Ampliar la ventana sola apenas sumaba dos avisos y después saturaba.
+
+**La decisión, que tomó Mateo:** mínimo de dos comparables, con la confianza informada como **"baja"** y los dos avisos usados a la vista. Con uno solo no se estima nunca — un único aviso no es un mercado.
+
+**Por qué se aflojó una regla que el Sprint 2 había puesto:** porque el motivo original sigue respetado. La regla era no dar un número que parezca un dato sin serlo. Un número acompañado de "esto sale de comparar con estos dos avisos" no finge ser más de lo que es; el que decide es el comprador, con la evidencia enfrente.
+
+**Y porque para motos, camiones, buses y cuatriciclos no hay alternativa.** No existe fuente externa gratuita para esos tipos: o se comparan contra los pocos avisos propios, o no tienen estimación en todo el sprint. Con el cambio, las tres Honda CB 190R pasaron a tener estimación, y el precio pedido de cada una cae dentro del rango.
+
+**La lección de proceso:** el número que había puesto la herramienta era defendible y estaba mal para este caso. La diferencia la hizo medirlo contra datos reales, no discutirlo. Por eso quedó el script `npm run verificar:estimacion`: cada vez que se toque un umbral, se vuelve a correr.

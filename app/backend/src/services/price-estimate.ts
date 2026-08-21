@@ -32,15 +32,41 @@ import type { VehicleType } from '../types.js';
 /**
  * Cuántos avisos parecidos hacen falta para animarse a estimar.
  *
- * Con menos de tres no hay estimación: hay una anécdota. Preferimos decir "no
- * tengo con qué compararlo" antes que dar un número que parezca un dato y no
- * lo sea — es la misma regla que ya se aplicó en el Sprint 2 cuando se le
- * prohibió al análisis opinar sobre el precio.
+ * Dos, y no tres. Se midió contra la base real antes de decidirlo: con tres,
+ * solo 10 de 68 publicaciones recibían estimación; con dos, 27. Los dos casos
+ * plantados a propósito en los datos de prueba se siguen detectando igual de
+ * fuerte (+65% y -21%), así que bajar el mínimo compró cobertura sin perder la
+ * capacidad de señalar lo que no cierra.
+ *
+ * LO QUE COSTÓ, Y CÓMO SE PAGA
+ *
+ *   Una estimación armada con dos avisos está más cerca de una anécdota que de
+ *   un dato. Por eso, cuando se calcula con dos, la confianza se informa como
+ *   "baja" y la pantalla muestra CUÁLES son los dos avisos. La promesa de la
+ *   plataforma no es saberlo todo: es no esconder con qué está hablando.
+ *
+ *   Con uno solo no se estima nunca. Un único aviso no es un mercado, es un
+ *   vecino con una idea.
+ *
+ * POR QUÉ IMPORTA MÁS DE LO QUE PARECE
+ *
+ *   Para motos, camiones, buses y cuatriciclos no hay fuente externa gratuita
+ *   (ver `docs/para_mas_adelante.md`). En esos tipos, o se compara contra los
+ *   pocos avisos propios, o no hay estimación en absoluto.
  */
-const MINIMO_COMPARABLES = 3;
+const MINIMO_COMPARABLES = 2;
 
-/** Cuántos años de diferencia se toleran para considerar dos vehículos comparables. */
-const VENTANA_ANIOS = 4;
+/**
+ * Cuántos años de diferencia se toleran para considerar dos vehículos
+ * comparables.
+ *
+ * Seis, que es donde deja de sumar: medido contra la base real, ampliarla más
+ * no encuentra ni un comparable nuevo. Puede parecer mucho para un auto, pero
+ * la diferencia de años ya se corrige con la depreciación del tipo — de eso se
+ * trata el ajuste. Lo que la ventana evita es comparar cosas que ni siquiera
+ * son la misma generación del modelo.
+ */
+const VENTANA_ANIOS = 6;
 
 /**
  * Cuántos comparables aporta como máximo un mismo vendedor.
@@ -101,7 +127,7 @@ export interface EstimacionDisponible {
   minimo: number;
   maximo: number;
   central: number;
-  confianza: 'alta' | 'media';
+  confianza: 'alta' | 'media' | 'baja';
   precio_pedido: number;
   /** Dónde cae el precio pedido respecto del rango estimado. */
   posicion: 'dentro' | 'por_encima' | 'por_debajo';
@@ -301,8 +327,17 @@ function calcular(
   const maximo = Math.max(p75, central * (1 + ANCHO_MINIMO_RANGO));
 
   const dispersion = central > 0 ? (p75 - p25) / central : 1;
-  const confianza: 'alta' | 'media' =
-    comparables.length >= 5 && dispersion <= 0.25 ? 'alta' : 'media';
+
+  // "baja" no es un adorno: es la etiqueta que acompaña a una estimación
+  // armada con el mínimo de avisos posible, y la pantalla tiene que mostrarla
+  // junto a los comparables que se usaron. Ver el comentario de
+  // MINIMO_COMPARABLES.
+  const confianza: 'alta' | 'media' | 'baja' =
+    comparables.length <= 2
+      ? 'baja'
+      : comparables.length >= 5 && dispersion <= 0.25
+        ? 'alta'
+        : 'media';
 
   const aMoneda = (valorUsd: number): number =>
     redondear(desdeDolares(valorUsd, moneda, cotizacion), moneda);
