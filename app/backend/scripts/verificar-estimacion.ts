@@ -73,9 +73,14 @@ for (const aviso of avisos) {
     ruidosos.push(`${marca} ${titulo} — pide ${pedido}, estimado ${rango} (${signo}${resultado.desvio_porcentual}%)`);
   }
 
+  const origen =
+    resultado.origen === 'referencia'
+      ? `ref. ${resultado.referencia_externa?.fuente ?? 'externa'}`
+      : `${resultado.comparables.length} comp.${resultado.referencia_externa ? ' + ref.' : ''}`;
+
   console.log(
     `${marca} ${titulo.padEnd(42)} ${pedido.padStart(16)}  ${km.padStart(12)}  → ${rango} ` +
-      `(${signo}${resultado.desvio_porcentual}%, ${resultado.comparables.length} comp., confianza ${resultado.confianza})`,
+      `(${signo}${resultado.desvio_porcentual}%, ${origen}, confianza ${resultado.confianza})`,
   );
 }
 

@@ -2,6 +2,7 @@ import { Type, type Content, type FunctionDeclaration, type Schema } from '@goog
 import { gemini, geminiModel } from './client.js';
 import type { ListingSearchFilters, ListingSearchResult } from '../services/listing-search.js';
 import type { Province, VehicleType } from '../types.js';
+import { REGLAS_DE_PRECIO } from './price-context.js';
 
 /**
  * El asistente conversacional que acompaña al comprador.
@@ -41,6 +42,12 @@ export interface ChatContext {
   currentListing: string | null;
   /** El análisis de ese aviso, si alguien ya lo pidió. */
   currentAnalysis: string | null;
+  /**
+   * La estimación de precio del aviso en pantalla, ya contada en palabras.
+   * Cuando es `null`, el asistente no habla de precios: la restricción del
+   * Sprint 2 sigue valiendo para ese vehículo. Ver `price-context.ts`.
+   */
+  currentEstimate: string | null;
 }
 
 /** Cómo se ejecuta la búsqueda. La provee el backend, que tiene la sesión. */
@@ -119,9 +126,9 @@ QUÉ PODÉS Y QUÉ NO
 - Podés buscar publicaciones reales de la plataforma con la herramienta ${SEARCH_TOOL_NAME}.
   Usá los identificadores de las listas de abajo, nunca inventes uno.
 - Cuando muestres resultados, listalos con marca, modelo, año, precio y ubicación.
-- NO estimás precios de mercado ni decís si un precio es caro o barato: la plataforma todavía no
-  tiene referencias de mercado, y eso llega más adelante. Si te lo preguntan, decilo con
-  naturalidad y ofrecé lo que sí podés hacer.
+- Sobre precios: solo podés hablar del precio de un vehículo si más abajo te pasaron la
+  estimación de la plataforma para ESE vehículo. Si no te la pasaron, no la tenés: decilo con
+  naturalidad y ofrecé lo que sí podés hacer. Nunca estimes un precio de memoria.
 - No sos un mecánico ni un perito. Lo que decís es orientativo y no reemplaza ver el vehículo.
 `.trim(),
     `Tipos de vehículo de la plataforma: ${types}.`,
@@ -135,6 +142,18 @@ QUÉ PODÉS Y QUÉ NO
         'o "el que estoy viendo", se refiere a esta:',
         '',
         context.currentListing,
+      ].join('\n'),
+    );
+  }
+
+  if (context.currentEstimate) {
+    parts.push(
+      [
+        'Precio de referencia de esa publicación, calculado por la plataforma:',
+        '',
+        context.currentEstimate,
+        '',
+        REGLAS_DE_PRECIO,
       ].join('\n'),
     );
   }

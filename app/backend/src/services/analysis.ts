@@ -4,7 +4,9 @@ import { HttpError } from '../lib/http-error.js';
 import { supabaseService } from '../lib/supabase.js';
 import { getVehicleTypeById } from './catalog.js';
 import { getListing } from './listings.js';
+import { estimarPrecio, type Estimacion } from './price-estimate.js';
 import { analyzeVehicle, AnalysisError } from '../ia/analysis.js';
+import { describePriceEstimate } from '../ia/price-context.js';
 import { isAiConfigured } from '../ia/client.js';
 import type { AnalysisRecord, AnalysisStatus, VehicleAnalysis } from '../ia/types.js';
 
@@ -53,7 +55,12 @@ export async function getAnalysis(
     return null;
   }
 
-  return toRecord(row, fingerprintOf(listing));
+  // La huella actual se calcula con la estimación de AHORA. Sin esto, un
+  // análisis guardado se vería siempre como viejo: la huella que se guardó
+  // incluye la posición del precio frente al mercado.
+  const estimacion = await estimarPrecio(supabase, listingId);
+
+  return toRecord(row, fingerprintOf(listing, estimacion));
 }
 
 /**
@@ -83,7 +90,12 @@ export async function startAnalysis(
     throw HttpError.badRequest('Esta publicación no tiene fotos, así que no hay nada para analizar.');
   }
 
-  const fingerprint = fingerprintOf(listing);
+  // La estimación se calcula ACÁ y no adentro del trabajo de fondo, porque acá
+  // todavía tenemos el cliente del usuario y sus permisos. Es lo que le permite
+  // al análisis hablar del precio.
+  const estimacion = await estimarPrecio(supabase, listingId);
+
+  const fingerprint = fingerprintOf(listing, estimacion);
   const existing = await readRow(supabase, listingId);
 
   // Ya hay uno corriendo y todavía no se venció: se acompaña ese, no se
@@ -113,7 +125,7 @@ export async function startAnalysis(
 
   // Sigue en segundo plano. El `void` y el `catch` son deliberados: si esto
   // fallara sin capturar, tumbaría el proceso entero de Node.
-  void runInBackground(listingId, listing, fingerprint);
+  void runInBackground(listingId, listing, fingerprint, estimacion);
 
   return {
     status: 'running',
@@ -131,6 +143,7 @@ async function runInBackground(
   listingId: string,
   listing: PresentedListing,
   fingerprint: string,
+  estimacion: Estimacion,
 ): Promise<void> {
   try {
     if (!listing.vehicle_type) {
@@ -155,6 +168,7 @@ async function runInBackground(
         description: listing.description,
         specs: listing.specs,
         photoCount: listing.photos.length,
+        priceEstimate: describePriceEstimate(estimacion),
       },
       vehicleType,
       listing.photos.map((photo) => photo.storage_path),
@@ -256,8 +270,19 @@ function hasTimedOut(updatedAt: string): boolean {
  * cambiado una imagen. El orden importa porque la foto principal es la que más
  * pesa en lo que el modelo mira primero.
  */
-function fingerprintOf(listing: PresentedListing): string {
+function fingerprintOf(listing: PresentedListing, estimacion?: Estimacion): string {
   const material = JSON.stringify({
+    // La estimación entra en GRUESO, no con su valor exacto.
+    //
+    // El análisis ahora puede hablar del precio, así que un análisis hecho
+    // cuando el aviso estaba "20% por encima" quedó viejo si hoy está dentro
+    // del rango. Pero si entrara el número exacto, cada publicación nueva de
+    // ese modelo invalidaría todos los análisis del modelo — y cada análisis
+    // cuesta plata. Guardando solo la posición y la decena de desvío, la huella
+    // cambia cuando cambia lo que el análisis dijo, no cuando se mueve un peso.
+    precio_vs_mercado: estimacion?.disponible
+      ? `${estimacion.posicion}:${Math.round(estimacion.desvio_porcentual / 10) * 10}`
+      : 'sin_estimacion',
     photos: listing.photos.map((photo) => photo.storage_path),
     vehicle_type_id: listing.vehicle_type?.id ?? null,
     brand: listing.brand,

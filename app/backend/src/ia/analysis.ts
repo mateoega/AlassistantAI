@@ -18,9 +18,13 @@ import type { VehicleType } from '../types.js';
  *
  * QUÉ NO HACE
  *
- *   No dictamina si el precio está bien ni si conviene comprar. No tiene con
- *   qué compararlo hasta el Sprint 3. Está pedido explícitamente en el prompt
- *   porque un modelo, si no se le aclara, opina de precios igual.
+ *   No dictamina si conviene comprar. Eso es una decisión de quien compra y
+ *   depende de cosas que el modelo no sabe.
+ *
+ *   Sobre el PRECIO sí puede hablar, desde el Sprint 3, pero solo cuando se le
+ *   pasa la estimación de la plataforma junto con los datos del vehículo. Si no
+ *   se la pasan, vuelve a regir la regla del Sprint 2 y no opina: el permiso no
+ *   viene de una instrucción, viene de tener el dato. Ver `price-context.ts`.
  */
 
 const SYSTEM_INSTRUCTION = `
@@ -41,10 +45,11 @@ sea un tipo de vehículo que no viste antes.
 REGLAS QUE NO SE NEGOCIAN
 - Hablá solo de lo que se ve en las fotos. Si algo no se ve, no lo supongas: decilo en
   "falta_ver".
-- NO opines sobre si el precio es alto, bajo o justo, ni digas si es o no una buena
-  oportunidad. Todavía no tenés referencias de precios de mercado, y una opinión sin
-  datos hace más daño que no decir nada. Si el usuario espera eso, el resto del análisis
-  igual le sirve.
+- Sobre el precio: solo hablás de él si en los datos del vehículo te pasaron la estimación
+  de referencia de la plataforma. Si no está, NO opines si el precio es alto, bajo o justo:
+  no tenés con qué compararlo, y una opinión sin datos hace más daño que no decir nada.
+- NUNCA digas si conviene comprar o si es una buena oportunidad, tengas o no la estimación.
+  Eso lo decide quien compra.
 - No inventes fallas para parecer útil. Si el vehículo se ve bien, decilo. Una lista de
   inconsistencias vacía es un resultado perfectamente válido.
 - Distinguí lo que ves de lo que sospechás. Para eso está el nivel de confianza.

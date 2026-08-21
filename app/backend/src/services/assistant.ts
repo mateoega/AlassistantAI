@@ -4,7 +4,9 @@ import { listProvinces, listVehicleTypes, getVehicleTypeById } from './catalog.j
 import { getListing } from './listings.js';
 import { searchListings } from './listing-search.js';
 import { getAnalysis } from './analysis.js';
+import { estimarPrecio } from './price-estimate.js';
 import { describeVehicle } from '../ia/vehicle-context.js';
+import { describePriceEstimate } from '../ia/price-context.js';
 import { replyToChat, type ChatMessage, type ChatReply } from '../ia/chat.js';
 import { isAiConfigured } from '../ia/client.js';
 import type { VehicleAnalysis } from '../ia/types.js';
@@ -58,6 +60,7 @@ export async function chat(
       provinces,
       currentListing: listingContext.listing,
       currentAnalysis: listingContext.analysis,
+      currentEstimate: listingContext.estimate,
     },
     // La búsqueda corre con el cliente del usuario: las reglas de acceso de la
     // base siguen valiendo aunque el pedido venga de un modelo.
@@ -73,16 +76,16 @@ export async function chat(
 async function describeCurrentListing(
   supabase: SupabaseClient,
   listingId: string | null,
-): Promise<{ listing: string | null; analysis: string | null }> {
+): Promise<{ listing: string | null; analysis: string | null; estimate: string | null }> {
   if (!listingId) {
-    return { listing: null, analysis: null };
+    return { listing: null, analysis: null, estimate: null };
   }
 
   try {
     const listing = await getListing(supabase, listingId);
 
     if (!listing.vehicle_type) {
-      return { listing: null, analysis: null };
+      return { listing: null, analysis: null, estimate: null };
     }
 
     const vehicleType = await getVehicleTypeById(listing.vehicle_type.id);
@@ -104,7 +107,10 @@ async function describeCurrentListing(
       vehicleType,
     );
 
-    const analysis = await getAnalysis(supabase, listingId);
+    const [analysis, estimacion] = await Promise.all([
+      getAnalysis(supabase, listingId),
+      estimarPrecio(supabase, listingId),
+    ]);
 
     return {
       listing: described,
@@ -112,10 +118,13 @@ async function describeCurrentListing(
         analysis?.status === 'done' && analysis.result && !analysis.is_stale
           ? describeAnalysis(analysis.result)
           : null,
+      // Si no hay estimación, esto es `null` y el asistente no habla de
+      // precios para este vehículo. Ver `ia/price-context.ts`.
+      estimate: describePriceEstimate(estimacion),
     };
   } catch (error) {
     console.warn(`[ia] no se pudo armar el contexto de la publicación ${listingId}:`, error);
-    return { listing: null, analysis: null };
+    return { listing: null, analysis: null, estimate: null };
   }
 }
 

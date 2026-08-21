@@ -121,8 +121,37 @@ export interface Comparable {
   vendido: boolean;
 }
 
+/**
+ * Lo que dice una fuente de afuera sobre este modelo y año.
+ *
+ * NO está ajustada por kilómetros: la fuente publica el valor del modelo, no
+ * el de este vehículo en particular, y no dice contra qué kilometraje lo
+ * calculó. Inventar ese ajuste sería agregarle una precisión que el dato no
+ * tiene. Por eso se muestra al lado del rango propio y no mezclada con él.
+ */
+export interface ReferenciaExterna {
+  fuente: string;
+  valor: number;
+  minimo: number | null;
+  maximo: number | null;
+  moneda: 'ARS' | 'USD';
+  /** El año de la fuente, que puede no ser exactamente el del aviso. */
+  anio_fuente: number;
+  /** Cuántas versiones del modelo promedió la fuente para ese año. */
+  versiones: number;
+}
+
 export interface EstimacionDisponible {
   disponible: true;
+
+  /**
+   * De dónde salió el rango:
+   *   'comparables' → de los avisos publicados en la plataforma (ajustados por
+   *                   año y kilómetros). Es el mejor caso.
+   *   'referencia'  → no había avisos parecidos suficientes y se usó la fuente
+   *                   externa, que no ajusta por kilómetros.
+   */
+  origen: 'comparables' | 'referencia';
   moneda: 'ARS' | 'USD';
   minimo: number;
   maximo: number;
@@ -134,6 +163,8 @@ export interface EstimacionDisponible {
   /** Diferencia porcentual contra el valor central. Positivo = más caro. */
   desvio_porcentual: number;
   comparables: Comparable[];
+  /** Lo que dice la fuente externa, cuando la hay. Se muestra siempre que exista. */
+  referencia_externa: ReferenciaExterna | null;
   cotizacion: Cotizacion | null;
   calculado_en: string;
 }
@@ -142,6 +173,15 @@ export interface EstimacionNoDisponible {
   disponible: false;
   motivo: string;
   comparables_encontrados: number;
+}
+
+interface FilaReferencia {
+  source: string;
+  year: number;
+  price_usd: string | number;
+  price_min_usd: string | number | null;
+  price_max_usd: string | number | null;
+  versions: number;
 }
 
 export type Estimacion = EstimacionDisponible | EstimacionNoDisponible;
@@ -217,19 +257,134 @@ export async function estimarPrecio(
   }
 
   const comparables = armarComparables(mismaFamilia, aviso, tipo, cotizacion);
+  const referencia = await buscarReferencia(supabase, aviso, tipo, cotizacion);
 
-  if (comparables.length < MINIMO_COMPARABLES) {
-    return {
-      disponible: false,
-      motivo:
-        comparables.length === 0
-          ? 'Todavía no hay otras publicaciones de este modelo con las que comparar.'
-          : `Hay ${comparables.length} ${comparables.length === 1 ? 'publicación parecida' : 'publicaciones parecidas'} y hacen falta al menos ${MINIMO_COMPARABLES} para estimar un precio con algo de fundamento.`,
-      comparables_encontrados: comparables.length,
-    };
+  // Camino principal: los avisos de la propia plataforma. Son los únicos que se
+  // pueden ajustar por kilómetros, así que cuando alcanzan, mandan ellos.
+  if (comparables.length >= MINIMO_COMPARABLES) {
+    return calcular(
+      comparables,
+      aviso.currency,
+      precioPedidoUsd,
+      Number(aviso.price),
+      cotizacion,
+      referencia,
+    );
   }
 
-  return calcular(comparables, aviso.currency, precioPedidoUsd, Number(aviso.price), cotizacion);
+  // Camino de respaldo: no hay con qué comparar acá adentro, pero una fuente de
+  // afuera sabe cuánto vale este modelo. Vale menos que lo anterior y se dice.
+  if (referencia) {
+    return desdeReferencia(referencia, aviso, precioPedidoUsd, comparables, cotizacion);
+  }
+
+  return {
+    disponible: false,
+    motivo:
+      comparables.length === 0
+        ? 'Todavía no hay otras publicaciones de este modelo con las que comparar, y ninguna fuente de precios que consultamos lo tiene cargado.'
+        : `Hay ${comparables.length} ${comparables.length === 1 ? 'publicación parecida' : 'publicaciones parecidas'} y hacen falta al menos ${MINIMO_COMPARABLES} para estimar un precio con algo de fundamento.`,
+    comparables_encontrados: comparables.length,
+  };
+}
+
+/**
+ * Lo que dice la fuente externa sobre este modelo y año.
+ *
+ * Se queda con el año más cercano al del aviso y lo corrige con la
+ * depreciación del tipo, igual que se hace con los comparables. Si la fuente
+ * no conoce el modelo —no tiene camiones ni motos, por ejemplo— devuelve
+ * `null` y la estimación sigue sin ella. Que la aplicación funcione cuando la
+ * fuente no está es la razón por la que las referencias viven en nuestra
+ * propia base y no se consultan en vivo.
+ */
+async function buscarReferencia(
+  supabase: SupabaseClient,
+  aviso: Aviso,
+  tipo: VehicleType,
+  cotizacion: Cotizacion | null,
+): Promise<ReferenciaExterna | null> {
+  const { data, error } = await supabase
+    .from('market_references')
+    .select('source, year, price_usd, price_min_usd, price_max_usd, versions')
+    .eq('brand', normalizar(aviso.brand))
+    .eq('model_family', familiaDeModelo(aviso.model))
+    .gte('year', aviso.year - VENTANA_ANIOS)
+    .lte('year', aviso.year + VENTANA_ANIOS);
+
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+
+  const filas = data as unknown as FilaReferencia[];
+  const masCercana = filas.reduce((mejor, fila) =>
+    Math.abs(fila.year - aviso.year) < Math.abs(mejor.year - aviso.year) ? fila : mejor,
+  );
+
+  const factorAnios = (1 - tipo.annual_depreciation) ** (masCercana.year - aviso.year);
+  const aMoneda = (valorUsd: number): number =>
+    redondear(desdeDolares(valorUsd, aviso.currency, cotizacion), aviso.currency);
+  const opcional = (valor: string | number | null): number | null =>
+    valor === null ? null : aMoneda(Number(valor) * factorAnios);
+
+  return {
+    fuente: masCercana.source,
+    valor: aMoneda(Number(masCercana.price_usd) * factorAnios),
+    minimo: opcional(masCercana.price_min_usd),
+    maximo: opcional(masCercana.price_max_usd),
+    moneda: aviso.currency,
+    anio_fuente: masCercana.year,
+    versiones: masCercana.versions,
+  };
+}
+
+/**
+ * La estimación cuando lo único que hay es la fuente externa.
+ *
+ * El rango sale de la diferencia entre versiones del mismo modelo (un Corolla
+ * 2019 no vale lo mismo en XEI que en SEG). Si la fuente no distingue
+ * versiones, se abre un 10% a cada lado para no fingir exactitud.
+ *
+ * La confianza nunca es "alta" por este camino: falta el ajuste por
+ * kilómetros, que es justamente lo que más mueve el precio de un usado.
+ */
+function desdeReferencia(
+  referencia: ReferenciaExterna,
+  aviso: Aviso,
+  precioPedidoUsd: number,
+  comparables: Comparable[],
+  cotizacion: Cotizacion | null,
+): EstimacionDisponible {
+  const central = referencia.valor;
+  const minimo = referencia.minimo ?? Math.round(central * 0.9);
+  const maximo = referencia.maximo ?? Math.round(central * 1.1);
+
+  const enUsd = (monto: number): number =>
+    aviso.currency === 'USD' ? monto : monto / (cotizacion?.pesos_por_dolar ?? 1);
+
+  return {
+    disponible: true,
+    origen: 'referencia',
+    moneda: aviso.currency,
+    minimo,
+    maximo,
+    central,
+    // Con dos o más versiones detrás, la fuente al menos promedió algo; con una
+    // sola, es un dato suelto.
+    confianza: referencia.versiones >= 2 ? 'media' : 'baja',
+    precio_pedido: Number(aviso.price),
+    posicion:
+      precioPedidoUsd > enUsd(maximo)
+        ? 'por_encima'
+        : precioPedidoUsd < enUsd(minimo)
+          ? 'por_debajo'
+          : 'dentro',
+    desvio_porcentual: Math.round(((precioPedidoUsd - enUsd(central)) / enUsd(central)) * 100),
+    comparables,
+    referencia_externa: referencia,
+    cotizacion,
+    calculado_en: new Date().toISOString(),
+  };
 }
 
 type Aviso = Awaited<ReturnType<typeof getListing>>;
@@ -310,6 +465,7 @@ function calcular(
   precioPedidoUsd: number,
   precioPedido: number,
   cotizacion: Cotizacion | null,
+  referencia: ReferenciaExterna | null,
 ): EstimacionDisponible {
   const ajustados = comparables.map((c) => c.precio_ajustado).sort((a, b) => a - b);
 
@@ -344,6 +500,7 @@ function calcular(
 
   return {
     disponible: true,
+    origen: 'comparables',
     moneda,
     minimo: aMoneda(minimo),
     maximo: aMoneda(maximo),
@@ -356,9 +513,27 @@ function calcular(
     // Se devuelven ordenados por año descendente, que es como se leen: del más
     // nuevo al más viejo.
     comparables: [...comparables].sort((a, b) => b.anio - a.anio),
+    referencia_externa: referencia,
     cotizacion,
     calculado_en: new Date().toISOString(),
   };
+}
+
+/**
+ * Texto comparable: minúscula, sin acentos y sin signos.
+ *
+ * Es lo que permite que "Mercedes-Benz" de una publicación y "MERCEDES BENZ"
+ * de una fuente externa se reconozcan como la misma marca.
+ */
+export function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s.]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean)
+    .join(' ');
 }
 
 /**
@@ -374,13 +549,7 @@ function calcular(
  * El día que exista un catálogo de modelos, esta función desaparece.
  */
 export function familiaDeModelo(model: string): string {
-  const palabras = model
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9\s.]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean);
+  const palabras = normalizar(model).split(' ').filter(Boolean);
 
   if (palabras.length === 0) {
     return '';

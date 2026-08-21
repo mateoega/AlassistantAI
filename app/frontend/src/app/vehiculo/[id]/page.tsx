@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { AnalysisPanel } from '@/components/AnalysisPanel';
+import { PriceEstimatePanel } from '@/components/PriceEstimate';
 import { Badge, Button, Card, Notice, Spinner, StatusBadge } from '@/components/ui';
 import {
   formatDate,
@@ -278,6 +279,11 @@ export default function VehiculoPage() {
               </dl>
             </Card>
           )}
+
+          {/* El precio de referencia va ANTES del análisis de fotos: es lo
+              primero que quiere saber quien mira un aviso, y no depende de que
+              el comprador apriete nada. */}
+          <PriceEstimatePanel listingId={listing.id} />
 
           {/* El asistente de IA. Sin fotos no tiene nada que mirar, así que no
               se ofrece — pasa solo en borradores a medio hacer. */}

@@ -32,6 +32,13 @@ export interface VehicleForPrompt {
   description: string | null;
   specs: Record<string, SpecValue>;
   photoCount: number;
+
+  /**
+   * La estimación de precio de la plataforma, ya contada en palabras, o `null`
+   * si no hay. Es lo que habilita a la IA a hablar del precio: sin esto, la
+   * restricción del Sprint 2 sigue vigente. Ver `price-context.ts`.
+   */
+  priceEstimate?: string | null;
 }
 
 export function describeVehicle(vehicle: VehicleForPrompt, vehicleType: VehicleType): string {
@@ -48,6 +55,10 @@ export function describeVehicle(vehicle: VehicleForPrompt, vehicleType: VehicleT
     `Ubicación: ${vehicle.city}${vehicle.province ? `, ${vehicle.province.name}` : ''}`,
     `Cantidad de fotos publicadas: ${vehicle.photoCount}`,
   ];
+
+  if (vehicle.priceEstimate) {
+    lines.push('', vehicle.priceEstimate);
+  }
 
   if (filled.length > 0) {
     lines.push(

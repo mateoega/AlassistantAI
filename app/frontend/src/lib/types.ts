@@ -167,3 +167,57 @@ export interface Listing {
   /** La ficha específica ya traducida a "etiqueta: valor", lista para mostrar. */
   specs_display: SpecDisplay[];
 }
+
+/**
+ * La estimación de precio del Sprint 3.
+ *
+ * Su forma la define `app/backend/src/services/price-estimate.ts`. Es una
+ * unión: o hay estimación, o hay un motivo por el que no la hay. No existe el
+ * estado intermedio de "estimación vacía" a propósito — un rango sin datos
+ * detrás es exactamente lo que la plataforma no quiere mostrar.
+ */
+export interface EstimateComparable {
+  id: string;
+  titulo: string;
+  anio: number;
+  kilometros: number;
+  precio: number;
+  moneda: 'ARS' | 'USD';
+  precio_ajustado: number;
+  vendido: boolean;
+}
+
+export interface ExternalReference {
+  fuente: string;
+  valor: number;
+  minimo: number | null;
+  maximo: number | null;
+  moneda: 'ARS' | 'USD';
+  anio_fuente: number;
+  versiones: number;
+}
+
+export interface PriceEstimateAvailable {
+  disponible: true;
+  origen: 'comparables' | 'referencia';
+  moneda: 'ARS' | 'USD';
+  minimo: number;
+  maximo: number;
+  central: number;
+  confianza: Confidence;
+  precio_pedido: number;
+  posicion: 'dentro' | 'por_encima' | 'por_debajo';
+  desvio_porcentual: number;
+  comparables: EstimateComparable[];
+  referencia_externa: ExternalReference | null;
+  cotizacion: { pesos_por_dolar: number; fuente: string; obtenida_en: string } | null;
+  calculado_en: string;
+}
+
+export interface PriceEstimateUnavailable {
+  disponible: false;
+  motivo: string;
+  comparables_encontrados: number;
+}
+
+export type PriceEstimate = PriceEstimateAvailable | PriceEstimateUnavailable;
