@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button, Field, NumberInput, inputClass } from '@/components/ui';
 import { digitsOnly } from '@/lib/format';
+import { SpecFilters } from './SpecFilters';
 import type { Province, VehicleType } from '@/lib/types';
 
 /**
@@ -32,6 +33,14 @@ export interface SearchValues {
   anio_min: string;
   anio_max: string;
   km_max: string;
+  /**
+   * Los filtros de la ficha específica del tipo elegido, tal como viajan en la
+   * dirección: `{ f_engine_displacement_cc_min: '250', f_moto_style: 'enduro' }`.
+   *
+   * Van en una bolsa aparte y no como campos fijos porque no se sabe cuáles
+   * son hasta que el catálogo dice qué campos tiene el tipo elegido.
+   */
+  spec: Record<string, string>;
 }
 
 export const EMPTY_SEARCH: SearchValues = {
@@ -45,11 +54,18 @@ export const EMPTY_SEARCH: SearchValues = {
   anio_min: '',
   anio_max: '',
   km_max: '',
+  spec: {},
 };
 
 /** Cuántos filtros finos hay puestos, sin contar el texto de la barra. */
 export function countFineFilters(values: SearchValues): number {
-  return Object.entries(values).filter(([key, value]) => key !== 'q' && value !== '').length;
+  const fijos = Object.entries(values).filter(
+    ([key, value]) => key !== 'q' && key !== 'spec' && value !== '',
+  ).length;
+
+  const ficha = Object.values(values.spec).filter((value) => value !== '').length;
+
+  return fijos + ficha;
 }
 
 export function SearchBar({
@@ -90,6 +106,21 @@ export function SearchBar({
     setDraft((current) => ({ ...current, [key]: value }));
   }
 
+  /**
+   * Cambiar de tipo de vehículo borra los filtros de la ficha. Son de otro
+   * tipo: "cinco puertas" no significa nada si se pasó de autos a motos, y
+   * arrastrarlo daría una búsqueda vacía sin motivo visible.
+   */
+  function setTipo(slug: string) {
+    setDraft((current) => ({ ...current, tipo: slug, spec: {} }));
+  }
+
+  function setSpec(param: string, value: string) {
+    setDraft((current) => ({ ...current, spec: { ...current.spec, [param]: value } }));
+  }
+
+  const tipoElegido = vehicleTypes.find((type) => type.slug === draft.tipo);
+
   const fineCount = countFineFilters(draft);
 
   return (
@@ -125,7 +156,7 @@ export function SearchBar({
           <Field label="Tipo de vehículo">
             <select
               value={draft.tipo}
-              onChange={(event) => set('tipo', event.target.value)}
+              onChange={(event) => setTipo(event.target.value)}
               className={inputClass}
             >
               <option value="">Todos</option>
@@ -220,6 +251,12 @@ export function SearchBar({
               suffix="km"
             />
           </Field>
+
+          {/* Los filtros propios del tipo, dibujados desde el catálogo. Sin
+              tipo elegido no aparecen: no se sabría de qué campos hablar. */}
+          {tipoElegido && (
+            <SpecFilters type={tipoElegido} values={draft.spec} onChange={setSpec} />
+          )}
 
           <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3">
             <Button type="submit">Aplicar filtros</Button>

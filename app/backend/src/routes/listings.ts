@@ -14,7 +14,8 @@ import {
 import { LISTING_STATUSES, type ListingStatus } from '../validation/listing-input.js';
 import { getAnalysis, startAnalysis } from '../services/analysis.js';
 import { estimarPrecio } from '../services/price-estimate.js';
-import type { ListingFilters } from '../services/listing-filters.js';
+import { buildSpecFilters, type ListingFilters } from '../services/listing-filters.js';
+import { listVehicleTypes } from '../services/catalog.js';
 
 export const listingsRouter = Router();
 
@@ -35,8 +36,31 @@ listingsRouter.get('/', async (req, res) => {
   const scope: ListingScope = req.query.scope === 'mine' ? 'mine' : 'public';
   const page = Math.max(0, Number(req.query.page) || 0);
 
-  res.json(await listListings(supabase, scope, userId, page, parseFilters(req.query)));
+  const filters = parseFilters(req.query);
+  filters.specs = await parseSpecFilters(filters.vehicle_type_slug, req.query);
+
+  res.json(await listListings(supabase, scope, userId, page, filters));
 });
+
+/**
+ * Los filtros sobre la ficha específica (cilindrada, cantidad de puertas, aire
+ * acondicionado) solo existen cuando se eligió un tipo de vehículo.
+ *
+ * No es una limitación técnica: sin tipo no se sabe qué campos hay ni qué
+ * significan. "Puertas" no quiere decir lo mismo en un auto que en un camión,
+ * y en una moto no quiere decir nada.
+ *
+ * Las claves salen del catálogo, nunca de la dirección. Ver `buildSpecFilters`.
+ */
+async function parseSpecFilters(typeSlug: string | undefined, query: Record<string, unknown>) {
+  if (!typeSlug) {
+    return [];
+  }
+
+  const type = (await listVehicleTypes()).find((candidate) => candidate.slug === typeSlug);
+
+  return type ? buildSpecFilters(type.fields, query) : [];
+}
 
 listingsRouter.get('/:id', async (req, res) => {
   const { supabase } = auth(req);

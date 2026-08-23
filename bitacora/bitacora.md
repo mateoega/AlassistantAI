@@ -534,3 +534,50 @@ Se aplicó con el procedimiento del skill, en el navegador integrado. Después, 
 Y con la aplicación andando: guardar desde el muro escribió la fila real, sacar desde la ficha la borró, tres guardados aparecieron en `/guardados` ordenados del último al primero, y sacar uno desde ahí adentro sacó la tarjeta en el acto. Sin errores de consola en una pestaña limpia.
 
 **Un detalle de método que conviene recordar:** las primeras lecturas de la consola mostraban errores que ya no existían —eran del rato en que el código estaba a medio escribir y el servidor recargaba solo—. Se confirmó abriendo una pestaña nueva, que arranca con la consola vacía. Mirar una consola vieja lleva a arreglar lo que ya está arreglado.
+
+## 2026-08-23 — Filtrar por la ficha: el catálogo dibuja, y los números se comparan como números
+
+Última pieza del Sprint 4. Elegido un tipo de vehículo, la barra suma sus campos propios: cilindrada y estilo en motos, asientos y aire acondicionado en buses, capacidad de carga en camiones.
+
+### Lo primero fue mirar el catálogo, no diseñar
+
+Antes de dibujar nada se listaron los campos que existen en los siete tipos. **No hay ni uno de texto libre**: todo es número, opción o sí/no. Eso borró de un saque la forma más incómoda de resolver —un buscador de texto adentro de la ficha— que se iba a construir para nadie.
+
+Quedaron tres formas, y las tres salen del catálogo: número con desde y hasta, opción con "Cualquiera" adelante, y sí/no como lista de tres — **un casillero no sabe decir "me da igual"**.
+
+### El error que se veía bien y andaba mal
+
+Postgres puede sacar un dato de la ficha de dos formas: como texto, o respetando el tipo que tiene adentro del JSON. La primera versión de la prueba dio el mismo resultado con las dos, y por poco se toma como que daba igual.
+
+Daba igual **por casualidad de los datos de motos**: con cilindradas de tres cifras, comparar "184" y "250" como texto ordena igual que como número. Se probó de nuevo con kilos, que llegan a cuatro cifras:
+
+| Filtro: carga desde 800 kg | Resultados |
+|---|---|
+| Comparando como número | **23** |
+| Comparando como texto | 8 |
+
+Como texto, "1000" es menor que "800", así que se perdían **todas** las camionetas de una tonelada — justo las que alguien que filtra por carga está buscando. Los filtros numéricos comparan como número, con el número de la medición anotado al lado en el código.
+
+**La lección no es sobre JSON:** es que una prueba que pasa con los datos que uno eligió no prueba nada. El caso que la rompía estaba a una tabla de distancia.
+
+### Las claves de la ficha salen del catálogo, nunca de la dirección
+
+Lo que viene en la dirección no se usa para armar la consulta. Se recorren los campos que el catálogo declara para el tipo elegido y, para cada uno, se busca su parámetro. Una clave inventada no existe entre los campos declarados, así que no llega nunca a la base.
+
+Es la misma regla que protege la carga de publicaciones desde el Sprint 1 —un dato que el tipo no declaró no entra—, ahora aplicada a la lectura. Quedó anotada en `app/CLAUDE.md`.
+
+### Otra vez un texto que solo se ve abriendo la pantalla
+
+El título de la sección decía **"Datos del moto"**. Lo armaba una regla que deducía el género por la terminación del nombre, y "moto" termina en o.
+
+Se sacó la regla entera en vez de agregarle excepciones: ahora dice el plural —"Datos de motos", "Datos de camionetas"—, que no necesita artículo. **No falla con ningún tipo, ni con los que se carguen mañana**, que es mejor que una regla que acierta casi siempre.
+
+### Lo que este sprint deja abierto a propósito
+
+El asistente **no** puede filtrar por la ficha: no entiende "motos de más de 250cc". Para que pueda hay que pasarle los campos del catálogo dentro de su herramienta de búsqueda, y eso toca el prompt. Es la única diferencia de capacidad entre las dos puertas de entrada; lo que ya comparten —qué significa cada filtro— sigue en un solo lugar.
+
+Se verificó que el asistente siga andando después de tocar ese módulo compartido: pidiéndole camionetas hasta 25.000 dólares devuelve los mismos cuatro vehículos que antes del cambio.
+
+### Cómo se verificó todo lo demás
+
+Contra la base y con la aplicación andando: motos enduro desde 140cc (2 de 10), buses con aire y 40 asientos o más (2, queda afuera el minibús de 19), autos automáticos desde 1.6 litros (7, con los decimales funcionando), camiones volcadores de 3 ejes (ninguno — y se comprobó que cada filtro por separado da 1, así que el vacío es real). Cambiar el tipo de vehículo borra los filtros del tipo anterior. El botón "atrás" vuelve a los resultados con la ficha puesta. Sin desborde horizontal a 375px, tres columnas a 1280, y sin errores de consola en una pestaña limpia.

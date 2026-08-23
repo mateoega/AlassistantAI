@@ -2,7 +2,7 @@
 
 Qué se construyó, qué se decidió y por qué. Las decisiones día por día están en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 
-> **En curso.** La búsqueda y los favoritos están terminados y verificados. Queda el filtrado por campos específicos de cada tipo.
+> **Terminado.** Búsqueda, filtros por los datos propios de cada tipo, y favoritos.
 
 ## Qué hace
 
@@ -82,6 +82,45 @@ Es el mismo problema que resolvió el Sprint 1.6 y se midió igual: a 375, 700, 
 
 ---
 
-## Lo que falta del sprint
+## Filtrar por los datos propios de cada tipo
 
-- **Filtrar por campos específicos de cada tipo** (por ejemplo, cilindrada en motos). Los campos viven dentro de la ficha `specs` de cada publicación, así que filtrar por ellos es una consulta distinta de las demás y merece su propia decisión.
+Elegido un tipo de vehículo, la barra suma sus campos: cilindrada y estilo en motos, cantidad de asientos y aire acondicionado en buses, capacidad de carga y tipo de caja en camiones. **Los dibuja el catálogo, no una lista escrita en el código** — un tipo nuevo cargado en la base trae sus filtros solo, igual que el formulario de carga se arma solo desde el Sprint 1.
+
+### Solo aparecen con un tipo elegido
+
+Sin tipo no se sabe qué campos hay ni qué significan. "Puertas" no quiere decir lo mismo en un auto que en un camión, y en una moto no quiere decir nada. Un filtro de ficha que llegue en la dirección sin tipo elegido se descarta.
+
+### Tres formas, y ninguna es de texto libre
+
+El catálogo dice qué es cada campo, así que la pantalla tiene tres formas: **número** (desde y hasta), **opción** (lista con "Cualquiera" adelante) y **sí/no** (lista de tres, porque un casillero no sabe decir "me da igual").
+
+No hay campo de texto libre, y no por decisión de diseño: **se miró el catálogo y no existe ni un campo de texto** entre los siete tipos. Diseñar la forma que nadie usa habría sido trabajo inventado.
+
+### Los números se comparan como números, y la diferencia se midió
+
+Postgres puede sacar un dato de la ficha de dos maneras: como texto o respetando el tipo que tiene adentro del JSON. Para los números la diferencia no es cosmética — **como texto, "1000" es menor que "800"**.
+
+Medido contra la base con un filtro de carga mínima de 800 kg:
+
+| Cómo se compara | Resultados |
+|---|---|
+| Como número | **23 camionetas y camiones** |
+| Como texto | 8, y se pierden todas las de 1000 a 1500 kg |
+
+Los filtros numéricos comparan como número. Está anotado en el código con el número al lado, porque es un error que se ve bien y anda mal.
+
+### Las claves salen del catálogo, nunca de la dirección
+
+Lo que viene en la dirección (`f_engine_displacement_cc_min=250`) no se usa para armar la consulta. Se recorren **los campos que el catálogo declara para ese tipo** y, para cada uno, se busca su parámetro. Una clave inventada no llega nunca a la base: no existe entre los campos declarados, así que no se filtra por ella ni se avisa.
+
+Es la misma regla que ya protegía la carga de publicaciones desde el Sprint 1 —un dato que el tipo no declaró no entra—, aplicada ahora a la lectura.
+
+### Un detalle que encontró abrir la pantalla
+
+El título de la sección decía **"Datos del moto"**. Estaba deducido del género por la terminación del nombre, y falla justo con el tipo más común. Ahora usa el plural —"Datos de motos", "Datos de camionetas"—, que no necesita artículo y no puede fallar con ningún tipo, ni con los que se carguen mañana.
+
+---
+
+## Lo que este sprint deja abierto
+
+- **El asistente todavía no puede filtrar por la ficha.** Sabe buscar por tipo, marca, precio, año, kilómetros y provincia, pero no entiende "motos de más de 250cc". Para que pueda, hay que pasarle los campos del catálogo dentro de su herramienta de búsqueda, y eso cambia el prompt. Es la única diferencia de capacidad entre las dos puertas de entrada — lo que ya comparten es **qué significa** cada filtro.

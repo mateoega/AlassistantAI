@@ -23,7 +23,7 @@ Detalle completo en el `README.md` de la raíz del proyecto.
 
 ## Estado actual
 
-Sprint 4 — la búsqueda para el que compra, sobre todo lo anterior. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint4.md`](../docs/sprint4.md).
+Sprint 4 terminado — la búsqueda y los favoritos, sobre todo lo anterior. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint4.md`](../docs/sprint4.md).
 
 Cinco piezas: la **barra de búsqueda** arriba del muro y los **favoritos** (Sprint 4), el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
 
@@ -51,6 +51,8 @@ Cinco piezas: la **barra de búsqueda** arriba del muro y los **favoritos** (Spr
 - Antes de agregar una dependencia nueva, preferir la opción más simple — este proyecto prioriza simplicidad sobre escalabilidad en esta etapa.
 - Cualquier decisión de arquitectura o tecnología que se tome, registrarla en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 - **Nunca escribir código que dependa de una lista de tipos de vehículo hardcodeada.** Los tipos y sus campos se leen siempre del catálogo en la base (`vehicle_types` y `vehicle_type_fields`). Si aparece un `if (tipo === 'auto')` o un `switch` por tipo en el código, el diseño se rompió: agregar un tipo nuevo tiene que funcionar cargando filas en el catálogo, sin redesplegar.
+- **Los filtros por datos propios de cada tipo se arman desde el catálogo, igual que el formulario.** Las claves de la ficha (`specs`) que llegan en la dirección no se usan nunca para construir la consulta: se recorren los campos que el catálogo declara para el tipo elegido y se busca el parámetro de cada uno. Una clave que el catálogo no declara no llega a la base. Ver [`backend/src/services/listing-filters.ts`](backend/src/services/listing-filters.ts), `buildSpecFilters`.
+- **Un número guardado en la ficha se compara como número, no como texto.** `specs->clave` respeta el tipo del dato; `specs->>clave` lo saca como texto, y ahí "1000" es menor que "800". Se midió: un filtro de carga mínima de 800 kg devolvía 8 resultados en vez de 23.
 - **Qué significa cada filtro de búsqueda se decide en un solo lugar**, [`backend/src/services/listing-filters.ts`](backend/src/services/listing-filters.ts). Hay dos puertas de entrada a la misma búsqueda —la barra del muro y la herramienta del asistente— y devuelven formatos distintos a propósito, pero los filtros tienen que significar lo mismo en las dos. Si aparece un filtro escrito directamente en uno de los dos servicios, el diseño se rompió.
 - **Los prompts de IA también se arman desde el catálogo.** La regla anterior no se detiene en el formulario: el prompt del análisis recibe el tipo y sus campos leídos de la base, y deja que el modelo razone según eso. No se escriben instrucciones del estilo "si es una moto, mirá la cadena". Ver [`backend/src/ia/vehicle-context.ts`](backend/src/ia/vehicle-context.ts).
 - **La clave de servicio de Supabase tiene usos contados, y esta lista es la lista completa:**

@@ -54,6 +54,12 @@ export function Wall() {
       anio_min: searchParams.get('anio_min') ?? '',
       anio_max: searchParams.get('anio_max') ?? '',
       km_max: searchParams.get('km_max') ?? '',
+      // Todo lo que empieza con `f_` es un filtro de la ficha específica. Se
+      // levantan sin saber cuáles son: los nombres los pone el catálogo, y el
+      // backend descarta los que no correspondan al tipo elegido.
+      spec: Object.fromEntries(
+        [...searchParams.entries()].filter(([key]) => key.startsWith('f_')),
+      ),
     }),
     [searchParams],
   );
@@ -192,6 +198,14 @@ function toQuery(values: SearchValues): string {
   const params = new URLSearchParams();
 
   for (const [key, value] of Object.entries(values)) {
+    if (key !== 'spec' && typeof value === 'string' && value !== '') {
+      params.set(key, value);
+    }
+  }
+
+  // Los de la ficha van con el nombre que ya traen (`f_doors`, `f_payload_kg_min`),
+  // el mismo en la dirección y en el pedido al servidor.
+  for (const [key, value] of Object.entries(values.spec)) {
     if (value !== '') {
       params.set(key, value);
     }

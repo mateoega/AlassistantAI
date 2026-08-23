@@ -66,7 +66,7 @@ En la pantalla de cada vehículo aparece un **precio de referencia**: qué se es
 
 **Lo que sigue sin hacer:** camiones, buses y cuatriciclos dependen solo de los avisos propios, porque no hay fuente externa gratuita y legible que los cubra. Y el **descargo de responsabilidad legal** sobre las estimaciones sigue sin definirse — ver [`para_mas_adelante.md`](para_mas_adelante.md).
 
-## Sprint 4 — Búsqueda, filtros y vista de comprador ⏳ (actual)
+## Sprint 4 — Búsqueda, filtros y vista de comprador ✅
 
 La visualización pública de publicaciones se adelantó al Sprint 1. Lo que queda acá es todo lo que necesita quien **busca** un vehículo, no quien lo publica. Detalle en [`sprint4.md`](sprint4.md).
 
@@ -75,12 +75,14 @@ La visualización pública de publicaciones se adelantó al Sprint 1. Lo que que
   *Desviación respecto de lo planeado:* iba a ser una pantalla de búsqueda y terminó siendo **una barra arriba del muro**. El que entra ya está mirando vehículos: mandarlo a un buscador aparte lo obliga a empezar de nuevo en una pantalla vacía. No existe la ruta `/buscar` — una búsqueda es el muro con parámetros (`/?q=corolla&tipo=auto`), lo que además hace que el botón "atrás" vuelva a los resultados.
 
   El motor lo había construido el Sprint 2 para el asistente. No se reusó entero —devuelve texto corto para leer en una conversación, no tarjetas paginadas—: lo que se compartió es **qué significa cada filtro** (`app/backend/src/services/listing-filters.ts`), y se verificó que las dos puertas devuelven lo mismo ante el mismo pedido.
-- ⏳ **Filtrado por campos específicos de cada tipo** (por ejemplo, cilindrada en motos). Es lo único de la búsqueda que falta: esos campos viven dentro de la ficha `specs` y se consultan distinto que el resto.
+- ✅ **Filtrado por los campos propios de cada tipo** (cilindrada en motos, asientos y aire acondicionado en buses, capacidad de carga en camiones). Aparecen al elegir un tipo y **los dibuja el catálogo**, no una lista escrita en el código.
+
+  Dos decisiones que quedaron adentro: las claves salen del catálogo y nunca de la dirección —una clave inventada no llega a la base—, y los números se comparan **como números**: como texto, "1000" es menor que "800", y un filtro de carga mínima de 800 kg devolvía 8 resultados en vez de 23.
 - ✅ **Favoritos** — un corazón en cada aviso y la pantalla `/guardados`. Es la primera funcionalidad pensada para el comprador y no para el vendedor.
 
   **Son privados y no se pueden contar**: no hay forma de saber cuántas personas guardaron un aviso, ni siquiera desde la plataforma. Se descartó el contador público de "23 personas guardaron esto" porque sirve para apurar al que duda. Si el vendedor pausa un aviso guardado, la pantalla dice cuántos guardados quedaron sin mostrar en vez de hacerlos desaparecer.
 
-## Sprint 5 — Mensajería interna
+## Sprint 5 — Mensajería interna ⏳ (el que sigue)
 
 Chat entre comprador y vendedor dentro de la plataforma, en reemplazo del contacto por WhatsApp que se sumó en el Sprint 1.6.
 

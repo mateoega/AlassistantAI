@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { VehicleTypeField } from '../types.js';
 
 /**
  * Los filtros de búsqueda de publicaciones, en un solo lugar.
@@ -15,6 +16,22 @@ import type { SupabaseClient } from '@supabase/supabase-js';
  * dos servicios que la usan.
  */
 
+/**
+ * Un filtro sobre la ficha específica del vehículo: "cilindrada desde 250",
+ * "caja automática", "con aire acondicionado".
+ *
+ * La clave NUNCA llega directo de quien hace el pedido: la arma
+ * `buildSpecFilters` a partir del catálogo. Es lo que impide que alguien
+ * escriba cualquier cosa en la dirección y termine metiéndola en la consulta.
+ */
+export interface SpecFilter {
+  key: string;
+  op: 'eq' | 'gte' | 'lte';
+  value: string | number | boolean;
+  /** Los números se comparan como números y no como texto. Ver `applyListingFilters`. */
+  numeric: boolean;
+}
+
 export interface ListingFilters {
   /** Slug del tipo de vehículo, tal como está en el catálogo ('moto', 'camion'). */
   vehicle_type_slug?: string;
@@ -29,6 +46,8 @@ export interface ListingFilters {
   kilometers_max?: number;
   /** Slug de la provincia, tal como está en el catálogo. */
   province_slug?: string;
+  /** Filtros sobre la ficha específica del tipo de vehículo. */
+  specs?: SpecFilter[];
 }
 
 /**
@@ -112,12 +131,102 @@ export async function applyListingFilters<Q extends FilterableQuery>(
     result = result.lte('kilometers', filters.kilometers_max);
   }
 
+  for (const spec of filters.specs ?? []) {
+    // `specs->clave` compara dentro del JSON, respetando el tipo del dato;
+    // `specs->>clave` lo saca como texto. Para los números la diferencia no es
+    // cosmética: como texto, "1000" es MENOR que "800", así que un filtro de
+    // carga mínima de 800 kg se comía todas las camionetas de una tonelada.
+    // Se midió contra la base: 8 resultados en vez de 23.
+    const column = spec.numeric ? `specs->${spec.key}` : `specs->>${spec.key}`;
+
+    if (spec.op === 'gte') {
+      result = result.gte(column, spec.value);
+    } else if (spec.op === 'lte') {
+      result = result.lte(column, spec.value);
+    } else {
+      result = result.eq(column, spec.value);
+    }
+  }
+
   return { query: result };
 }
 
-/** ¿Hay algún filtro puesto? Sirve para saber si el muro está filtrado o entero. */
-export function hasAnyFilter(filters: ListingFilters): boolean {
-  return Object.values(filters).some((value) => value !== undefined && value !== '');
+/**
+ * Traduce lo que vino en la dirección a filtros sobre la ficha, **usando el
+ * catálogo como única lista de claves válidas**.
+ *
+ * Recibe los campos que el tipo de vehículo declara y busca, para cada uno,
+ * los parámetros `f_<clave>` (igual a), `f_<clave>_min` y `f_<clave>_max`.
+ * Lo que no corresponda a un campo declarado no existe: ni se filtra ni se
+ * avisa. Por eso una clave inventada en la dirección no llega nunca a la
+ * consulta.
+ *
+ * Los rangos solo se arman para campos numéricos, y la igualdad solo para
+ * opciones y sí/no. No es una restricción arbitraria: es lo que el catálogo
+ * dice que es cada campo.
+ */
+export function buildSpecFilters(
+  fields: VehicleTypeField[],
+  params: Record<string, unknown>,
+): SpecFilter[] {
+  const filters: SpecFilter[] = [];
+
+  for (const field of fields) {
+    const numeric = field.data_type === 'number' || field.data_type === 'integer';
+
+    if (numeric) {
+      const min = numberParam(params[`f_${field.key}_min`]);
+      if (min !== undefined) {
+        filters.push({ key: field.key, op: 'gte', value: min, numeric: true });
+      }
+
+      const max = numberParam(params[`f_${field.key}_max`]);
+      if (max !== undefined) {
+        filters.push({ key: field.key, op: 'lte', value: max, numeric: true });
+      }
+
+      continue;
+    }
+
+    const raw = textParam(params[`f_${field.key}`]);
+    if (raw === undefined) {
+      continue;
+    }
+
+    if (field.data_type === 'boolean') {
+      if (raw === 'true' || raw === 'false') {
+        filters.push({ key: field.key, op: 'eq', value: raw === 'true', numeric: true });
+      }
+      continue;
+    }
+
+    if (field.data_type === 'select') {
+      // Una opción que el catálogo no declara no se busca: devolvería vacío
+      // igual, pero es mejor que no llegue a la consulta.
+      const exists = (field.options ?? []).some((option) => option.value === raw);
+      if (exists) {
+        filters.push({ key: field.key, op: 'eq', value: raw, numeric: false });
+      }
+      continue;
+    }
+
+    filters.push({ key: field.key, op: 'eq', value: raw, numeric: false });
+  }
+
+  return filters;
+}
+
+function textParam(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const text = value.trim();
+  return text === '' ? undefined : text;
+}
+
+function numberParam(value: unknown): number | undefined {
+  const text = textParam(value);
+  if (text === undefined) return undefined;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 /** Traduce un slug del catálogo al id que guarda la publicación. */
