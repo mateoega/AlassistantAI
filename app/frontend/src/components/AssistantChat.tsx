@@ -156,8 +156,8 @@ export function AssistantChat() {
         {messages.length === 0 && (
           <div className="space-y-3">
             <p className="text-sm text-body">
-              Te ayudo a mirar un vehículo con ojo crítico y a encontrar opciones. No estimo
-              precios de mercado todavía.
+              Te ayudo a mirar un vehículo con ojo crítico, a entender su precio y a encontrar
+              opciones.
             </p>
             <ul className="space-y-2">
               {SUGGESTIONS.map((suggestion) => (

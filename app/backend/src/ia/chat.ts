@@ -3,6 +3,7 @@ import { gemini, geminiModel } from './client.js';
 import type { ListingSearchFilters, ListingSearchResult } from '../services/listing-search.js';
 import type { Province, VehicleType } from '../types.js';
 import { REGLAS_DE_PRECIO } from './price-context.js';
+import { HttpError } from '../lib/http-error.js';
 
 /**
  * El asistente conversacional que acompaña al comprador.
@@ -183,6 +184,35 @@ export interface ChatReply {
   results: ListingSearchResult[];
 }
 
+/**
+ * Llama al modelo y traduce sus caídas a algo que se pueda leer en pantalla.
+ *
+ * POR QUÉ EXISTE
+ *
+ *   Cuando Google devuelve 503 —"este modelo está con mucha demanda"—, el
+ *   error viajaba como un problema interno y en pantalla se leía "ocurrió un
+ *   problema en el servidor". Eso manda a buscar la falla en el lugar
+ *   equivocado: no hay nada roto de este lado, hay que esperar un momento.
+ *
+ *   Es la misma lección del 2026-08-17, cuando un fallo del proveedor de IA se
+ *   presentó como un error genérico y costó encontrarlo.
+ */
+async function pedirAlModelo<T>(llamada: () => Promise<T>): Promise<T> {
+  try {
+    return await llamada();
+  } catch (error) {
+    const status = (error as { status?: number } | null)?.status;
+
+    if (status === 503 || status === 429) {
+      throw HttpError.unavailable(
+        'El asistente está con mucha demanda en este momento. Probá de nuevo en unos segundos.',
+      );
+    }
+
+    throw error;
+  }
+}
+
 export async function replyToChat(
   messages: ChatMessage[],
   context: ChatContext,
@@ -198,15 +228,17 @@ export async function replyToChat(
   const found: ListingSearchResult[] = [];
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
-    const response = await gemini().models.generateContent({
-      model,
-      contents: history,
-      config: {
-        systemInstruction: systemInstruction(context),
-        tools: [{ functionDeclarations: [SEARCH_DECLARATION] }],
-        temperature: 0.4,
-      },
-    });
+    const response = await pedirAlModelo(() =>
+      gemini().models.generateContent({
+        model,
+        contents: history,
+        config: {
+          systemInstruction: systemInstruction(context),
+          tools: [{ functionDeclarations: [SEARCH_DECLARATION] }],
+          temperature: 0.4,
+        },
+      }),
+    );
 
     const calls = response.functionCalls ?? [];
 

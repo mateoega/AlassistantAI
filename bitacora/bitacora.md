@@ -436,3 +436,17 @@ Siguiendo la lección del 2026-08-17 —que compile no es que ande—, se probó
 **Sin estimación** (el camión Scania, que no tiene con qué compararse): contestó que *"no tengo la estimación de precio de la plataforma para este Scania, así que no sabría decirte con certeza si los US$ 95.000 están bien"*, y ofreció lo que sí puede hacer — analizar las fotos, buscar camiones parecidos.
 
 **Es exactamente el comportamiento buscado, y por el motivo buscado.** No se calló porque una regla del prompt se lo prohibiera: se calló porque no había dato. Es la diferencia entre una restricción que alguien puede borrar sin darse cuenta y una que se sostiene sola.
+
+## 2026-08-21 — Verificado dentro de la app, con sesión real: tres cosas que solo se ven así
+
+Mateo inició sesión en el navegador integrado y se recorrió la pantalla del Corolla sobrevaluado. El panel de precio cargó con datos reales, marcó el **65% por encima**, listó los cuatro avisos con los que comparó, y el asistente contestó citando el rango y negándose a decir si conviene comprarlo. Sin errores de consola, sin rojo ni naranja, sin desborde a 375px.
+
+Aparecieron **tres cosas que ninguna verificación anterior podía encontrar**, y las tres son de la misma familia: cosas que quedaron diciendo lo de antes.
+
+**Dos textos viejos del Sprint 2.** Abajo del análisis de fotos seguía diciendo *"Todavía no compara precios de mercado"*, y el saludo del asistente, *"No estimo precios de mercado todavía"* — con el panel de precio de referencia justo arriba. Corregidos los dos.
+
+**Un fallo del proveedor disfrazado de error nuestro.** Gemini devolvió 503 —"este modelo está con mucha demanda"— y en pantalla se leía *"Ocurrió un problema en el servidor"*. Eso manda a buscar la falla en el lugar equivocado: no hay nada roto de este lado, hay que esperar un rato. Ahora un 503 o un 429 del modelo se traducen a *"El asistente está con mucha demanda en este momento. Probá de nuevo en unos segundos."*
+
+**Es la tercera vez que este proyecto tropieza con lo mismo:** el 2026-08-17 un modelo dado de baja y una firma de herramientas perdida se presentaron como un error genérico y costaron una sesión encontrarlos. La regla que queda: **cuando el proveedor de IA falla, el mensaje tiene que decir que falló el proveedor.**
+
+**La lección de proceso, en cambio, es nueva:** los textos de la interfaz envejecen con las decisiones y no los agarra ningún control de tipos ni ningún script. La única forma de encontrarlos fue abrir la pantalla y leerla. Conviene releer los descargos y los textos de ayuda cada vez que un sprint levanta una restricción del anterior.

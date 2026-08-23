@@ -153,8 +153,8 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
 
       <p className="text-xs text-muted">
         Es una lectura orientativa hecha a partir de las fotos. No reemplaza una revisión mecánica
-        presencial ni verifica la documentación del vehículo. Todavía no compara precios de
-        mercado.
+        presencial ni verifica la documentación del vehículo. El precio se compara aparte, en
+        "Precio de referencia".
       </p>
     </Card>
   );
