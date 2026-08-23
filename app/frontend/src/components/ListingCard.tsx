@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { FavoriteButton } from './FavoriteButton';
 import { StatusBadge } from './ui';
+import { useSession } from './SessionProvider';
 import { formatKilometers, formatLocation, formatPrice } from '@/lib/format';
 import type { Listing } from '@/lib/types';
 
@@ -11,7 +13,12 @@ import type { Listing } from '@/lib/types';
  * texto. El título no compite con la imagen.
  */
 export function ListingCard({ listing }: { listing: Listing }) {
+  const { session } = useSession();
   const cover = listing.photos[0];
+
+  // Guardar el aviso propio no tiene sentido: el dueño ya lo tiene en "Mis
+  // publicaciones".
+  const isOwner = session?.user.id === listing.seller_id;
 
   return (
     <Link href={`/vehiculo/${listing.id}`} className="group block">
@@ -32,6 +39,16 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <span className="absolute left-2 top-2">
           <StatusBadge status={listing.status} />
         </span>
+
+        {/* El corazón va arriba a la derecha, sobre la foto: es donde lo busca
+            la mano en cualquier app de clasificados, y no le roba lugar al
+            precio. Va por encima de la cortina del vendido para que un aviso
+            que se vendió también se pueda sacar de guardados. */}
+        {!isOwner && (
+          <span className="absolute right-2 top-2 z-10">
+            <FavoriteButton listingId={listing.id} />
+          </span>
+        )}
 
         {/* Un vehículo vendido se sigue viendo, pero tiene que quedar claro de
             un vistazo que ya no está disponible. */}

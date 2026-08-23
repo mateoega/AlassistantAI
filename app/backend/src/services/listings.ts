@@ -22,7 +22,13 @@ export type { SpecDisplay };
  * aunque este código tuviera un error.
  */
 
-const LISTING_SELECT = `
+/**
+ * Las columnas de una publicación tal como las necesita una tarjeta o una
+ * ficha. Se exporta porque los favoritos muestran las mismas publicaciones:
+ * si la tarjeta del muro y la de favoritos se armaran con consultas distintas,
+ * tarde o temprano una mostraría algo que la otra no.
+ */
+export const LISTING_SELECT = `
   id, seller_id, brand, model, year, price, currency,
   kilometers, city, description, specs,
   status, published_at, sold_at, created_at, updated_at,
@@ -406,6 +412,15 @@ interface ListingRow {
   province: { id: string; slug: string; name: string } | null;
   seller: { id: string; display_name: string | null; phone: string | null } | null;
   photos: { id: string; storage_path: string; sort_order: number }[] | null;
+}
+
+/**
+ * Presenta varias publicaciones ya leídas de la base. Lo usan los favoritos,
+ * que traen las publicaciones por otro camino pero las muestran igual.
+ */
+export async function presentListings(rows: unknown[]) {
+  const typesById = await vehicleTypesById();
+  return rows.map((row) => presentListing(row as ListingRow, typesById));
 }
 
 async function vehicleTypesById(): Promise<Map<string, VehicleType>> {

@@ -7,10 +7,13 @@ import { useSession } from './SessionProvider';
 /**
  * Barra superior.
  *
- * En pantallas chicas muestra solo el logo: los cuatro botones de navegación
- * juntos necesitaban 544px y un celular común tiene 375, así que se salían de
- * la pantalla. En celular la navegación vive en la barra inferior
- * (`MobileNav`), como en las apps de clasificados.
+ * En pantallas chicas muestra solo el logo: los botones de navegación juntos
+ * no entran en un celular de 375px, así que ahí la navegación vive en la barra
+ * inferior (`MobileNav`), como en las apps de clasificados.
+ *
+ * El corte está en 768px y no en 640: con "Guardados" sumado en el Sprint 4,
+ * los cuatro botones ya no entraban en esa franja. `MobileNav` usa el mismo
+ * número, así que nunca se ven las dos ni ninguna.
  */
 export function SiteHeader() {
   const { session } = useSession();
@@ -31,13 +34,16 @@ export function SiteHeader() {
         </Link>
 
         {session && (
-          <nav className="hidden items-center gap-2 text-sm sm:flex">
+          <nav className="hidden items-center gap-2 text-sm md:flex">
             <Link
               href="/publicar"
               className="rounded-lg bg-brand-deep px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-deep/90"
             >
               + Publicar
             </Link>
+            <TopLink href="/guardados" active={pathname === '/guardados'}>
+              Guardados
+            </TopLink>
             <TopLink href="/mis-publicaciones" active={pathname === '/mis-publicaciones'}>
               Mis publicaciones
             </TopLink>

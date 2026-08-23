@@ -490,3 +490,47 @@ Devolver la consulta de Supabase desde una función `async` la ejecutaba antes d
 ### Cómo se verificó
 
 Con la aplicación andando y sesión real: búsqueda por texto (5 Corollas), filtros combinados (8 camionetas en dólares hasta 30.000), "ver más" arrastrando los filtros a la página siguiente (48 de 60), búsqueda sin resultados, ida a un aviso y vuelta con el botón "atrás" —conservó el texto buscado y los 6 resultados—, el asistente contestando con la misma búsqueda por su lado, sin errores de consola y sin desborde horizontal a 375px.
+
+## 2026-08-23 — Favoritos: la primera tabla que existe para el que compra
+
+Hasta hoy todo el modelo de datos giraba alrededor del aviso: lo escribe el que vende, lo lee cualquiera. `favorites` guarda algo que es **del que mira**, y que no le interesa a nadie más.
+
+### La decisión que define la tabla: no se pueden contar
+
+Las reglas de acceso dejan a cada usuario leer, agregar y sacar únicamente sus propias filas. **No hay ninguna política que permita leer las de otro, ni siquiera contarlas.**
+
+Eso descarta el clásico "23 personas guardaron este vehículo". No es una omisión ni algo que se sume después: **ese contador existe para apurar al que duda**, que es exactamente la presión que esta plataforma dice no querer ejercer. Y a quien guarda un aviso nadie le pidió permiso para contárselo al vendedor.
+
+Quedó escrito como regla en `app/CLAUDE.md`: agregar cualquier lectura agregada de `favorites` contradice el diseño.
+
+**Se verificó midiendo, no leyendo el SQL:** con una fila real guardada en la base, un cliente sin sesión pide la tabla y recibe 0 filas, y pedir la cuenta devuelve 0. La misma fila la ve la clave de servicio.
+
+### Qué hacer con un guardado que el vendedor pausó
+
+Desde el Sprint 1.6 un aviso pausado deja de ser visible para todos menos su dueño. Eso convierte a un favorito en un puntero a algo invisible: **no se sabe nada de ese vehículo, ni la marca.**
+
+Lo fácil era hacer desaparecer la tarjeta. Se eligió decir cuántos son —"Un vehículo que guardaste ya no está disponible: el vendedor pausó el aviso"—, que es todo lo que se puede decir sin inventar. Un guardado que se esfuma sin explicación es la clase de cosa que hace desconfiar de una aplicación entera.
+
+**Un guardado que se vendió, en cambio, se sigue viendo** con su cartel de vendido: enterarse es mejor que buscarlo y no encontrarlo nunca más.
+
+### Otra vez: abrir la pantalla encontró lo que el compilador no
+
+La primera versión de la pantalla de guardados mostraba, al mismo tiempo, *"un vehículo que guardaste ya no está disponible"* y *"todavía no guardaste ningún vehículo"*. **Se contradicen.**
+
+El motivo es que había un solo cartel de "vacío" para dos situaciones que no son la misma: no haber guardado nunca nada, y tener guardados que hoy están pausados. Ahora cada una dice lo suyo.
+
+No lo agarra ningún control de tipos, igual que los textos viejos del 2026-08-21. Sigue valiendo la regla: **cuando una pantalla puede estar vacía por más de un motivo, hay que abrirla en cada uno.**
+
+### Un efecto colateral que era predecible y se midió igual
+
+Sumar "Guardados" dejó cinco botones en la barra de celular y cuatro en la de escritorio, y los de arriba ya no entraban entre 640 y 768px. El corte entre las dos barras **pasó de 640 a 768**, el mismo número en las dos.
+
+Es exactamente el problema del Sprint 1.6, así que se midió igual: a 375, 700, 767, 768 y 1078px hay siempre exactamente una barra visible y ningún desborde horizontal. En celular la etiqueta más ancha ("Guardados", 53px) entra holgada en su celda de 75px.
+
+### La migración quedó aplicada y verificada contra la base
+
+Se aplicó con el procedimiento del skill, en el navegador integrado. Después, desde afuera: la tabla existe y responde; guardar dos veces el mismo par usuario-publicación **lo rechaza la base** (23505) sin que el código tenga que preguntarlo; guardar apuntando a un aviso inexistente también (23503).
+
+Y con la aplicación andando: guardar desde el muro escribió la fila real, sacar desde la ficha la borró, tres guardados aparecieron en `/guardados` ordenados del último al primero, y sacar uno desde ahí adentro sacó la tarjeta en el acto. Sin errores de consola en una pestaña limpia.
+
+**Un detalle de método que conviene recordar:** las primeras lecturas de la consola mostraban errores que ya no existían —eran del rato en que el código estaba a medio escribir y el servidor recargaba solo—. Se confirmó abriendo una pestaña nueva, que arranca con la consola vacía. Mirar una consola vieja lleva a arreglar lo que ya está arreglado.

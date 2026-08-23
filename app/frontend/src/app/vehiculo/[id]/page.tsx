@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { AnalysisPanel } from '@/components/AnalysisPanel';
+import { FavoriteButton } from '@/components/FavoriteButton';
 import { PriceEstimatePanel } from '@/components/PriceEstimate';
 import { Badge, Button, Card, Notice, Spinner, StatusBadge } from '@/components/ui';
 import {
@@ -250,6 +251,16 @@ export default function VehiculoPage() {
               <Button variant="quiet" disabled={working} onClick={() => void remove()}>
                 Borrar
               </Button>
+            </div>
+          )}
+
+          {/* Guardar está arriba, junto al precio y antes de todo lo demás: es
+              lo que se aprieta cuando el vehículo gusta y todavía no se
+              decidió nada. Al dueño no se le ofrece — ya tiene su aviso en
+              "Mis publicaciones". */}
+          {!isOwner && (
+            <div className="flex flex-wrap gap-3">
+              <FavoriteButton listingId={listing.id} variant="labeled" />
             </div>
           )}
 

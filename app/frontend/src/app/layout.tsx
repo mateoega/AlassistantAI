@@ -4,6 +4,7 @@ import { SessionProvider } from '@/components/SessionProvider';
 import { SiteHeader } from '@/components/SiteHeader';
 import { MobileNav } from '@/components/MobileNav';
 import { AssistantProvider } from '@/components/AssistantProvider';
+import { FavoritesProvider } from '@/components/FavoritesProvider';
 import { AssistantChat } from '@/components/AssistantChat';
 import './globals.css';
 
@@ -18,17 +19,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="es">
       <body className="min-h-screen bg-canvas text-body">
         <SessionProvider>
-          {/* El asistente envuelve toda la aplicación para que la conversación
-              sobreviva a la navegación entre pantallas: si viviera dentro del
-              panel, entrar a un aviso borraría el hilo. */}
-          <AssistantProvider>
-            <SiteHeader />
-            {/* El pb-24 de abajo deja lugar para la barra de navegación fija del
-                celular, para que no tape el último elemento de la pantalla. */}
-            <main className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:pb-6">{children}</main>
-            <MobileNav />
-            <AssistantChat />
-          </AssistantProvider>
+          {/* Los guardados se piden una sola vez y los miran todos los
+              corazones de la aplicación, en el muro y en cada ficha. */}
+          <FavoritesProvider>
+            {/* El asistente envuelve toda la aplicación para que la conversación
+                sobreviva a la navegación entre pantallas: si viviera dentro del
+                panel, entrar a un aviso borraría el hilo. */}
+            <AssistantProvider>
+              <SiteHeader />
+              {/* El pb-24 de abajo deja lugar para la barra de navegación fija
+                  del celular, para que no tape el último elemento de la
+                  pantalla. */}
+              <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">{children}</main>
+              <MobileNav />
+              <AssistantChat />
+            </AssistantProvider>
+          </FavoritesProvider>
         </SessionProvider>
       </body>
     </html>

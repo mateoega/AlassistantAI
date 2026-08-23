@@ -7,13 +7,14 @@ import { useSession } from './SessionProvider';
 /**
  * Navegación inferior, solo en celular.
  *
- * Los cuatro botones de la barra superior necesitaban 544px de ancho y un
- * celular común tiene 375: no entraban. En vez de apretarlos o esconderlos
- * detrás de un menú, se pasan abajo, que es donde llega el pulgar y donde los
- * pone cualquier app de clasificados.
+ * Los botones de la barra superior no entran en un celular de 375px. En vez
+ * de apretarlos o esconderlos detrás de un menú, se pasan abajo, que es donde
+ * llega el pulgar y donde los pone cualquier app de clasificados.
  *
- * En pantallas medianas o más grandes desaparece: ahí la barra superior tiene
- * lugar de sobra.
+ * Desaparece de tablet para arriba (768px), no de 640: al sumar "Guardados"
+ * en el Sprint 4, la barra de arriba pasó a necesitar más ancho del que hay
+ * en esa franja intermedia. El corte de las dos barras es el mismo número, así
+ * que siempre hay exactamente una navegación visible.
  */
 export function MobileNav() {
   const { session } = useSession();
@@ -26,7 +27,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface sm:hidden"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
       // Respeta la franja de gestos de los celulares sin botón físico.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
@@ -37,6 +38,12 @@ export function MobileNav() {
           label="Publicar"
           active={pathname === '/publicar'}
           icon={<PlusIcon />}
+        />
+        <Item
+          href="/guardados"
+          label="Guardados"
+          active={pathname === '/guardados'}
+          icon={<HeartIcon />}
         />
         <Item
           href="/mis-publicaciones"
@@ -78,7 +85,7 @@ function Item({
   );
 }
 
-/* Íconos dibujados a mano para no sumar una librería entera por cuatro figuras. */
+/* Íconos dibujados a mano para no sumar una librería entera por cinco figuras. */
 
 const iconProps = {
   width: 22,
@@ -106,6 +113,14 @@ function PlusIcon() {
     <svg {...iconProps}>
       <rect x="3" y="3" width="18" height="18" rx="5" />
       <path d="M12 8v8M8 12h8" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z" />
     </svg>
   );
 }

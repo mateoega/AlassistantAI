@@ -87,6 +87,9 @@ Por eso agregar un tipo de vehículo nuevo **no requiere programar**. Ver la rec
 | `profiles` | Nombre y teléfono del vendedor, enlazado a su usuario. |
 | `listings` | La publicación: campos comunes en columnas + ficha `specs` con lo específico. |
 | `listing_photos` | Las fotos de cada publicación y su orden. La primera es la principal. |
+| `listing_analyses` | El análisis de IA vigente de cada publicación *(Sprint 2)*. Ningún usuario escribe acá. |
+| `market_references` | Precios de referencia de fuentes externas *(Sprint 3)*. La llena un script; la app solo lee. |
+| `favorites` | Los vehículos que cada usuario guardó *(Sprint 4)*. Privados: solo los ve su dueño. |
 
 Los archivos SQL que crean todo esto están en [`../supabase/migrations/`](../supabase/migrations/), y los datos iniciales en [`../supabase/seed.sql`](../supabase/seed.sql).
 
@@ -100,6 +103,8 @@ Las reglas de acceso están en la base misma, no solo en el código de la app. A
 - **Las publicaciones publicadas** las ve cualquier usuario logueado. **Los borradores, solo su dueño.**
 - **Crear, editar y borrar una publicación**: solo su dueño, y no puede publicar a nombre de otro.
 - **Las fotos** heredan el permiso de su publicación, y cada usuario solo puede subir archivos a su propia carpeta.
+- **Los favoritos son privados**: cada usuario lee, agrega y saca únicamente los suyos. No hay ninguna regla que permita leer los de otro **ni contarlos**, así que no se puede saber cuántas personas guardaron un aviso — es una decisión de producto, no una omisión.
+- **Los análisis de IA y los precios de referencia no los escribe nadie desde la aplicación**: son afirmaciones de la plataforma. Los escribe el backend con la clave de servicio.
 
 ---
 

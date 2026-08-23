@@ -76,7 +76,9 @@ La visualización pública de publicaciones se adelantó al Sprint 1. Lo que que
 
   El motor lo había construido el Sprint 2 para el asistente. No se reusó entero —devuelve texto corto para leer en una conversación, no tarjetas paginadas—: lo que se compartió es **qué significa cada filtro** (`app/backend/src/services/listing-filters.ts`), y se verificó que las dos puertas devuelven lo mismo ante el mismo pedido.
 - ⏳ **Filtrado por campos específicos de cada tipo** (por ejemplo, cilindrada en motos). Es lo único de la búsqueda que falta: esos campos viven dentro de la ficha `specs` y se consultan distinto que el resto.
-- ⏳ **Favoritos** — guardar los vehículos que a uno le interesaron y volver a verlos en una pantalla propia. Requiere una tabla nueva; es la primera funcionalidad pensada para el comprador y no para el vendedor.
+- ✅ **Favoritos** — un corazón en cada aviso y la pantalla `/guardados`. Es la primera funcionalidad pensada para el comprador y no para el vendedor.
+
+  **Son privados y no se pueden contar**: no hay forma de saber cuántas personas guardaron un aviso, ni siquiera desde la plataforma. Se descartó el contador público de "23 personas guardaron esto" porque sirve para apurar al que duda. Si el vendedor pausa un aviso guardado, la pantalla dice cuántos guardados quedaron sin mostrar en vez de hacerlos desaparecer.
 
 ## Sprint 5 — Mensajería interna
 

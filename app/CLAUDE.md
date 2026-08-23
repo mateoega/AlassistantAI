@@ -25,7 +25,9 @@ Detalle completo en el `README.md` de la raíz del proyecto.
 
 Sprint 4 — la búsqueda para el que compra, sobre todo lo anterior. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint4.md`](../docs/sprint4.md).
 
-Cuatro piezas: la **barra de búsqueda** arriba del muro (Sprint 4), el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
+Cinco piezas: la **barra de búsqueda** arriba del muro y los **favoritos** (Sprint 4), el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
+
+**Los favoritos son privados y no se pueden contar.** Ninguna regla de acceso permite leer los favoritos de otro usuario **ni contarlos**, así que no existe —ni debe existir— un "23 personas guardaron este vehículo". Es una decisión de producto: ese contador sirve para apurar al que duda. Agregar cualquier lectura agregada de `favorites` contradice el diseño.
 
 **Buscar no es una pantalla aparte.** No existe la ruta `/buscar`: una búsqueda es el muro con parámetros en la dirección (`/?q=corolla&tipo=auto`). Los filtros viven en la dirección y no en el estado del componente, para que el botón "atrás" vuelva a los resultados. Ver [`../docs/sprint4.md`](../docs/sprint4.md).
 

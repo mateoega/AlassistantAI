@@ -2,7 +2,7 @@
 
 Qué se construyó, qué se decidió y por qué. Las decisiones día por día están en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 
-> **En curso.** La búsqueda está terminada y verificada. Los favoritos, que son la otra mitad del sprint, todavía no se empezaron.
+> **En curso.** La búsqueda y los favoritos están terminados y verificados. Queda el filtrado por campos específicos de cada tipo.
 
 ## Qué hace
 
@@ -43,7 +43,45 @@ Se verificó midiendo: **el mismo pedido por las dos puertas —camionetas en d�
 - **Los tipos de vehículo y las provincias salen del catálogo**, como en el resto de la aplicación. Un tipo nuevo cargado en la base aparece solo en el filtro.
 - **El catálogo no bloquea la búsqueda.** Si no carga, la barra de texto sigue funcionando y no se muestra ninguna alarma: sirve para acotar, no para buscar.
 
+---
+
+## Favoritos
+
+Un corazón sobre la foto de cada aviso, un botón "Guardar" en la ficha del vehículo, y la pantalla `/guardados` con lo que uno eligió. **Es la primera parte de la aplicación que existe para el que compra**: todo lo demás gira alrededor del aviso, que lo escribe el que vende.
+
+### La decisión de fondo: los favoritos son privados y no se pueden contar
+
+La tabla `favorites` deja a cada usuario leer, agregar y sacar únicamente sus propias filas. **No hay ninguna regla que permita leer las de otro, ni siquiera contarlas.**
+
+Eso descarta de entrada el clásico "23 personas guardaron este vehículo". No se omitió por falta de tiempo: un contador así sirve para apurar al que duda, que es exactamente la presión que esta plataforma no quiere ejercer, y a quien guarda un aviso nadie le pidió permiso para contárselo al vendedor.
+
+Se verificó midiendo, no leyendo el SQL: con una fila guardada en la base, un cliente sin sesión pide la tabla y recibe **0 filas**, y pedir la cuenta devuelve **0**.
+
+### Qué pasa cuando el vendedor pausa un aviso guardado
+
+La base deja de mostrarlo — eso ya era así desde el Sprint 1.6 y no se tocó. El favorito queda apuntando a algo invisible, y **de ese vehículo no se sabe nada, ni la marca**.
+
+Se podría hacer desaparecer la tarjeta y listo. En su lugar, la pantalla dice cuántos son: *"Un vehículo que guardaste ya no está disponible: el vendedor pausó el aviso."* Es todo lo que se puede decir sin inventar, y es mejor que un guardado que se esfuma sin explicación.
+
+**Un vehículo guardado que se vendió, en cambio, sí se sigue viendo**, con su cartel de vendido. Enterarse de que se vendió es mejor que buscarlo y no encontrarlo nunca más.
+
+### Detalles de los favoritos que quedaron decididos
+
+- **El botón no espera al servidor.** Al apretar, el corazón cambia en el acto y el pedido viaja después; si falla, vuelve solo a como estaba. Guardar es un gesto, no un formulario.
+- **Guardar y sacar son idempotentes.** Apretar dos veces rápido no rompe nada: la clave de la tabla es el par usuario-publicación, así que la base misma impide el duplicado. Verificado contra la base: el segundo intento vuelve rechazado.
+- **Los guardados se piden una sola vez** para toda la aplicación, no una por tarjeta. Si no, entrar al muro dispararía veinticuatro pedidos para responder una sola pregunta.
+- **Mientras no se sabe qué está guardado, no se dibuja ningún corazón.** Un corazón vacío que un segundo después salta a lleno es peor que esperar.
+- **No se ofrece guardar el aviso propio.** El dueño ya lo tiene en "Mis publicaciones".
+- **Dos pantallas vacías distintas.** No haber guardado nunca nada y tener guardados que hoy están pausados no son lo mismo, y decir el motivo equivocado es peor que no decir nada. El primer intento mostraba las dos cosas a la vez, contradiciéndose; se encontró abriendo la pantalla.
+
+### Un efecto colateral: la navegación se quedó sin lugar
+
+Con "Guardados" adentro quedaron cinco botones en la barra de celular y cuatro en la de escritorio, y los de arriba ya no entraban entre 640 y 768px. **El corte entre las dos barras pasó de 640 a 768**, con el mismo número en las dos para que nunca se vean las dos ni ninguna.
+
+Es el mismo problema que resolvió el Sprint 1.6 y se midió igual: a 375, 700, 767, 768 y 1078px, exactamente una barra visible y ningún desborde horizontal.
+
+---
+
 ## Lo que falta del sprint
 
-- **Favoritos** — guardar los vehículos que interesaron y volver a verlos. Necesita una tabla nueva con sus reglas de acceso; es la primera funcionalidad pensada para el comprador y no para el vendedor.
 - **Filtrar por campos específicos de cada tipo** (por ejemplo, cilindrada en motos). Los campos viven dentro de la ficha `specs` de cada publicación, así que filtrar por ellos es una consulta distinta de las demás y merece su propia decisión.
