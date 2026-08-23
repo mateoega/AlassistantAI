@@ -450,3 +450,43 @@ Aparecieron **tres cosas que ninguna verificación anterior podía encontrar**, 
 **Es la tercera vez que este proyecto tropieza con lo mismo:** el 2026-08-17 un modelo dado de baja y una firma de herramientas perdida se presentaron como un error genérico y costaron una sesión encontrarlos. La regla que queda: **cuando el proveedor de IA falla, el mensaje tiene que decir que falló el proveedor.**
 
 **La lección de proceso, en cambio, es nueva:** los textos de la interfaz envejecen con las decisiones y no los agarra ningún control de tipos ni ningún script. La única forma de encontrarlos fue abrir la pantalla y leerla. Conviene releer los descargos y los textos de ayuda cada vez que un sprint levanta una restricción del anterior.
+
+## 2026-08-23 — La búsqueda no es una pantalla: es el muro con menos vehículos
+
+El roadmap decía "pantalla de búsqueda" desde el Sprint 0. **Mateo la cambió antes de que se escribiera una línea:** una barra arriba del muro, en la misma pantalla donde ya están los autos.
+
+El motivo es de producto y es más fuerte que la comodidad de implementar: el que entra ya está mirando vehículos. Mandarlo a un buscador aparte lo hace empezar de nuevo en una pantalla vacía, y lo obliga a saber qué quiere antes de ver qué hay. Buscar acá no es ir a otro lado — es ver menos.
+
+Consecuencia concreta: **no existe la ruta `/buscar`**. Una búsqueda es el muro con parámetros, `/?q=corolla&tipo=auto`.
+
+### Lo que se busca vive en la dirección de la página, y eso no es un detalle técnico
+
+Los filtros podrían haber vivido adentro del componente, que es lo más corto de escribir. Se escriben en la dirección, que cuesta un poco más, por un movimiento que hace todo el que compra: **mirar un aviso, volver, mirar el siguiente.** Con el estado adentro del componente, ese "volver" devuelve el muro entero y la búsqueda se perdió. Con la búsqueda en la dirección, el botón "atrás" vuelve a los resultados.
+
+De yapa, una búsqueda se puede pasar por mensaje: el enlace lleva los filtros puestos.
+
+Lo que cuesta: la pantalla principal tiene que envolver al muro en un `Suspense`, porque Next lo exige para cualquier componente que lea la dirección. Quedó anotado en el código el motivo, para que nadie lo borre por parecer de más.
+
+### Lo que se compartió con el asistente no es la búsqueda: es qué significa cada filtro
+
+El Sprint 2 ya había construido un motor de búsqueda para que el asistente pudiera contestar "mostrame motos hasta dos millones", y el roadmap anotaba que el Sprint 4 lo iba a reusar "tal cual". **Reusarlo tal cual habría estado mal:** ese motor devuelve ocho resultados como máximo, en texto corto y sin fotos, porque va adentro de una conversación. El muro necesita tarjetas con foto y paginadas.
+
+Lo que sí tiene que ser idéntico es **qué significa cada filtro**. Si buscar "volks" encuentra "Volkswagen" en la barra, tiene que encontrarlo también preguntándole al asistente. Así que se separó esa parte a `listing-filters.ts`, que usan las dos puertas de entrada, y cada una se queda con su formato y su tope.
+
+**Se verificó midiendo, no razonando:** el mismo pedido por las dos puertas —camionetas en dólares hasta 25.000— devolvió los mismos cuatro vehículos, en el mismo orden.
+
+### Tres decisiones chicas que se tomaron mirando la pantalla
+
+**Pesos y dólares no se mezclan.** Filtrar por precio sin elegir moneda compara 20.000 dólares con 20.000 pesos. El filtro de precio se aplica dentro de la moneda elegida, y está escrito en la pantalla en vez de quedar como sorpresa.
+
+**Un filtro que no existe no muestra el muro entero.** Si la dirección trae un tipo de vehículo que no está en el catálogo, la respuesta es vacía. Ignorar el filtro y mostrar todo sería mentir sobre lo que se está viendo — es la misma familia de decisión que la del Sprint 2: antes que mostrar algo que parece lo pedido sin serlo, no se muestra nada.
+
+**Sin resultados no es lo mismo que sin publicaciones.** Son dos pantallas vacías distintas. Ofrecer "publicá el primero" cuando hay sesenta avisos que no coinciden con la búsqueda es no haber entendido qué pasó; lo que corresponde ahí es ofrecer aflojar la búsqueda.
+
+### Un tropiezo del compilador que vale anotar
+
+Devolver la consulta de Supabase desde una función `async` la ejecutaba antes de tiempo: una consulta también es una promesa, así que el `await` de quien llamaba la disparaba ahí mismo, sin dejar ordenarla ni paginarla. Lo agarró el control de tipos antes de correr nada. La consulta filtrada ahora vuelve adentro de un objeto, con el motivo escrito al lado para que no parezca una vuelta de más.
+
+### Cómo se verificó
+
+Con la aplicación andando y sesión real: búsqueda por texto (5 Corollas), filtros combinados (8 camionetas en dólares hasta 30.000), "ver más" arrastrando los filtros a la página siguiente (48 de 60), búsqueda sin resultados, ida a un aviso y vuelta con el botón "atrás" —conservó el texto buscado y los 6 resultados—, el asistente contestando con la misma búsqueda por su lado, sin errores de consola y sin desborde horizontal a 375px.

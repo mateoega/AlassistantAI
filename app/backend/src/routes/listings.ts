@@ -14,6 +14,7 @@ import {
 import { LISTING_STATUSES, type ListingStatus } from '../validation/listing-input.js';
 import { getAnalysis, startAnalysis } from '../services/analysis.js';
 import { estimarPrecio } from '../services/price-estimate.js';
+import type { ListingFilters } from '../services/listing-filters.js';
 
 export const listingsRouter = Router();
 
@@ -24,13 +25,17 @@ listingsRouter.use(requireAuth);
  * GET /api/listings?scope=public|mine&page=0
  *   public → el muro: solo las disponibles, de todos los usuarios
  *   mine   → las propias, en cualquier estado
+ *
+ * El muro acepta además los filtros de la barra de búsqueda (`q`, `tipo`,
+ * `marca`, `provincia`, `precio_min`...). No hay una ruta `/buscar` aparte
+ * porque buscar no es ir a otro lado: es el mismo muro con menos vehículos.
  */
 listingsRouter.get('/', async (req, res) => {
   const { userId, supabase } = auth(req);
   const scope: ListingScope = req.query.scope === 'mine' ? 'mine' : 'public';
   const page = Math.max(0, Number(req.query.page) || 0);
 
-  res.json(await listListings(supabase, scope, userId, page));
+  res.json(await listListings(supabase, scope, userId, page, parseFilters(req.query)));
 });
 
 listingsRouter.get('/:id', async (req, res) => {
@@ -115,6 +120,62 @@ listingsRouter.delete('/:id', async (req, res) => {
   await deleteListing(supabase, requireId(req.params.id));
   res.status(204).end();
 });
+
+/**
+ * Traduce lo que viene en la dirección a filtros de búsqueda.
+ *
+ * Todo lo que no se entiende se descarta en silencio y el filtro queda sin
+ * poner: una dirección escrita a mano con `precio_max=barato` muestra el muro
+ * sin ese filtro, que es mejor que un error en la cara de quien mira.
+ */
+function parseFilters(query: Record<string, unknown>): ListingFilters {
+  const filters: ListingFilters = {};
+
+  const text = str(query.q);
+  if (text) filters.text = text;
+
+  const tipo = str(query.tipo);
+  if (tipo) filters.vehicle_type_slug = tipo;
+
+  const marca = str(query.marca);
+  if (marca) filters.brand = marca;
+
+  const provincia = str(query.provincia);
+  if (provincia) filters.province_slug = provincia;
+
+  const moneda = str(query.moneda)?.toUpperCase();
+  if (moneda === 'ARS' || moneda === 'USD') filters.currency = moneda;
+
+  const precioMin = num(query.precio_min);
+  if (precioMin !== undefined) filters.price_min = precioMin;
+
+  const precioMax = num(query.precio_max);
+  if (precioMax !== undefined) filters.price_max = precioMax;
+
+  const anioMin = num(query.anio_min);
+  if (anioMin !== undefined) filters.year_min = anioMin;
+
+  const anioMax = num(query.anio_max);
+  if (anioMax !== undefined) filters.year_max = anioMax;
+
+  const kmMax = num(query.km_max);
+  if (kmMax !== undefined) filters.kilometers_max = kmMax;
+
+  return filters;
+}
+
+function str(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim();
+  return trimmed === '' ? undefined : trimmed;
+}
+
+function num(value: unknown): number | undefined {
+  const text = str(value);
+  if (text === undefined) return undefined;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+}
 
 function requireId(id: string | undefined): string {
   if (!id) {

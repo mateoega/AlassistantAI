@@ -23,11 +23,13 @@ Detalle completo en el `README.md` de la raíz del proyecto.
 
 ## Estado actual
 
-Sprint 3 — la estimación de precio de mercado, sobre el asistente de IA del Sprint 2. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint3.md`](../docs/sprint3.md).
+Sprint 4 — la búsqueda para el que compra, sobre todo lo anterior. Ver [`../docs/roadmap.md`](../docs/roadmap.md) y [`../docs/sprint4.md`](../docs/sprint4.md).
 
-Tres piezas: el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
+Cuatro piezas: la **barra de búsqueda** arriba del muro (Sprint 4), el **precio de referencia** en cada publicación (Sprint 3), el **botón "Analizar"** que mira las fotos junto con los datos declarados, y el **chat del asistente**, disponible en toda la aplicación, que sabe qué aviso hay en pantalla y puede buscar entre las publicaciones.
 
-**La IA trabaja para el comprador, no para el vendedor.** Es la decisión que define este sprint y la que explica el tono de los prompts. Si aparece una función de IA pensada para ayudar a quien publica, contradice el diseño — ver [`../bitacora/bitacora.md`](../bitacora/bitacora.md), 2026-08-12.
+**Buscar no es una pantalla aparte.** No existe la ruta `/buscar`: una búsqueda es el muro con parámetros en la dirección (`/?q=corolla&tipo=auto`). Los filtros viven en la dirección y no en el estado del componente, para que el botón "atrás" vuelva a los resultados. Ver [`../docs/sprint4.md`](../docs/sprint4.md).
+
+**La IA trabaja para el comprador, no para el vendedor.** Es la decisión que viene definiendo el proyecto desde el Sprint 2 y la que explica el tono de los prompts. Si aparece una función de IA pensada para ayudar a quien publica, contradice el diseño — ver [`../bitacora/bitacora.md`](../bitacora/bitacora.md), 2026-08-12.
 
 **El análisis no dictamina si conviene comprar.** Eso sigue prohibido y no depende de tener datos: es una decisión de quien compra.
 
@@ -47,6 +49,7 @@ Tres piezas: el **precio de referencia** en cada publicación (Sprint 3), el **b
 - Antes de agregar una dependencia nueva, preferir la opción más simple — este proyecto prioriza simplicidad sobre escalabilidad en esta etapa.
 - Cualquier decisión de arquitectura o tecnología que se tome, registrarla en [`../bitacora/bitacora.md`](../bitacora/bitacora.md).
 - **Nunca escribir código que dependa de una lista de tipos de vehículo hardcodeada.** Los tipos y sus campos se leen siempre del catálogo en la base (`vehicle_types` y `vehicle_type_fields`). Si aparece un `if (tipo === 'auto')` o un `switch` por tipo en el código, el diseño se rompió: agregar un tipo nuevo tiene que funcionar cargando filas en el catálogo, sin redesplegar.
+- **Qué significa cada filtro de búsqueda se decide en un solo lugar**, [`backend/src/services/listing-filters.ts`](backend/src/services/listing-filters.ts). Hay dos puertas de entrada a la misma búsqueda —la barra del muro y la herramienta del asistente— y devuelven formatos distintos a propósito, pero los filtros tienen que significar lo mismo en las dos. Si aparece un filtro escrito directamente en uno de los dos servicios, el diseño se rompió.
 - **Los prompts de IA también se arman desde el catálogo.** La regla anterior no se detiene en el formulario: el prompt del análisis recibe el tipo y sus campos leídos de la base, y deja que el modelo razone según eso. No se escriben instrucciones del estilo "si es una moto, mirá la cadena". Ver [`backend/src/ia/vehicle-context.ts`](backend/src/ia/vehicle-context.ts).
 - **La clave de servicio de Supabase tiene usos contados, y esta lista es la lista completa:**
   1. Guardar los **análisis de IA**, en una tabla que ningún usuario puede escribir.

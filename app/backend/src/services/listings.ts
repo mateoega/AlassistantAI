@@ -5,6 +5,7 @@ import { HttpError } from '../lib/http-error.js';
 import { getVehicleTypeById, listVehicleTypes } from './catalog.js';
 import { describeSpecs, type SpecDisplay } from './spec-display.js';
 import { validateSpecs } from '../validation/specs.js';
+import { applyListingFilters, type ListingFilters } from './listing-filters.js';
 import {
   assertPhotosBelongTo,
   type ListingInput,
@@ -41,23 +42,41 @@ export async function listListings(
   scope: ListingScope,
   userId: string,
   page = 0,
+  filters: ListingFilters = {},
 ) {
   const from = page * PAGE_SIZE;
   // Se pide una de más para saber si hay página siguiente, sin tener que hacer
   // una segunda consulta contando el total.
   const to = from + PAGE_SIZE;
 
-  let query = supabase.from('listings').select(LISTING_SELECT);
+  // `count: 'exact'` viene en la misma consulta y trae el total de
+  // publicaciones que cumplen los filtros, no las de esta página: es lo
+  // que deja decir "23 vehículos encontrados" sin una segunda consulta.
+  let query = supabase.from('listings').select(LISTING_SELECT, { count: 'exact' });
 
   if (scope === 'mine') {
     query = query.eq('seller_id', userId).order('created_at', { ascending: false });
   } else {
     // El muro: solo lo que está efectivamente disponible. Un aviso pausado o
     // ya vendido no tiene por qué ocupar lugar acá.
-    query = query.eq('status', 'published').order('published_at', { ascending: false });
+    query = query.eq('status', 'published');
+
+    // El muro filtrado es el mismo muro, no otra pantalla: la búsqueda del
+    // Sprint 4 recorta este listado en vez de reemplazarlo. Los filtros son
+    // los mismos que usa el asistente — ver `listing-filters.ts`.
+    const filtered = await applyListingFilters(supabase, query, filters);
+
+    // Un tipo o una provincia que no están en el catálogo: no hay resultados
+    // posibles, y devolver la página vacía es más honesto que ignorar el
+    // filtro y mostrar el muro entero como si nada.
+    if (!filtered) {
+      return { listings: [], page, has_more: false, total: 0 };
+    }
+
+    query = filtered.query.order('published_at', { ascending: false });
   }
 
-  const { data, error } = await query.range(from, to);
+  const { data, error, count } = await query.range(from, to);
 
   if (error) {
     throw new Error(`No se pudieron leer las publicaciones: ${error.message}`);
@@ -73,6 +92,7 @@ export async function listListings(
       .map((row) => presentListing(row as unknown as ListingRow, typesById)),
     page,
     has_more: hasMore,
+    total: count ?? rows.length,
   };
 }
 

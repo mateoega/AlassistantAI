@@ -43,7 +43,7 @@ Salió de revisar el objetivo del Sprint 1 antes de pasar al 2. El flujo estaba 
 - ✅ **Paginación del muro.** Cortaba en 100 publicaciones sin avisarle a nadie.
 - ✅ **Limpieza de fotos huérfanas.** Las fotos de formularios abandonados ya no se acumulan en Storage.
 
-## Sprint 2 — El asistente de IA para el comprador ✅ (actual)
+## Sprint 2 — El asistente de IA para el comprador ✅
 
 > **Desviación respecto de lo planeado.** Este sprint iba a ser "análisis de fotos": una función del sistema que le pega una etiqueta a la publicación. Al arrancarlo se replanteó para quién es la IA y pasó a ser **un asistente del comprador**. El motivo está en la [bitácora](../bitacora/bitacora.md) (2026-08-12): el que compra es el que está solo, y una herramienta que le señala defectos a quien publica es una herramienta que quien publica no va a usar.
 
@@ -66,14 +66,17 @@ En la pantalla de cada vehículo aparece un **precio de referencia**: qué se es
 
 **Lo que sigue sin hacer:** camiones, buses y cuatriciclos dependen solo de los avisos propios, porque no hay fuente externa gratuita y legible que los cubra. Y el **descargo de responsabilidad legal** sobre las estimaciones sigue sin definirse — ver [`para_mas_adelante.md`](para_mas_adelante.md).
 
-## Sprint 4 — Búsqueda, filtros y vista de comprador
+## Sprint 4 — Búsqueda, filtros y vista de comprador ⏳ (actual)
 
-La visualización pública de publicaciones se adelantó al Sprint 1. Lo que queda acá es todo lo que necesita quien **busca** un vehículo, no quien lo publica:
+La visualización pública de publicaciones se adelantó al Sprint 1. Lo que queda acá es todo lo que necesita quien **busca** un vehículo, no quien lo publica. Detalle en [`sprint4.md`](sprint4.md).
 
-- Búsqueda por texto y filtros: **tipo de vehículo** primero, más marca, año, rango de precio y ubicación. También filtrado por campos específicos de cada tipo (por ejemplo, cilindrada en motos).
+- ✅ **Búsqueda por texto y filtros** (tipo de vehículo, marca, provincia, moneda, precio, año y kilómetros), con la cantidad de resultados a la vista.
 
-  **Parte de esto ya está hecho.** El Sprint 2 construyó el motor de búsqueda (`app/backend/src/services/listing-search.ts`) para que el asistente pudiera buscar avisos, con todos esos filtros menos el de campos específicos. Lo que falta acá es la pantalla, no la consulta.
-- **Favoritos** — guardar los vehículos que a uno le interesaron y volver a verlos en una pantalla propia. Requiere una tabla nueva; es la primera funcionalidad pensada para el comprador y no para el vendedor.
+  *Desviación respecto de lo planeado:* iba a ser una pantalla de búsqueda y terminó siendo **una barra arriba del muro**. El que entra ya está mirando vehículos: mandarlo a un buscador aparte lo obliga a empezar de nuevo en una pantalla vacía. No existe la ruta `/buscar` — una búsqueda es el muro con parámetros (`/?q=corolla&tipo=auto`), lo que además hace que el botón "atrás" vuelva a los resultados.
+
+  El motor lo había construido el Sprint 2 para el asistente. No se reusó entero —devuelve texto corto para leer en una conversación, no tarjetas paginadas—: lo que se compartió es **qué significa cada filtro** (`app/backend/src/services/listing-filters.ts`), y se verificó que las dos puertas devuelven lo mismo ante el mismo pedido.
+- ⏳ **Filtrado por campos específicos de cada tipo** (por ejemplo, cilindrada en motos). Es lo único de la búsqueda que falta: esos campos viven dentro de la ficha `specs` y se consultan distinto que el resto.
+- ⏳ **Favoritos** — guardar los vehículos que a uno le interesaron y volver a verlos en una pantalla propia. Requiere una tabla nueva; es la primera funcionalidad pensada para el comprador y no para el vendedor.
 
 ## Sprint 5 — Mensajería interna
 

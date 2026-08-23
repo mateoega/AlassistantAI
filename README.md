@@ -2,7 +2,7 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 3 — la estimación de precio de mercado.** Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 4 — la búsqueda para el que compra.** Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -68,6 +68,7 @@ AIassistant/
 │   ├── sprint1.md             decisiones del Sprint 1
 │   ├── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
 │   ├── sprint3.md             decisiones del Sprint 3 (la estimación de precio)
+│   ├── sprint4.md             decisiones del Sprint 4 (la búsqueda en el muro)
 │   └── para_mas_adelante.md   lo postergado hasta ver si la app se usa, y qué lo destraba
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL
