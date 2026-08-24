@@ -9,14 +9,7 @@ import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { PriceEstimatePanel } from '@/components/PriceEstimate';
 import { Badge, Button, Card, Notice, Spinner, StatusBadge } from '@/components/ui';
-import {
-  formatDate,
-  formatKilometers,
-  formatLocation,
-  formatPrice,
-  phoneUrl,
-  whatsappUrl,
-} from '@/lib/format';
+import { formatDate, formatKilometers, formatLocation, formatPrice } from '@/lib/format';
 import type { Listing, ListingStatus } from '@/lib/types';
 
 export default function VehiculoPage() {
@@ -53,11 +46,20 @@ export default function VehiculoPage() {
     }
   }, [listingId]);
 
+  /**
+   * Quién está mirando, y no el objeto de sesión entero: la librería de
+   * Supabase lo reemplaza cada vez que renueva el token o cuando se vuelve a
+   * la pestaña, y atado a él, la ficha se volvía a pedir sola y quedaba
+   * parpadeando en "Cargando…". Se encontró en el Sprint 5, verificando la
+   * mensajería.
+   */
+  const userId = session?.user?.id ?? null;
+
   useEffect(() => {
-    if (session && listingId) {
+    if (userId && listingId) {
       void load();
     }
-  }, [session, listingId, load]);
+  }, [userId, listingId, load]);
 
   async function changeStatus(status: ListingStatus) {
     setWorking(true);
@@ -324,11 +326,11 @@ export default function VehiculoPage() {
               </p>
             )}
 
-            {isOwner && !listing.seller?.phone && (
+            {isOwner && (
               <p className="text-sm text-muted">
-                No cargaste tu teléfono, así que nadie puede contactarte.{' '}
-                <Link href="/perfil" className="font-medium text-brand-deep hover:underline">
-                  Agregalo en tu perfil
+                Las consultas por este vehículo te llegan a{' '}
+                <Link href="/mensajes" className="font-medium text-brand-deep hover:underline">
+                  Mensajes
                 </Link>
                 .
               </p>
@@ -341,51 +343,50 @@ export default function VehiculoPage() {
 }
 
 /**
- * Botones de contacto.
+ * El botón que abre la conversación con el vendedor.
  *
  * Es la salida del embudo: sin esto, un comprador interesado se queda mirando
- * la pantalla sin poder hacer nada. El mensaje de WhatsApp viene escrito para
- * que el vendedor sepa de entrada de qué vehículo le hablan.
+ * la pantalla sin poder hacer nada. Hasta el Sprint 5 era un enlace a WhatsApp
+ * con el mensaje ya escrito, y estaba marcado como provisorio desde el día que
+ * se puso: sacaba de la plataforma a la persona justo en el momento en que
+ * decidía.
  *
- * Provisorio hasta que exista la mensajería interna de la plataforma.
+ * Apretarlo no manda ningún mensaje: abre la conversación —o vuelve a la que
+ * ya existía— y ahí se escribe. Consultar dos veces el mismo aviso sigue la
+ * charla anterior en vez de empezar otra.
  */
 function ContactSeller({ listing }: { listing: Listing }) {
-  const phone = listing.seller?.phone ?? null;
+  const router = useRouter();
+  const [opening, setOpening] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
 
-  if (!phone) {
-    return (
-      <p className="text-sm text-muted">Este vendedor todavía no cargó un teléfono de contacto.</p>
-    );
+  async function open() {
+    setOpening(true);
+    setProblem(null);
+
+    try {
+      const data = await api<{ id: string }>('/api/conversations', {
+        method: 'POST',
+        body: { listing_id: listing.id },
+      });
+      router.push(`/mensajes/${data.id}`);
+    } catch (error) {
+      setProblem(
+        error instanceof ApiError ? error.message : 'No se pudo abrir la conversación.',
+      );
+      setOpening(false);
+    }
   }
-
-  const message =
-    `Hola! Vi tu ${listing.brand} ${listing.model} ${listing.year} publicado en AIassistant ` +
-    `por ${formatPrice(listing.price, listing.currency)} y me interesa.`;
-
-  const whatsapp = whatsappUrl(phone, message);
-  const call = phoneUrl(phone);
 
   return (
     <div className="space-y-2">
-      {whatsapp && (
-        <a
-          href={whatsapp}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block rounded-lg bg-brand-deep px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
-        >
-          Escribir por WhatsApp
-        </a>
-      )}
-
-      {call && (
-        <a
-          href={call}
-          className="block rounded-lg border border-line px-5 py-2.5 text-center text-sm text-body transition-colors hover:border-brand"
-        >
-          Llamar al {phone}
-        </a>
-      )}
+      <Button full disabled={opening} onClick={() => void open()}>
+        {opening ? 'Abriendo…' : 'Consultar al vendedor'}
+      </Button>
+      <p className="text-center text-xs text-muted">
+        La conversación queda dentro de AIassistant, junto a este aviso.
+      </p>
+      {problem && <Notice tone="alert" title={problem} />}
     </div>
   );
 }

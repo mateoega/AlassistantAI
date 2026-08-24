@@ -27,6 +27,11 @@ export type { SpecDisplay };
  * ficha. Se exporta porque los favoritos muestran las mismas publicaciones:
  * si la tarjeta del muro y la de favoritos se armaran con consultas distintas,
  * tarde o temprano una mostraría algo que la otra no.
+ *
+ * EL TELÉFONO DEL VENDEDOR NO VIAJA ACÁ. Viajaba hasta el Sprint 5, cuando la
+ * ficha lo usaba para armar el enlace a WhatsApp. Ahora el contacto es la
+ * mensajería interna, así que mandar el número de teléfono de alguien en cada
+ * aviso del muro sería repartir un dato personal que la pantalla ya no muestra.
  */
 export const LISTING_SELECT = `
   id, seller_id, brand, model, year, price, currency,
@@ -34,7 +39,7 @@ export const LISTING_SELECT = `
   status, published_at, sold_at, created_at, updated_at,
   vehicle_type:vehicle_types ( id, slug, name, name_plural ),
   province:provinces ( id, slug, name ),
-  seller:profiles ( id, display_name, phone ),
+  seller:profiles ( id, display_name ),
   photos:listing_photos ( id, storage_path, sort_order )
 `;
 
@@ -410,7 +415,7 @@ interface ListingRow {
     name_plural: string;
   } | null;
   province: { id: string; slug: string; name: string } | null;
-  seller: { id: string; display_name: string | null; phone: string | null } | null;
+  seller: { id: string; display_name: string | null } | null;
   photos: { id: string; storage_path: string; sort_order: number }[] | null;
 }
 

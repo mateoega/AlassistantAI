@@ -2,7 +2,7 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 4 — la búsqueda para el que compra.** Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 5 — la conversación entre comprador y vendedor, adentro de la plataforma.** Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -54,6 +54,8 @@ La IA de AIassistant trabaja **para quien compra, no para quien vende**. El que 
 2. **Chat del asistente.** Disponible en toda la aplicación. Sabe qué aviso hay en pantalla, puede citar su análisis y puede buscar entre las publicaciones que están a la venta.
 3. **Estimación de precio** *(Sprint 3)*. Un rango de lo que se está pidiendo por vehículos parecidos, con la lista de avisos con los que se comparó a la vista. No dice si conviene comprar: dice contra qué se comparó y qué dio. Desde este sprint, el asistente puede hablar de precios — pero solo cuando existe una estimación para ese vehículo.
 
+**La IA no entra en los mensajes** *(Sprint 5)*. La conversación entre comprador y vendedor es privada: nadie más que sus dos participantes la lee, tampoco el asistente. Leer charlas ajenas para "ayudar" es exactamente lo que esta plataforma no hace.
+
 ---
 
 ## Estructura del proyecto
@@ -69,6 +71,7 @@ AIassistant/
 │   ├── sprint2.md             decisiones del Sprint 2 (el asistente de IA)
 │   ├── sprint3.md             decisiones del Sprint 3 (la estimación de precio)
 │   ├── sprint4.md             decisiones del Sprint 4 (la búsqueda en el muro)
+│   ├── sprint5.md             decisiones del Sprint 5 (la mensajería interna)
 │   └── para_mas_adelante.md   lo postergado hasta ver si la app se usa, y qué lo destraba
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL

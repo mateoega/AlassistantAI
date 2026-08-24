@@ -97,9 +97,13 @@ export default function PerfilPage() {
             />
           </Field>
 
+          {/* Desde el Sprint 5 el contacto es por mensajes dentro de la
+              plataforma, así que este número ya no sale en ningún aviso. Se
+              sigue pudiendo cargar para tenerlo a mano y pasarlo en una
+              conversación, pero nadie lo ve sin que uno se lo dé. */}
           <Field
             label="Teléfono de contacto"
-            hint="Con característica, sin el 0 y sin el 15. Es el número al que te van a escribir por WhatsApp: sin esto, un comprador no tiene cómo contactarte."
+            hint="Opcional y privado: no aparece en tus publicaciones. Las consultas te llegan a Mensajes; el teléfono es para cuando quieras pasárselo a alguien en la conversación."
           >
             <input
               type="tel"

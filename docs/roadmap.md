@@ -82,11 +82,29 @@ La visualización pública de publicaciones se adelantó al Sprint 1. Lo que que
 
   **Son privados y no se pueden contar**: no hay forma de saber cuántas personas guardaron un aviso, ni siquiera desde la plataforma. Se descartó el contador público de "23 personas guardaron esto" porque sirve para apurar al que duda. Si el vendedor pausa un aviso guardado, la pantalla dice cuántos guardados quedaron sin mostrar en vez de hacerlos desaparecer.
 
-## Sprint 5 — Mensajería interna ⏳ (el que sigue)
+## Sprint 5 — Mensajería interna ✅
 
-Chat entre comprador y vendedor dentro de la plataforma, en reemplazo del contacto por WhatsApp que se sumó en el Sprint 1.6.
+Chat entre comprador y vendedor dentro de la plataforma. Detalle en [`sprint5.md`](sprint5.md).
 
-Es un sprint propio y no un agregado: necesita tabla de conversaciones y mensajes con sus reglas de acceso, pantalla de conversaciones, estado de leído/no leído y avisos de mensajes nuevos. Se decidió postergarlo para no retrasar la IA, que es lo que diferencia a la plataforma; el enlace a WhatsApp cubre la necesidad mientras tanto.
+- ✅ **Una conversación por vehículo y comprador**, con la lista en `/mensajes`, el hilo con el vehículo siempre a la vista, leído/no leído y globito de mensajes nuevos en las dos navegaciones.
+
+  Dos decisiones quedaron adentro de la base y no del código: **el leído vive en su propia tabla** —las reglas de acceso de Postgres son por fila y no por columna, así que dos columnas en la misma conversación dejarían a cada uno pisar la marca del otro—, y **los mensajes no se editan ni se borran**, porque lo dicho en una negociación es prueba para el otro.
+
+  La conversación **sobrevive al aviso**: guarda el título del vehículo copiado del día que empezó, así que si el vendedor lo pausa o lo borra la charla se sigue leyendo. Es la diferencia con los favoritos, donde borrar el aviso borra el favorito.
+- ✅ **El contacto por WhatsApp se sacó del todo**, como estaba previsto desde que se puso en el Sprint 1.6. Mientras el botón esté, la conversación se da afuera y todo lo que la plataforma sabe del vehículo —el análisis, la estimación— se queda de este lado sin que nadie lo mire.
+
+  *Consecuencia asumida:* al vendedor le llegan las consultas **solo si entra a la aplicación**. No hay aviso por mail ni notificación al celular, y es la deuda más clara que deja el sprint.
+- ✅ **El teléfono del vendedor dejó de viajar en cada publicación.** Iba en cada aviso del muro para armar el enlace de WhatsApp; sin ese enlace, seguir mandándolo sería repartir un dato personal que ninguna pantalla muestra. Sigue en el perfil, ahora opcional y privado.
+
+**Lo que no hace:** no avisa fuera de la aplicación, no deja mandar fotos en un mensaje y no tiene forma de denunciar ni bloquear a alguien. Lo último **no puede faltar el día que la use gente que no conocemos** — ver [`para_mas_adelante.md`](para_mas_adelante.md).
+
+---
+
+## Lo que sigue — ponerla online
+
+Con el Sprint 5 terminan los sprints planificados: el flujo cierra de punta a punta para el que publica y para el que compra, con la IA y la estimación de precio en el medio.
+
+Lo que viene no es un sprint más de funcionalidades, sino la decisión tomada el 2026-08-21: **poner la aplicación online y mirar si se usa.** Dos cosas hay que resolver antes de que entre gente que no conocemos, y las dos están en [`para_mas_adelante.md`](para_mas_adelante.md): el **descargo de responsabilidad** sobre las estimaciones y la forma de **denunciar o bloquear** a alguien en los mensajes.
 
 ---
 

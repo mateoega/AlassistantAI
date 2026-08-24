@@ -43,42 +43,53 @@ export function groupThousands(digits: string): string {
 }
 
 /**
- * Arma el enlace de WhatsApp a partir del teléfono cargado en el perfil.
- *
- * WhatsApp necesita el número en formato internacional y sin símbolos. Acá se
- * asume Argentina (+54) cuando el vendedor no puso código de país, y se agrega
- * el 9 que los celulares argentinos requieren.
- *
- * Es una conversión de mejor esfuerzo, no infalible: si alguien escribe el
- * teléfono con el 0 de larga distancia o el 15, el enlace puede salir mal. Por
- * eso la pantalla de perfil pide explícitamente el formato correcto.
- *
- * Devuelve null si el número es demasiado corto para ser real.
+ * La hora de un mensaje: "14:35".
  */
-export function whatsappUrl(phone: string | null, message: string): string | null {
-  if (!phone) return null;
-
-  let digits = phone.replace(/\D/g, '');
-
-  if (digits.length < 8) return null;
-
-  digits = digits.replace(/^00/, '');
-
-  if (!digits.startsWith('54')) {
-    digits = `54${digits.replace(/^0/, '')}`;
-  }
-
-  // Los celulares argentinos van como 54 9 + característica + número.
-  if (!digits.startsWith('549')) {
-    digits = `549${digits.slice(2)}`;
-  }
-
-  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+export function formatTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
 }
 
-/** Enlace para llamar. Usa el número tal como lo cargó el vendedor. */
-export function phoneUrl(phone: string | null): string | null {
-  if (!phone) return null;
-  const cleaned = phone.replace(/[^\d+]/g, '');
-  return cleaned.length >= 6 ? `tel:${cleaned}` : null;
+/**
+ * Cuándo fue algo, contado como lo cuenta una persona: "hace 5 min", "hace
+ * 2 h", "ayer", y de ahí en adelante la fecha.
+ *
+ * En una bandeja de entrada lo que importa es qué tan reciente es cada
+ * conversación comparada con las otras, no el minuto exacto. La fecha completa
+ * aparece igual dentro del hilo, en cada mensaje.
+ */
+export function formatRelativeTime(iso: string): string {
+  const then = new Date(iso);
+  const minutes = Math.floor((Date.now() - then.getTime()) / 60_000);
+
+  if (minutes < 1) return 'recién';
+  if (minutes < 60) return `hace ${minutes} min`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours} h`;
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'ayer';
+  if (days < 7) return `hace ${days} días`;
+
+  return then.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+}
+
+/**
+ * El día de un mensaje, para el separador del hilo: "hoy", "ayer" o la fecha.
+ */
+export function formatDayLabel(iso: string): string {
+  const date = new Date(iso);
+  const today = new Date();
+  const days = Math.round(
+    (startOfDay(today).getTime() - startOfDay(date).getTime()) / 86_400_000,
+  );
+
+  if (days === 0) return 'Hoy';
+  if (days === 1) return 'Ayer';
+
+  return date.toLocaleDateString('es-AR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function startOfDay(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }

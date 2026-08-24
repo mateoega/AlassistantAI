@@ -581,3 +581,60 @@ Se verificó que el asistente siga andando después de tocar ese módulo compart
 ### Cómo se verificó todo lo demás
 
 Contra la base y con la aplicación andando: motos enduro desde 140cc (2 de 10), buses con aire y 40 asientos o más (2, queda afuera el minibús de 19), autos automáticos desde 1.6 litros (7, con los decimales funcionando), camiones volcadores de 3 ejes (ninguno — y se comprobó que cada filtro por separado da 1, así que el vacío es real). Cambiar el tipo de vehículo borra los filtros del tipo anterior. El botón "atrás" vuelve a los resultados con la ficha puesta. Sin desborde horizontal a 375px, tres columnas a 1280, y sin errores de consola en una pestaña limpia.
+
+## 2026-08-23 — Sprint 5: la conversación entra a la plataforma, y WhatsApp se va
+
+Mensajería interna entre comprador y vendedor: `/mensajes` con la bandeja de entrada, el hilo con el vehículo siempre a la vista, leído/no leído y globito de mensajes nuevos. Reemplaza el enlace a WhatsApp que el Sprint 1.6 había puesto **marcado como provisorio desde el día que se puso**.
+
+### Se sacó WhatsApp del todo, y no como una opción más
+
+La alternativa cómoda era dejar el botón abajo, de segunda opción. Se descartó por un motivo concreto: **mientras el botón esté, la conversación se da afuera**, y todo lo que la plataforma sabe del vehículo —el análisis de las fotos, la estimación de precio— se queda de este lado sin que nadie lo mire, justo en el momento en que se decide.
+
+Lo que eso cuesta, asumido y anotado: **al vendedor le llegan las consultas solo si entra a la aplicación.** No hay mail ni notificación. Es la única ventaja real que tenía WhatsApp y quedó como el primer punto a resolver si la mensajería se usa.
+
+### El teléfono dejó de viajar en cada aviso
+
+Efecto colateral que no estaba en el plan y salió de mirar qué quedaba sin dueño: el teléfono del vendedor viajaba dentro de **cada publicación del muro** porque la ficha lo necesitaba para armar el enlace de WhatsApp. Sin ese enlace no lo mostraba ninguna pantalla, así que seguir mandándolo era repartir veinticuatro teléfonos por página a cualquiera con una cuenta.
+
+Salió de la consulta. No hizo falta tocar la base: el dato sigue guardado y el perfil lo sigue pidiendo, ahora declarado **opcional y privado**.
+
+### Dos decisiones que viven en la base y no en el código
+
+**El leído va en su propia tabla.** Lo natural era una columna para cada lado adentro de la conversación, y no se puede hacer seguro: las políticas de Postgres se escriben **por fila, no por columna**, así que la política que deja al comprador actualizar "su" columna lo deja también pisar la del vendedor y apagarle el globito. Con una tabla aparte y el usuario en la clave, la regla vuelve a ser de fila.
+
+Se midió, no se supuso: el comprador intentando adelantar la marca del vendedor afecta **0 filas**, e insertando una a su nombre la base contesta `42501 new row violates row-level security policy`. La marca del vendedor quedó intacta y la propia sí se puede mover.
+
+**Los mensajes no se editan ni se borran.** No hay política de UPDATE ni de DELETE sobre `messages`: lo dicho en una negociación es prueba para el otro. Verificado desde el cliente del usuario — editar y borrar un mensaje propio devuelven cero filas.
+
+**La conversación sobrevive al aviso.** Guarda el título del vehículo copiado del día que empezó la charla, así que si el vendedor pausa o borra el aviso la conversación se sigue leyendo y dice de qué era. Es lo contrario de los favoritos, donde borrar el aviso borra el favorito: un favorito es un puntero a un aviso, una conversación es algo que dos personas dijeron.
+
+### El error que solo se veía abriendo la pantalla
+
+El hilo quedaba **parpadeando en "Cargando…"** y no se llegaba a leer nunca. Andaba en las pruebas contra la API, compilaba, y no había ningún error en la consola.
+
+La causa: el refresco estaba atado al **objeto de sesión** de la librería de Supabase, y esa librería lo reemplaza sola cada vez que renueva el token o cuando se vuelve a la pestaña. Cada reemplazo volvía a pedir el hilo desde cero y volvía a poner el cartel de cargando.
+
+Se arregló en dos partes, y las dos importan: el efecto se ata a **quién** está mirando (`session.user.id`), no al objeto; y el cartel de "Cargando…" aparece **solo mientras no hay nada que mostrar** — si el hilo ya está en pantalla, un refresco de fondo no lo reemplaza por un cartel.
+
+**El mismo error estaba en la ficha del vehículo desde el Sprint 1** y nadie lo había visto: ahí el refresco silencioso no molestaba lo suficiente como para notarlo. Se arregló igual, porque es donde vive el botón nuevo.
+
+**Cómo apareció:** instrumentando la pantalla con registros de cada render y cada corrida del efecto, después de que mirar la consola y la red no alcanzara. La red mostraba pedidos cada 2 segundos que nadie había pedido.
+
+### Cómo se verificó
+
+Con un script contra la base y el backend reales, entrando como **tres usuarios distintos** —vendedor, comprador y un tercero— sin usar contraseñas: se pide un enlace de acceso con la clave de servicio y se llama a la API como lo haría el navegador. **30 comprobaciones, todas en verde**, entre ellas:
+
+- Consultar dos veces el mismo aviso sigue la misma conversación, y no abre una nueva.
+- Al vendedor le aparece con 1 sin leer; leerla la apaga; contestar cuenta como haber leído.
+- Un tercero no puede abrir la conversación (404), ni escribir en ella (404), ni verla desde la base, ni **contar** cuántos preguntaron por un aviso.
+- Un aviso pausado no se puede consultar, pero la conversación que ya existía se sigue leyendo y dice de qué vehículo era.
+
+Y con la aplicación andando: se abrió una conversación desde la ficha de un vehículo —lleva al hilo vacío, sin mandar ningún mensaje automático—, se escribió con el botón y con la tecla Enter, el mensaje apareció en el acto, y el globito de la navegación pasó de vacío a 1 y volvió a apagarse al abrir el hilo.
+
+### La navegación se quedó sin lugar, por tercera vez
+
+Sprint 1.6, Sprint 4 y ahora. Con "Mensajes" eran **seis botones en la barra de celular**, y seis en 375px son 62px cada uno, con el texto cortado.
+
+Salió **"Mi perfil"**, que pasó a un botón chico arriba a la derecha —en celular el encabezado solo tenía el logo—. Es lo que menos se toca de los seis. Medido a 375, 767 y 768px: **exactamente una barra visible, cinco botones de 75px justos, y ningún desborde horizontal.**
+
+Un detalle más que salió de mirar: el globito decía **"1 mensajes sin leer"**. Ahora dice "1 mensaje" cuando es uno.

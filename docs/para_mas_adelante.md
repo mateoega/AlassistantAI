@@ -40,12 +40,29 @@ Cada punto está escrito igual: **qué es**, **por qué no ahora** y **qué señ
 
 **Qué señal lo dispara.** El día que salga de pruebas y la use gente que no conocemos. El descargo de responsabilidad conviene resolverlo **antes** de ese día, no después: es texto, no desarrollo, y es lo más barato de la lista.
 
-## 5. Mejoras de producto que hoy no bloquean nada
+## 5. Denunciar y bloquear en los mensajes
+
+**Qué es.** El Sprint 5 abrió un canal de mensajes entre desconocidos y no dejó forma de cortarlo: no se puede bloquear a alguien ni denunciar una conversación.
+
+**Por qué no ahora.** Mientras la aplicación esté en pruebas, entre gente conocida, no hay a quién bloquear. Construirlo antes sería moderar una comunidad que todavía no existe.
+
+**Qué señal lo dispara.** El día que la use gente que no conocemos, y **antes de ese día, no después**. Va junto con el punto 6: son las dos cosas que hay que resolver para salir de pruebas. Es lo más barato de construir de esta lista después del descargo, y lo más caro de no tener.
+
+## 6. Avisar de un mensaje nuevo fuera de la aplicación
+
+**Qué es.** Hoy, a quien le escriben se entera solo si entra a AIassistant. No hay mail ni notificación al celular. Es la única ventaja real que tenía el enlace a WhatsApp que el Sprint 5 sacó.
+
+**Por qué no ahora.** Mandar mails necesita un servicio de envío contratado y configurado, y un mail mal armado termina en la carpeta de correo no deseado, que es peor que no mandarlo. Con poca gente usando la aplicación, el costo de entrar a mirar es bajo.
+
+**Qué señal lo dispara.** Que haya conversaciones empezadas que se queden sin respuesta más de un día. Ese número se puede mirar en la base sin construir nada.
+
+## 7. Mejoras de producto que hoy no bloquean nada
 
 Ninguna de estas impide usar la aplicación. Todas se hacen mejor con datos de uso real que adivinando hoy.
 
 - **Administrar los tipos de vehículo desde la propia app.** Hoy un tipo nuevo se carga desde el panel de Supabase. Debería poder hacerlo alguien del equipo desde una pantalla de administración. *Señal:* que haga falta crear tipos seguido, o que lo tenga que hacer alguien que no es técnico.
 - **Catálogo de marcas y modelos por tipo.** Hoy la marca sale de un catálogo pero **el modelo se escribe libre**. Un catálogo cerrado mejoraría la estimación de precio (comparar "Corolla" con "corola" hoy no es automático) y la búsqueda. *Señal:* ver en los avisos reales cuánto se escribe mal el mismo modelo. Recién ahí se sabe si el problema es grande o imaginario.
+- **Mandar fotos en un mensaje.** "Mandame una foto del motor" es de las preguntas más comunes y hoy se contesta con palabras. La subida a Storage existe desde el Sprint 1; falta decidir quién ve esas fotos y por cuánto tiempo. *Señal:* que aparezca pedido en las conversaciones reales.
 - **Verificación de documentación legal del vehículo.** *Señal:* que aparezca como pedido de los usuarios, o como diferencial necesario frente a la competencia.
 - **Historial de mantenimiento.** *Señal:* misma que la anterior.
 - **Versión mobile.** La aplicación ya se ve bien en un celular; esto sería una app nativa. *Señal:* que el tráfico sea mayoritariamente de celular **y** que la web se quede corta.
@@ -54,4 +71,6 @@ Ninguna de estas impide usar la aplicación. Todas se hacen mejor con datos de u
 
 ## Lo que NO va acá
 
-Esto no es el depósito de todo lo que falta. Lo que ya está planificado con sprint asignado vive en el [roadmap](roadmap.md) — hoy, la **búsqueda y filtros con favoritos** (Sprint 4) y la **mensajería interna** (Sprint 5). Este archivo es solo para lo que se decidió postergar **hasta tener señales de uso real**.
+Esto no es el depósito de todo lo que falta. Lo que ya está planificado con sprint asignado vive en el [roadmap](roadmap.md), donde con el **Sprint 5** terminaron los sprints previstos. Este archivo es solo para lo que se decidió postergar **hasta tener señales de uso real**.
+
+Dos de los puntos de arriba tienen fecha aunque no tengan sprint: el **descargo de responsabilidad** (punto 4) y **denunciar y bloquear** (punto 5) se resuelven *antes* de que entre gente que no conocemos, no después.

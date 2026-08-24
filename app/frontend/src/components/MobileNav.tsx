@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from './SessionProvider';
+import { useMessages } from './MessagesProvider';
 
 /**
  * Navegación inferior, solo en celular.
@@ -15,9 +16,15 @@ import { useSession } from './SessionProvider';
  * en el Sprint 4, la barra de arriba pasó a necesitar más ancho del que hay
  * en esa franja intermedia. El corte de las dos barras es el mismo número, así
  * que siempre hay exactamente una navegación visible.
+ *
+ * SON CINCO Y SIGUEN SIENDO CINCO. "Mensajes" entró en el Sprint 5 en el lugar
+ * de "Perfil", que se fue a la barra de arriba. Seis botones en 375px son 62px
+ * cada uno: entran a la fuerza y con el texto cortado. El perfil es lo que
+ * menos se toca de los seis, así que es el que se va.
  */
 export function MobileNav() {
   const { session } = useSession();
+  const { unread } = useMessages();
   const pathname = usePathname();
 
   if (!session || pathname === '/login') {
@@ -46,12 +53,18 @@ export function MobileNav() {
           icon={<HeartIcon />}
         />
         <Item
+          href="/mensajes"
+          label="Mensajes"
+          active={pathname.startsWith('/mensajes')}
+          icon={<ChatIcon />}
+          badge={unread}
+        />
+        <Item
           href="/mis-publicaciones"
           label="Mis avisos"
           active={pathname.startsWith('/mis-publicaciones')}
           icon={<ListIcon />}
         />
-        <Item href="/perfil" label="Perfil" active={pathname === '/perfil'} icon={<UserIcon />} />
       </ul>
     </nav>
   );
@@ -62,11 +75,14 @@ function Item({
   label,
   active,
   icon,
+  badge,
 }: {
   href: string;
   label: string;
   active: boolean;
   icon: React.ReactNode;
+  /** Mensajes sin leer. `null` mientras no se sabe: ahí no se dibuja nada. */
+  badge?: number | null;
 }) {
   return (
     <li className="flex-1">
@@ -78,7 +94,19 @@ function Item({
           active ? 'font-semibold text-brand-deep' : 'text-muted',
         ].join(' ')}
       >
-        {icon}
+        <span className="relative">
+          {icon}
+          {/* El globito se apoya sobre el ícono en vez de ocupar lugar al lado:
+              la barra ya está justa de ancho. */}
+          {Boolean(badge) && (
+            <span
+              aria-label={badge === 1 ? '1 mensaje sin leer' : `${badge} mensajes sin leer`}
+              className="absolute -right-2 -top-1 rounded-full bg-brand-deep px-1.5 py-0.5 text-[10px] font-semibold leading-none text-white"
+            >
+              {badge! > 9 ? '9+' : badge}
+            </span>
+          )}
+        </span>
         {label}
       </Link>
     </li>
@@ -134,11 +162,10 @@ function ListIcon() {
   );
 }
 
-function UserIcon() {
+function ChatIcon() {
   return (
     <svg {...iconProps}>
-      <circle cx="12" cy="8" r="4" />
-      <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
+      <path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
     </svg>
   );
 }

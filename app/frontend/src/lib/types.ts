@@ -58,6 +58,13 @@ export interface Brand {
   vehicle_type_ids: string[];
 }
 
+/**
+ * El perfil propio, tal como lo devuelve `/api/profile`.
+ *
+ * El teléfono es solo para uno mismo: desde el Sprint 5 no viaja dentro de las
+ * publicaciones, porque el contacto pasó a ser la mensajería interna y no hay
+ * ninguna pantalla que lo muestre a otro.
+ */
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -161,7 +168,7 @@ export interface Listing {
   sold_at: string | null;
   created_at: string;
   vehicle_type: Pick<VehicleType, 'id' | 'slug' | 'name' | 'name_plural'> | null;
-  seller: Profile | null;
+  seller: Pick<Profile, 'id' | 'display_name'> | null;
   photos: ListingPhoto[];
   specs: Record<string, string | number | boolean>;
   /** La ficha específica ya traducida a "etiqueta: valor", lista para mostrar. */
@@ -222,3 +229,52 @@ export interface PriceEstimateUnavailable {
 }
 
 export type PriceEstimate = PriceEstimateAvailable | PriceEstimateUnavailable;
+
+/**
+ * La mensajería interna del Sprint 5.
+ *
+ * Su forma la define `app/backend/src/services/conversations.ts`. Dos detalles
+ * que no se ven en los nombres:
+ *
+ *   `listing_title` viene copiado del día que empezó la charla, así que la
+ *   conversación se puede mostrar aunque el aviso ya no exista.
+ *
+ *   `listing` en `null` con `listing_id` cargado significa que el vendedor lo
+ *   pausó; con `listing_id` en `null`, que lo borró. Son cosas distintas y la
+ *   pantalla las dice distinto.
+ */
+export interface ConversationListing {
+  id: string;
+  brand: string;
+  model: string;
+  year: number;
+  price: number | null;
+  currency: 'ARS' | 'USD';
+  status: ListingStatus;
+  photo_url: string | null;
+}
+
+export interface Conversation {
+  id: string;
+  listing_id: string | null;
+  listing_title: string;
+  /** Qué soy yo acá: el que preguntó o el que publicó. */
+  role: 'buyer' | 'seller';
+  counterpart: { id: string; display_name: string | null };
+  last_message: { body: string; mine: boolean } | null;
+  last_message_at: string;
+  unread_count: number;
+  listing: ConversationListing | null;
+}
+
+export interface ConversationMessage {
+  id: string;
+  body: string;
+  /** Si lo escribí yo. Define de qué lado de la pantalla va. */
+  mine: boolean;
+  created_at: string;
+}
+
+export interface ConversationThread extends Conversation {
+  messages: ConversationMessage[];
+}
