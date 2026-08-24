@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { photoPublicUrl } from '../config/env.js';
 import { HttpError } from '../lib/http-error.js';
+import { getModerationState, type ModerationState } from './moderation.js';
 
 /**
  * La mensajería interna: la conversación entre quien pregunta por un vehículo
@@ -51,6 +52,15 @@ interface ConversationListing {
 
 export interface ConversationThread extends ConversationSummary {
   messages: ThreadMessage[];
+  /**
+   * Si hay un bloqueo de por medio y si esta conversación ya fue denunciada.
+   *
+   * Viaja con el hilo y no con la lista: la bandeja de entrada no necesita
+   * saberlo —una conversación bloqueada se sigue leyendo igual— y preguntarlo
+   * por cada fila de la lista sería un puñado de consultas para dibujar algo
+   * que no se muestra.
+   */
+  moderation: ModerationState;
 }
 
 interface ThreadMessage {
@@ -190,6 +200,40 @@ async function findConversation(
   return data ? (data as { id: string }).id : null;
 }
 
+/**
+ * Quién está del otro lado de una conversación.
+ *
+ * Es lo único que hace falta para bloquear o desbloquear, y por eso no se
+ * pide el hilo entero: traer todos los mensajes para leer un identificador
+ * sería pedir la conversación completa para no mirarla.
+ *
+ * Si la conversación no es de este usuario, la base no la devuelve. Desde
+ * afuera, no existe.
+ */
+export async function getCounterpartId(
+  supabase: SupabaseClient,
+  userId: string,
+  conversationId: string,
+): Promise<string> {
+  const { data, error } = await supabase
+    .from('conversations')
+    .select('buyer_id, seller_id')
+    .eq('id', conversationId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`No se pudo leer la conversación: ${error.message}`);
+  }
+
+  if (!data) {
+    throw HttpError.notFound('Esa conversación no existe o no es tuya.');
+  }
+
+  const row = data as { buyer_id: string; seller_id: string };
+
+  return row.buyer_id === userId ? row.seller_id : row.buyer_id;
+}
+
 /** Las conversaciones del usuario, las últimas primero. */
 export async function listConversations(
   supabase: SupabaseClient,
@@ -249,8 +293,16 @@ export async function getConversation(
     throw new Error(`No se pudieron leer los mensajes: ${messagesError.message}`);
   }
 
+  const moderation = await getModerationState(
+    supabase,
+    userId,
+    conversationId,
+    summary!.counterpart.id,
+  );
+
   return {
     ...summary!,
+    moderation,
     messages: ((messages ?? []) as { id: string; body: string; sender_id: string; created_at: string }[]).map(
       (message) => ({
         id: message.id,
@@ -283,11 +335,14 @@ export async function sendMessage(
     .select('id, body, sender_id, created_at')
     .maybeSingle();
 
-  // 42501 es "la base rechazó la escritura por sus reglas de acceso": se está
-  // escribiendo en una conversación ajena, o en una que no existe. Para quien
-  // lo intentó son la misma cosa, y ninguna es un error del servidor.
+  // 42501 es "la base rechazó la escritura por sus reglas de acceso". Desde el
+  // Sprint 6 hay dos motivos posibles: la conversación no es de este usuario, o
+  // hay un bloqueo de por medio. Distinguirlos importa — un "no existe" sobre
+  // una conversación que está en pantalla es un error incomprensible.
   if (error?.code === '42501') {
-    throw HttpError.notFound('Esa conversación no existe o no es tuya.');
+    throw (await isBlocked(supabase, userId, conversationId))
+      ? HttpError.badRequest('No se puede escribir en esta conversación.')
+      : HttpError.notFound('Esa conversación no existe o no es tuya.');
   }
 
   if (error) {
@@ -309,6 +364,23 @@ export async function sendMessage(
     mine: message.sender_id === userId,
     created_at: message.created_at,
   };
+}
+
+/**
+ * Si el rechazo vino de un bloqueo.
+ *
+ * NO DICE QUIÉN BLOQUEÓ A QUIÉN, ni acá ni en la pantalla. Quien bloqueó ya lo
+ * sabe, y al otro enterarse no le sirve para nada bueno.
+ */
+async function isBlocked(
+  supabase: SupabaseClient,
+  userId: string,
+  conversationId: string,
+): Promise<boolean> {
+  const counterpartId = await getCounterpartId(supabase, userId, conversationId);
+  const state = await getModerationState(supabase, userId, conversationId, counterpartId);
+
+  return state.blocked;
 }
 
 function parseBody(raw: unknown): string {

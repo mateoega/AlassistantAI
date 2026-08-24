@@ -216,6 +216,46 @@ export function buildSpecFilters(
   return filters;
 }
 
+/**
+ * Un filtro de ficha pedido por el asistente, todavía sin validar: la clave es
+ * la que dijo el modelo y el valor viene como texto.
+ *
+ * No es lo mismo que `SpecFilter`. Un `SpecRequest` es una intención; un
+ * `SpecFilter` ya pasó por el catálogo.
+ */
+export interface SpecRequest {
+  key: string;
+  op: 'eq' | 'gte' | 'lte';
+  value: string;
+}
+
+/**
+ * Lo que el asistente pidió filtrar de la ficha, pasado por el catálogo.
+ *
+ * POR QUÉ NO TIENE VALIDACIÓN PROPIA
+ *
+ *   Traduce cada pedido al mismo nombre de parámetro que usaría la dirección
+ *   (`f_engine_displacement_cc_min=250`) y deja que lo valide `buildSpecFilters`,
+ *   que es la función que ya usa el muro. Así las dos puertas de entrada no solo
+ *   comparten qué significa cada filtro: comparten qué filtro es válido.
+ *
+ *   Escribir acá una validación paralela sería la forma más fácil de que el
+ *   asistente y la barra de búsqueda empiecen a diferir de a poco.
+ */
+export function specFiltersFromRequests(
+  fields: VehicleTypeField[],
+  requests: SpecRequest[],
+): SpecFilter[] {
+  const params: Record<string, unknown> = {};
+
+  for (const request of requests) {
+    const suffix = request.op === 'gte' ? '_min' : request.op === 'lte' ? '_max' : '';
+    params[`f_${request.key}${suffix}`] = request.value;
+  }
+
+  return buildSpecFilters(fields, params);
+}
+
 function textParam(value: unknown): string | undefined {
   if (typeof value !== 'string') return undefined;
   const text = value.trim();

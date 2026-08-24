@@ -90,6 +90,11 @@ Por eso agregar un tipo de vehículo nuevo **no requiere programar**. Ver la rec
 | `listing_analyses` | El análisis de IA vigente de cada publicación *(Sprint 2)*. Ningún usuario escribe acá. |
 | `market_references` | Precios de referencia de fuentes externas *(Sprint 3)*. La llena un script; la app solo lee. |
 | `favorites` | Los vehículos que cada usuario guardó *(Sprint 4)*. Privados: solo los ve su dueño. |
+| `conversations` | Una charla por vehículo y comprador *(Sprint 5)*. Guarda el título del vehículo copiado, así sobrevive al aviso. |
+| `messages` | Lo que se dijeron. No se editan ni se borran. |
+| `conversation_reads` | Hasta dónde leyó cada uno. Tabla propia y no dos columnas: las reglas de acceso son por fila, no por columna. |
+| `user_blocks` | Quién bloqueó a quién *(Sprint 6)*. Cada uno ve solo los bloqueos que hizo; nadie puede leer quién lo bloqueó a él. |
+| `conversation_reports` | Las denuncias sobre una conversación *(Sprint 6)*. Se leen desde el panel de Supabase: no hay pantalla de moderación. |
 
 Los archivos SQL que crean todo esto están en [`../supabase/migrations/`](../supabase/migrations/), y los datos iniciales en [`../supabase/seed.sql`](../supabase/seed.sql).
 
@@ -104,6 +109,8 @@ Las reglas de acceso están en la base misma, no solo en el código de la app. A
 - **Crear, editar y borrar una publicación**: solo su dueño, y no puede publicar a nombre de otro.
 - **Las fotos** heredan el permiso de su publicación, y cada usuario solo puede subir archivos a su propia carpeta.
 - **Los favoritos son privados**: cada usuario lee, agrega y saca únicamente los suyos. No hay ninguna regla que permita leer los de otro **ni contarlos**, así que no se puede saber cuántas personas guardaron un aviso — es una decisión de producto, no una omisión.
+- **Una conversación la ven sus dos participantes y nadie más.** No hay forma de contar cuántas personas preguntaron por un aviso, igual que con los favoritos.
+- **Un bloqueo corta los mensajes desde la base**, en las dos direcciones, y lo hacen las políticas de `messages` y `conversations` — no la pantalla. Preguntan a través de `blocked_with`, una función que corre con los permisos de su dueño: una consulta común no serviría, porque quien escribe no puede ver la fila de quien lo bloqueó.
 - **Los análisis de IA y los precios de referencia no los escribe nadie desde la aplicación**: son afirmaciones de la plataforma. Los escribe el backend con la clave de servicio.
 
 ---

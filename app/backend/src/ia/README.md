@@ -23,6 +23,7 @@ Se configura con `GEMINI_MODEL` en el `.env` de la raíz. Si está vacía usa un
 | `photos.ts` | Baja las fotos, las achica a 1024px y las deja listas para enviar. |
 | `analysis.ts` | El análisis de una publicación: el prompt, la llamada y el parseo. |
 | `chat.ts` | El asistente conversacional, con la búsqueda de publicaciones como herramienta. |
+| `price-context.ts` | Cuenta la estimación de precio en palabras. Si no hay estimación devuelve `null`, y la IA vuelve a no poder hablar de precios. |
 | `types.ts` | La forma del resultado del análisis. La comparten la base, el backend y el frontend. |
 
 ## La regla que sostiene todo: el prompt sale del catálogo
@@ -49,6 +50,15 @@ Una foto de celular pesa varios megabytes. Diez de esas en un pedido lo hacen fa
 
 ## Estado actual
 
-**Sprint 2 completo:** análisis de publicaciones y asistente conversacional.
+**Sprint 2:** análisis de publicaciones y asistente conversacional.
 
-**Sprint 3 (pendiente):** la estimación de precio, que combina los datos declarados, el análisis de fotos y referencias de mercado. Es lo que va a permitir que el asistente responda si un precio es razonable — hoy tiene prohibido opinar de eso, justamente porque no tiene con qué compararlo. Ver [`roadmap.md`](../../../../docs/roadmap.md).
+**Sprint 3:** la estimación de precio entró al módulo como `price-context.ts`, y con ella se levantó la restricción que el Sprint 2 se había impuesto. **La levanta el dato, no el prompt:** cuando hay estimación para ese vehículo, viaja junto con sus datos y la IA puede hablar de precio; cuando no la hay, `price-context.ts` devuelve `null` y la prohibición sigue vigente para ese vehículo. No agregar al prompt un permiso suelto para opinar de precios — el permiso tiene que venir de que haya con qué comparar.
+
+**Sprint 6:** dos cosas que le faltaban al chat.
+
+- **Filtra por los campos de la ficha.** La herramienta de búsqueda tiene un parámetro `ficha` —clave, operador, valor— y el prompt le cuenta qué campos declara cada tipo, leídos del catálogo. Lo que el modelo pide **no se valida acá**: se copia sin mirar y lo valida el backend contra el catálogo, con la misma función que usa la barra de búsqueda del muro. Este archivo no sabe —ni tiene que saber— qué campos tiene una moto.
+- **Contesta mientras escribe.** `replyToChat` recibe un `onDelta` opcional y la respuesta se pide siempre de a pedazos, con o sin alguien mirándolos. Juntar las partes crudas del turno no es opcional: ahí viaja la firma que Gemini 3 exige devolver intacta en la vuelta siguiente.
+
+**Lo que este módulo sigue sin hacer:**
+
+- **No entra a los mensajes**, y es a propósito. La conversación entre comprador y vendedor la leen sus dos participantes y nadie más — ver [`sprint5.md`](../../../../docs/sprint5.md).

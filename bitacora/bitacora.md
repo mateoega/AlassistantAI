@@ -638,3 +638,66 @@ Sprint 1.6, Sprint 4 y ahora. Con "Mensajes" eran **seis botones en la barra de 
 Salió **"Mi perfil"**, que pasó a un botón chico arriba a la derecha —en celular el encabezado solo tenía el logo—. Es lo que menos se toca de los seis. Medido a 375, 767 y 768px: **exactamente una barra visible, cinco botones de 75px justos, y ningún desborde horizontal.**
 
 Un detalle más que salió de mirar: el globito decía **"1 mensajes sin leer"**. Ahora dice "1 mensaje" cuando es uno.
+
+## 2026-08-24 — Repaso de pendientes: lo que arrastraban los cinco sprints
+
+Con el Sprint 5 cerrado se revisaron los seis documentos de sprint, el roadmap, la bitácora y el código buscando una sola cosa: **qué quedó abierto y no está en ninguna lista que alguien mire.**
+
+**Lo que apareció.** Cuatro pendientes reales que vivían solo adentro del documento del sprint que los dejó abiertos, y que por eso no figuraban en `para_mas_adelante.md`:
+
+- El **asistente no puede filtrar por los campos de la ficha** (Sprint 4). Es la única diferencia de capacidad entre las dos puertas de búsqueda.
+- Los **coeficientes de depreciación son provisorios** (Sprint 3): salen del mercado en general, no de datos propios.
+- El **chat no contesta escribiéndose** (Sprint 2).
+- El **recorrido del que publica nunca se verificó con una cuenta real** (Sprint 1): publicar, editar, marcar vendido.
+
+**Adónde fue cada uno, y por qué no todos al mismo lado.** Los tres primeros esperan una señal de uso real, así que entraron a [`para_mas_adelante.md`](../docs/para_mas_adelante.md) con la señal que los destraba —los coeficientes como punto propio, los otros dos entre las mejoras que hoy no bloquean nada—. El cuarto **no espera ninguna señal**: es trabajo de media hora que nadie hizo. Meterlo en un archivo que arranca diciendo "esto es lo que se decidió no hacer hasta ver si la app se usa" habría sido esconderlo con buena letra. Fue al final del [roadmap](../docs/roadmap.md), junto al descargo de responsabilidad y a denunciar y bloquear: **las tres cosas que hay que hacer antes de poner la aplicación online.**
+
+**Un error de numeración que se arrastraba.** `para_mas_adelante.md` decía que denunciar y bloquear "va junto con el punto 6" —el aviso por mail— cuando las dos cosas que destraban salir de pruebas son el descargo y el bloqueo. Corregido, junto con la renumeración que trajo el punto nuevo.
+
+**Y una documentación que había quedado vieja.** El README del módulo de IA seguía diciendo *"Sprint 3 (pendiente)"* y que la IA "hoy tiene prohibido opinar" de precios — dejó de ser cierto hace tres sprints, cuando `price-context.ts` levantó esa restricción. Era el único lugar del repositorio desactualizado: el README raíz, `app/CLAUDE.md` y el roadmap estaban al día. Ahora dice lo que el módulo hace y lo que sigue sin hacer, con el archivo que faltaba en la tabla.
+
+## 2026-08-24 — Sprint 6: se cierran los pendientes de los cinco sprints
+
+El repaso de la mañana encontró seis cosas abiertas. Cinco se hicieron hoy; la sexta no se puede hacer todavía y el motivo importa más que la lista.
+
+### El descargo de responsabilidad, que venía del Sprint 0
+
+Es la pantalla `/legales`, enlazada desde el pie de todas las pantallas, desde la estimación, desde el análisis y desde el login —antes de crear la cuenta, no después: un descargo que solo se lee estando adentro llega tarde—.
+
+**Está escrito en castellano y no en abogado.** La plataforma le habla a la gente en castellano en todas las demás pantallas; un texto legal que nadie puede leer cumple con la formalidad y no con lo que la formalidad busca. Dice qué hace la plataforma, qué no hace, y qué queda en manos de cada uno: que el precio de referencia sale de precios pedidos y no de ventas, que el análisis lo hace un programa que se puede equivocar en las dos direcciones, y que las publicaciones las escriben las personas que venden.
+
+**Lo escribió Claude, no un abogado.** Queda anotado acá y en `para_mas_adelante.md`: antes de una salida a producción de verdad tiene que leerlo alguien del oficio. La responsabilidad civil de un intermediario en una compraventa entre particulares no la define un texto bien redactado, por honesto que sea.
+
+### Bloquear y denunciar, y el error que casi se cuela
+
+Son dos cosas separadas y ninguna dispara a la otra: bloquear corta en el acto y lo decide la persona; denunciar deja constancia. Encadenarlas sería decidir por quien está del otro lado.
+
+**El detalle que ordenó el diseño** es que las reglas de acceso de Postgres también se aplican a las consultas que hace una regla de acceso. La versión obvia de la política —un `exists (select 1 from user_blocks ...)` adentro de la política de `messages`— corre con la identidad de quien escribe, y quien escribe **no puede ver** la fila de quien lo bloqueó, porque esa fila es de otro. La consulta habría vuelto vacía siempre: una regla que se lee bien, compila bien y no frena nada.
+
+Por eso la pregunta la hace `blocked_with`, una función `security definer` que solo responde por pares donde está quien pregunta. Es el mismo tipo de trampa que la vista `conversation_overview` del Sprint 5, donde faltaba `security_invoker`: **el modo por omisión de Postgres es el equivocado en las dos, y en direcciones opuestas.**
+
+Tres decisiones más quedaron adentro: el bloqueo **corta en las dos direcciones** —dejar al que bloqueó seguir escribiendo sin poder recibir respuesta sería quedarse con la última palabra—, **no se dice quién bloqueó a quién** —a quien fue bloqueado se le dice que ahí no se puede escribir, y nada más—, y **los mensajes viejos se siguen leyendo**, porque para una denuncia son justamente lo que hay que poder mostrar.
+
+Las denuncias se leen desde el panel de Supabase. No hay pantalla de moderación y no la va a haber hasta que haya algo que moderar.
+
+### El recorrido del que publica, verificado cinco sprints después
+
+El Sprint 1 lo dejó anotado como no verificado y ahí quedó. Ahora es `npm run verificar:recorrido`: entra con tres cuentas reales sin usar contraseñas, recorre publicar, editar, consultar, bloquear, denunciar, pausar, vender y borrar, y limpia todo lo que crea. **47 comprobaciones, todas en verde.**
+
+Es el tercer uso de la clave de servicio en el proyecto y quedó documentado en `app/CLAUDE.md`: se usa para pedir los enlaces de acceso de un solo uso y para la limpieza final. Todo lo que verifica lo hace después con la sesión de cada usuario.
+
+**Lo que encontró la primera corrida** no fue un error del código sino de la red: un `fetch failed` contra Supabase que llegó a la pantalla como "ocurrió un problema en el servidor". Es la tercera vez que esta bitácora anota lo mismo — un fallo de un servicio externo disfrazado de error propio.
+
+### Dos cosas más que estaban en la lista de "no bloquean nada"
+
+**El asistente ya filtra por la ficha.** Se verificó contra la base: "motos de más de 180cc" devuelve exactamente las cuatro que superan esa cilindrada y deja afuera las de 150, 125 y 110. Lo que el modelo pide se traduce al mismo parámetro que usaría la dirección del navegador y lo valida la misma función que el muro — escribir una validación aparte para el asistente sería la forma más fácil de que las dos puertas empiecen a diferir de a poco.
+
+**El chat contesta mientras escribe.** Los pedazos llegan a los 7,0s, 7,1s y 28s: el ritmo lo pone el modelo. Dos detalles quedaron adentro: los encabezados del stream **no se mandan hasta que hay algo que mandar**, para que un error anterior al primer byte siga viajando como una respuesta HTTP normal en vez de como un evento dentro de un 200; y las partes crudas del turno se juntan igual, porque ahí viaja la firma que Gemini 3 exige devolver intacta — el error del 2026-08-17, con una forma nueva de volver.
+
+### Lo que NO se hizo, y por qué
+
+**Los coeficientes de depreciación siguen sin calcularse con datos propios.** Con setenta publicaciones no hay con qué: un coeficiente medido sobre esa cantidad de avisos sería tan inventado como el de hoy, pero con cara de haber sido medido. Sigue en `para_mas_adelante.md` con la señal que lo destraba.
+
+### La migración 013 quedó aplicada y verificada
+
+Aplicada desde el panel y comprobada desde afuera con el script, que es lo que vale: que el editor diga "Success" no alcanza.

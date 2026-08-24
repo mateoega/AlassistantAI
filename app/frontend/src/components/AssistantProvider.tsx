@@ -1,6 +1,13 @@
 'use client';
 
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from 'react';
 import type { ListingSearchResult } from '@/lib/types';
 
 /**
@@ -35,6 +42,16 @@ interface AssistantState {
   setMessages: (messages: ChatMessage[]) => void;
   thinking: boolean;
   setThinking: (thinking: boolean) => void;
+  /**
+   * La respuesta que se está escribiendo en este momento, mientras llega.
+   *
+   * Vive acá arriba por la misma razón que la conversación: el panel se puede
+   * cerrar mientras el asistente contesta —para mirar el aviso del que se está
+   * hablando— y al volver a abrirlo la respuesta tiene que seguir donde iba, no
+   * empezar de nuevo ni aparecer entera de golpe.
+   */
+  streamingText: string;
+  setStreamingText: Dispatch<SetStateAction<string>>;
 }
 
 const AssistantContext = createContext<AssistantState | null>(null);
@@ -43,10 +60,20 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
+  const [streamingText, setStreamingText] = useState('');
 
   return (
     <AssistantContext.Provider
-      value={{ open, setOpen, messages, setMessages, thinking, setThinking }}
+      value={{
+        open,
+        setOpen,
+        messages,
+        setMessages,
+        thinking,
+        setThinking,
+        streamingText,
+        setStreamingText,
+      }}
     >
       {children}
     </AssistantContext.Provider>

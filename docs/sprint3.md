@@ -113,4 +113,4 @@ Se verificó además que **no hay rojo ni naranja en ningún estado** —incluid
 
 - **Camiones, buses y cuatriciclos dependen solo de la capa 1.** No hay fuente externa gratuita y legible para esos tipos: si no hay dos avisos parecidos publicados, no hay estimación. Ver [`para_mas_adelante.md`](para_mas_adelante.md).
 - **El descargo de responsabilidad legal** sobre las estimaciones sigue sin definirse. Conviene resolverlo antes de que la use gente que no conocemos: es texto, no desarrollo.
-- **Los coeficientes de depreciación no se calcularon con datos propios**, porque todavía no hay volumen para hacerlo.
+- **Los coeficientes de depreciación no se calcularon con datos propios**, porque todavía no hay volumen para hacerlo. Anotado en [`para_mas_adelante.md`](para_mas_adelante.md), punto 3.

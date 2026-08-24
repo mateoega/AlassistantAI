@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Card, Notice } from '@/components/ui';
 import { formatKilometers, formatPrice } from '@/lib/format';
@@ -98,7 +99,11 @@ function NoDisponible({ estimate }: { estimate: Extract<Estimate, { disponible: 
       {estimate.referencia_externa && <Referencia referencia={estimate.referencia_externa} />}
 
       <p className="text-xs text-muted">
-        A medida que se publiquen más vehículos de este modelo, va a poder estimarse.
+        A medida que se publiquen más vehículos de este modelo, va a poder estimarse.{' '}
+        <Link href="/legales" className="font-medium text-brand-deep hover:underline">
+          Qué alcance tiene
+        </Link>
+        .
       </p>
     </div>
   );
@@ -143,7 +148,13 @@ function Disponible({ estimate }: { estimate: Extract<Estimate, { disponible: tr
 
       {estimate.comparables.length > 0 && <Comparables comparables={estimate.comparables} />}
 
-      <p className="text-xs text-muted">{descargo(estimate)}</p>
+      <p className="text-xs text-muted">
+        {descargo(estimate)}{' '}
+        <Link href="/legales" className="font-medium text-brand-deep hover:underline">
+          Qué alcance tiene
+        </Link>
+        .
+      </p>
     </div>
   );
 }

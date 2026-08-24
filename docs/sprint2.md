@@ -108,7 +108,7 @@ De `app/ia/` a `app/backend/src/ia/`. Desvío respecto de la estructura del Spri
 - **Análisis automático al publicar** — descartado por costo. Corre cuando alguien lo pide.
 - **Historial de conversaciones guardado** — la charla vive mientras dura la visita.
 - **Pantalla de búsqueda con filtros** — Sprint 4. El motor está hecho; falta la pantalla.
-- **Respuestas del chat que aparecen escribiéndose** (streaming). Se muestra "Pensando…" y llega la respuesta completa. Se puede sumar después sin rehacer nada.
+- **Respuestas del chat que aparecen escribiéndose** (streaming). Se muestra "Pensando…" y llega la respuesta completa. Se puede sumar después sin rehacer nada. **Hecho en el [Sprint 6](sprint6.md).**
 
 ## Qué se verificó y qué no
 

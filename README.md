@@ -2,7 +2,7 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 5 — la conversación entre comprador y vendedor, adentro de la plataforma.** Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 6 — cerrado lo que los cinco sprints anteriores dejaron abierto.** El descargo de responsabilidad, bloquear y denunciar en los mensajes, el asistente filtrando por los datos propios de cada tipo, el chat contestando mientras escribe, y el recorrido del que publica verificado con cuentas reales. Ver [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
@@ -54,7 +54,9 @@ La IA de AIassistant trabaja **para quien compra, no para quien vende**. El que 
 2. **Chat del asistente.** Disponible en toda la aplicación. Sabe qué aviso hay en pantalla, puede citar su análisis y puede buscar entre las publicaciones que están a la venta.
 3. **Estimación de precio** *(Sprint 3)*. Un rango de lo que se está pidiendo por vehículos parecidos, con la lista de avisos con los que se comparó a la vista. No dice si conviene comprar: dice contra qué se comparó y qué dio. Desde este sprint, el asistente puede hablar de precios — pero solo cuando existe una estimación para ese vehículo.
 
-**La IA no entra en los mensajes** *(Sprint 5)*. La conversación entre comprador y vendedor es privada: nadie más que sus dos participantes la lee, tampoco el asistente. Leer charlas ajenas para "ayudar" es exactamente lo que esta plataforma no hace.
+**La IA no entra en los mensajes** *(Sprint 5)*. La conversación entre comprador y vendedor es privada: nadie más que sus dos participantes la lee, tampoco el asistente. Leer charlas ajenas para "ayudar" es exactamente lo que esta plataforma no hace. En cada conversación se puede **bloquear** —la base corta los mensajes en las dos direcciones, sin decirle a nadie quién lo decidió— y **denunciar** *(Sprint 6)*.
+
+**Qué alcance tiene todo esto está escrito y a la vista**, en [`/legales`](app/frontend/src/app/legales/page.tsx): la estimación sale de precios pedidos y no es una tasación, el análisis lo hace un programa que se puede equivocar, y las publicaciones las escriben las personas que venden.
 
 ---
 
@@ -72,6 +74,7 @@ AIassistant/
 │   ├── sprint3.md             decisiones del Sprint 3 (la estimación de precio)
 │   ├── sprint4.md             decisiones del Sprint 4 (la búsqueda en el muro)
 │   ├── sprint5.md             decisiones del Sprint 5 (la mensajería interna)
+│   ├── sprint6.md             decisiones del Sprint 6 (lo que quedaba abierto)
 │   └── para_mas_adelante.md   lo postergado hasta ver si la app se usa, y qué lo destraba
 ├── supabase/
 │   ├── migrations/            el esquema de la base, en archivos SQL

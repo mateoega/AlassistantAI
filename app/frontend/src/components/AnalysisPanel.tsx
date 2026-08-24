@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Button, Card, Notice } from '@/components/ui';
 import type { AnalysisRecord, Confidence, VehicleAnalysis } from '@/lib/types';
@@ -154,7 +155,11 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
       <p className="text-xs text-muted">
         Es una lectura orientativa hecha a partir de las fotos. No reemplaza una revisión mecánica
         presencial ni verifica la documentación del vehículo. El precio se compara aparte, en
-        "Precio de referencia".
+        "Precio de referencia".{' '}
+        <Link href="/legales" className="font-medium text-brand-deep hover:underline">
+          Qué alcance tiene
+        </Link>
+        .
       </p>
     </Card>
   );

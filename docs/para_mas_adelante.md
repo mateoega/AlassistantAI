@@ -24,7 +24,15 @@ Cada punto está escrito igual: **qué es**, **por qué no ahora** y **qué señ
 
 **Qué señal lo dispara.** Que haya volumen real de publicaciones en esos tipos —en cuyo caso la capa 1 se arregla sola—, o que se contrate la fuente del punto 1, que sí los cubre. La tabla `market_references` ya está preparada para recibir otra fuente sin tocar la estimación.
 
-## 3. Asegurar la fuente gratuita que hoy se usa
+## 3. Calcular los coeficientes de depreciación con datos propios
+
+**Qué es.** La estimación corrige el precio de cada comparable por año y por kilómetros, y esa corrección usa dos números por tipo de vehículo. Hoy **esos números son provisorios y gruesos**: salen de cómo se comporta el mercado argentino en general, no de lo que pasa en la plataforma. Quedó anotado al cerrar el [Sprint 3](sprint3.md).
+
+**Por qué no ahora.** Con setenta publicaciones no hay con qué calcularlos. Un coeficiente medido sobre esa cantidad de avisos sería tan inventado como el de hoy, pero con cara de haber sido medido, que es peor. Al ordenar el Sprint 3 se los sacó del código y se los puso en dos columnas de `vehicle_types` (migración `20260821000001`), justamente para que el día que se puedan ajustar no haya que tocar código ni volver a desplegar.
+
+**Qué señal lo dispara.** Que haya volumen de avisos suficiente por tipo como para medir cuánto cae el precio por año y por cada 10.000 km. La cuenta se hace contra la base y el resultado se escribe en el catálogo.
+
+## 4. Asegurar la fuente gratuita que hoy se usa
 
 **Qué es.** Arg Autos es una API pública y gratuita hecha **por una sola persona**. Anda bien y los precios que devuelve son realistas — se verificó contra modelos concretos antes de adoptarla. Pero no declara de dónde saca los datos, no tiene licencia de uso publicada y no garantiza ningún nivel de servicio. Puede dejar de existir sin aviso.
 
@@ -32,21 +40,13 @@ Cada punto está escrito igual: **qué es**, **por qué no ahora** y **qué señ
 
 **Qué señal lo dispara.** Que se caiga y no vuelva, o que la app crezca lo suficiente como para que depender de un proyecto personal sea un riesgo del negocio y no un detalle técnico.
 
-## 4. Definir el modelo de negocio y el alcance legal
+## 5. Definir el modelo de negocio, y que un abogado lea el descargo
 
-**Qué es.** Dos pendientes explícitos que arrastra el proyecto desde el [Sprint 0](sprint0.md): cómo monetiza la plataforma, y **qué responsabilidad asume sobre las estimaciones que da** — incluido si hace falta un descargo de responsabilidad visible.
+**Qué es.** De los dos pendientes que el proyecto arrastraba desde el [Sprint 0](sprint0.md) queda uno y medio. **Cómo monetiza la plataforma** sigue sin definirse. Y el **alcance legal** ya no está en cero: el Sprint 6 escribió el descargo de responsabilidad y lo puso en `/legales`, enlazado desde el pie de todas las pantallas, desde la estimación de precio, desde el análisis y desde el login. Lo que falta es que **lo lea alguien del oficio**.
 
-**Por qué no ahora.** El primero necesita saber si la aplicación le sirve a alguien. El segundo empieza a importar cuando hay usuarios reales tomando decisiones de plata con lo que la plataforma les muestra.
+**Por qué no ahora.** El modelo de negocio necesita saber si la aplicación le sirve a alguien. La revisión legal cuesta plata y, con la plataforma en pruebas entre gente conocida, lo que había que resolver ya está resuelto: que quien mira un número sepa de dónde sale y qué no es.
 
-**Qué señal lo dispara.** El día que salga de pruebas y la use gente que no conocemos. El descargo de responsabilidad conviene resolverlo **antes** de ese día, no después: es texto, no desarrollo, y es lo más barato de la lista.
-
-## 5. Denunciar y bloquear en los mensajes
-
-**Qué es.** El Sprint 5 abrió un canal de mensajes entre desconocidos y no dejó forma de cortarlo: no se puede bloquear a alguien ni denunciar una conversación.
-
-**Por qué no ahora.** Mientras la aplicación esté en pruebas, entre gente conocida, no hay a quién bloquear. Construirlo antes sería moderar una comunidad que todavía no existe.
-
-**Qué señal lo dispara.** El día que la use gente que no conocemos, y **antes de ese día, no después**. Va junto con el punto 6: son las dos cosas que hay que resolver para salir de pruebas. Es lo más barato de construir de esta lista después del descargo, y lo más caro de no tener.
+**Qué señal lo dispara.** El día que salga de pruebas de verdad. La responsabilidad civil de un intermediario en una compraventa entre particulares no la define un texto bien redactado, por honesto que sea.
 
 ## 6. Avisar de un mensaje nuevo fuera de la aplicación
 
@@ -73,4 +73,6 @@ Ninguna de estas impide usar la aplicación. Todas se hacen mejor con datos de u
 
 Esto no es el depósito de todo lo que falta. Lo que ya está planificado con sprint asignado vive en el [roadmap](roadmap.md), donde con el **Sprint 5** terminaron los sprints previstos. Este archivo es solo para lo que se decidió postergar **hasta tener señales de uso real**.
 
-Dos de los puntos de arriba tienen fecha aunque no tengan sprint: el **descargo de responsabilidad** (punto 4) y **denunciar y bloquear** (punto 5) se resuelven *antes* de que entre gente que no conocemos, no después.
+Tampoco va acá lo que hay que hacer **antes** de poner la aplicación online y no depende de ninguna señal: eso vive al final del [roadmap](roadmap.md), en "Lo que sigue".
+
+**Tres puntos salieron de este archivo en el [Sprint 6](sprint6.md)**, y conviene saber por qué: el **descargo de responsabilidad** y **denunciar y bloquear** eran los dos que tenían fecha —antes de que entre gente que no conocemos— y están hechos; el **asistente filtrando por los campos de la ficha** y el **chat que contesta mientras escribe** estaban entre las mejoras que no bloqueaban nada, y se hicieron igual porque cerraban lo último que los cinco primeros sprints dejaron abierto.

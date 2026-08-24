@@ -3,13 +3,21 @@ import { HttpError } from '../lib/http-error.js';
 import { listProvinces, listVehicleTypes, getVehicleTypeById } from './catalog.js';
 import { getListing } from './listings.js';
 import { searchListings } from './listing-search.js';
+import { specFiltersFromRequests, type ListingFilters } from './listing-filters.js';
 import { getAnalysis } from './analysis.js';
 import { estimarPrecio } from './price-estimate.js';
 import { describeVehicle } from '../ia/vehicle-context.js';
 import { describePriceEstimate } from '../ia/price-context.js';
-import { replyToChat, type ChatMessage, type ChatReply } from '../ia/chat.js';
+import {
+  replyToChat,
+  type ChatDelta,
+  type ChatMessage,
+  type ChatReply,
+  type ChatSearchRequest,
+} from '../ia/chat.js';
 import { isAiConfigured } from '../ia/client.js';
 import type { VehicleAnalysis } from '../ia/types.js';
+import type { VehicleType } from '../types.js';
 
 /**
  * El asistente conversacional: junta el contexto, llama al modelo y le presta
@@ -34,6 +42,7 @@ export async function chat(
   supabase: SupabaseClient,
   rawMessages: unknown,
   listingId: string | null,
+  onDelta?: ChatDelta,
 ): Promise<ChatReply> {
   if (!isAiConfigured()) {
     throw HttpError.unavailable('El asistente todavía no está configurado en este servidor.', [
@@ -64,8 +73,39 @@ export async function chat(
     },
     // La búsqueda corre con el cliente del usuario: las reglas de acceso de la
     // base siguen valiendo aunque el pedido venga de un modelo.
-    (filters) => searchListings(supabase, filters),
+    (request) => searchListings(supabase, resolveFilters(request, vehicleTypes)),
+    onDelta,
   );
+}
+
+/**
+ * Termina de armar los filtros que pidió el asistente: los de la ficha se
+ * validan acá, contra el catálogo.
+ *
+ * SIN TIPO DE VEHÍCULO NO HAY FICHA. "Motos de más de 250cc" tiene sentido;
+ * "vehículos de más de 250cc" no, porque `engine_displacement_cc` es un campo
+ * de las motos y de nadie más. Si el modelo pidió filtros de ficha sin decir de
+ * qué tipo, se descartan: la búsqueda se hace igual con el resto, que es mejor
+ * que devolver vacío sin explicación.
+ */
+function resolveFilters(request: ChatSearchRequest, vehicleTypes: VehicleType[]): ListingFilters {
+  if (request.specRequests.length === 0) {
+    return request.filters;
+  }
+
+  const slug = request.filters.vehicle_type_slug;
+  const vehicleType = slug ? vehicleTypes.find((type) => type.slug === slug) : undefined;
+
+  if (!vehicleType) {
+    return request.filters;
+  }
+
+  // Una clave que el catálogo no declara para ese tipo no sobrevive a esta
+  // llamada: `specFiltersFromRequests` la ignora, igual que ignora una clave
+  // inventada en la dirección del navegador.
+  const specs = specFiltersFromRequests(vehicleType.fields, request.specRequests);
+
+  return specs.length > 0 ? { ...request.filters, specs } : request.filters;
 }
 
 /**

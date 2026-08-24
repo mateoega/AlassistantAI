@@ -1,7 +1,15 @@
-import { Type, type Content, type FunctionDeclaration, type Schema } from '@google/genai';
+import {
+  Type,
+  type Content,
+  type FunctionCall,
+  type FunctionDeclaration,
+  type Part,
+  type Schema,
+} from '@google/genai';
 import { gemini, geminiModel } from './client.js';
 import type { ListingSearchFilters, ListingSearchResult } from '../services/listing-search.js';
-import type { Province, VehicleType } from '../types.js';
+import type { SpecRequest } from '../services/listing-filters.js';
+import type { Province, VehicleType, VehicleTypeField } from '../types.js';
 import { REGLAS_DE_PRECIO } from './price-context.js';
 import { HttpError } from '../lib/http-error.js';
 
@@ -51,8 +59,22 @@ export interface ChatContext {
   currentEstimate: string | null;
 }
 
+/**
+ * Lo que el modelo pidió buscar: los filtros comunes ya convertidos, y los de
+ * la ficha **tal como los pidió, sin validar**.
+ *
+ * Los de la ficha viajan aparte porque acá no se puede decidir si son válidos:
+ * qué campos tiene una moto lo dice el catálogo, y el catálogo se lee en el
+ * backend. Este archivo no inventa una lista de campos por tipo — es la misma
+ * regla por la que el prompt del análisis sale del catálogo y no del código.
+ */
+export interface ChatSearchRequest {
+  filters: ListingSearchFilters;
+  specRequests: SpecRequest[];
+}
+
 /** Cómo se ejecuta la búsqueda. La provee el backend, que tiene la sesión. */
-export type SearchRunner = (filters: ListingSearchFilters) => Promise<ListingSearchResult[]>;
+export type SearchRunner = (request: ChatSearchRequest) => Promise<ListingSearchResult[]>;
 
 /**
  * Cuántas veces se le permite al modelo encadenar búsquedas antes de contestar.
@@ -87,6 +109,36 @@ const SEARCH_PARAMETERS: Schema = {
       type: Type.STRING,
       description:
         'Identificador de la provincia, exactamente como figura en la lista que te pasaron.',
+    },
+    ficha: {
+      type: Type.ARRAY,
+      description:
+        'Filtros por los datos propios del tipo de vehículo: cilindrada en motos, capacidad de ' +
+        'carga en camiones, aire acondicionado en buses. Solo se pueden usar junto con ' +
+        'vehicle_type_slug, y solo con las claves que la lista de ese tipo declara.',
+      items: {
+        type: Type.OBJECT,
+        properties: {
+          clave: {
+            type: Type.STRING,
+            description: 'La clave del campo, tal cual figura en la lista del tipo de vehículo.',
+          },
+          operador: {
+            type: Type.STRING,
+            enum: ['igual', 'minimo', 'maximo'],
+            description:
+              '"minimo" y "maximo" son solo para campos numéricos; "igual" para los de opciones y ' +
+              'los de sí/no.',
+          },
+          valor: {
+            type: Type.STRING,
+            description:
+              'El valor buscado. Para sí/no va "true" o "false"; para los de opciones, el valor ' +
+              'declarado en la lista, no su etiqueta.',
+          },
+        },
+        required: ['clave', 'operador', 'valor'],
+      },
     },
   },
 };
@@ -126,6 +178,11 @@ CÓMO HABLÁS
 QUÉ PODÉS Y QUÉ NO
 - Podés buscar publicaciones reales de la plataforma con la herramienta ${SEARCH_TOOL_NAME}.
   Usá los identificadores de las listas de abajo, nunca inventes uno.
+- Para filtrar por los datos propios de un tipo —cilindrada, capacidad de carga, aire
+  acondicionado— usá el parámetro "ficha" junto con el tipo de vehículo. Las claves posibles son
+  las de la lista de más abajo y ninguna otra: una clave que no esté ahí se ignora, y la búsqueda
+  vuelve sin ese filtro. Si te piden filtrar por algo que ese tipo no declara, decilo en vez de
+  buscar como si nada.
 - Cuando muestres resultados, listalos con marca, modelo, año, precio y ubicación.
 - Sobre precios: solo podés hablar del precio de un vehículo si más abajo te pasaron la
   estimación de la plataforma para ESE vehículo. Si no te la pasaron, no la tenés: decilo con
@@ -134,6 +191,7 @@ QUÉ PODÉS Y QUÉ NO
 `.trim(),
     `Tipos de vehículo de la plataforma: ${types}.`,
     `Provincias: ${provinces}.`,
+    describeSpecFields(context.vehicleTypes),
   ];
 
   if (context.currentListing) {
@@ -178,6 +236,51 @@ QUÉ PODÉS Y QUÉ NO
   return parts.join('\n\n');
 }
 
+/**
+ * Qué se puede filtrar en cada tipo de vehículo, contado en palabras.
+ *
+ * Sale entero del catálogo: los campos, sus claves, sus unidades y sus
+ * opciones. Un tipo cargado hoy desde el panel de Supabase queda filtrable por
+ * sus campos sin tocar este archivo, igual que aparece solo en el formulario.
+ *
+ * Los campos de texto libre quedan afuera a propósito: un filtro de igualdad
+ * exacta sobre texto escrito a mano no encuentra nada, y hacerle creer al
+ * modelo que puede usarlo termina en una búsqueda vacía sin explicación.
+ */
+function describeSpecFields(vehicleTypes: VehicleType[]): string {
+  const lines = vehicleTypes
+    .map((type) => {
+      const fields = type.fields.filter((field) => field.data_type !== 'text');
+
+      if (fields.length === 0) {
+        return null;
+      }
+
+      return `- ${type.slug}: ${fields.map(describeField).join('; ')}`;
+    })
+    .filter((line): line is string => line !== null);
+
+  if (lines.length === 0) {
+    return 'Ningún tipo de vehículo declara campos propios filtrables.';
+  }
+
+  return ['Campos propios de cada tipo, para el parámetro "ficha":', ...lines].join('\n');
+}
+
+function describeField(field: VehicleTypeField): string {
+  if (field.data_type === 'boolean') {
+    return `${field.key} (${field.label}, sí/no)`;
+  }
+
+  if (field.data_type === 'select') {
+    const options = (field.options ?? []).map((option) => option.value).join('|');
+    return `${field.key} (${field.label}, opciones: ${options})`;
+  }
+
+  const unit = field.unit ? ` en ${field.unit}` : '';
+  return `${field.key} (${field.label}, número${unit})`;
+}
+
 export interface ChatReply {
   text: string;
   /** Los avisos que el asistente encontró, para poder enlazarlos en pantalla. */
@@ -213,10 +316,20 @@ async function pedirAlModelo<T>(llamada: () => Promise<T>): Promise<T> {
   }
 }
 
+/**
+ * Se llama con cada pedacito de respuesta apenas llega del modelo.
+ *
+ * Existe para que la respuesta aparezca escribiéndose en vez de golpe. Es
+ * opcional: quien no la pasa recibe el texto entero al final y no se entera de
+ * que por dentro la respuesta llegó de a partes.
+ */
+export type ChatDelta = (text: string) => void;
+
 export async function replyToChat(
   messages: ChatMessage[],
   context: ChatContext,
   runSearch: SearchRunner,
+  onDelta?: ChatDelta,
 ): Promise<ChatReply> {
   const model = geminiModel();
 
@@ -228,23 +341,13 @@ export async function replyToChat(
   const found: ListingSearchResult[] = [];
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
-    const response = await pedirAlModelo(() =>
-      gemini().models.generateContent({
-        model,
-        contents: history,
-        config: {
-          systemInstruction: systemInstruction(context),
-          tools: [{ functionDeclarations: [SEARCH_DECLARATION] }],
-          temperature: 0.4,
-        },
-      }),
-    );
+    const response = await streamRound(model, history, context, onDelta);
 
-    const calls = response.functionCalls ?? [];
+    const calls = response.functionCalls;
 
     // Sin pedido de búsqueda, esto ya es la respuesta final.
     if (calls.length === 0) {
-      return { text: response.text?.trim() ?? '', results: found };
+      return { text: response.text.trim(), results: found };
     }
 
     // En la última vuelta permitida ya no se ejecutan más búsquedas: se le pide
@@ -262,10 +365,9 @@ export async function replyToChat(
      * chat contestando "ocurrió un problema en el servidor" apenas intentaba
      * buscar publicaciones.
      */
-    const modelTurn = response.candidates?.[0]?.content;
     history.push(
-      modelTurn?.parts?.length
-        ? { role: 'model', parts: modelTurn.parts }
+      response.parts.length > 0
+        ? { role: 'model', parts: response.parts }
         : { role: 'model', parts: calls.map((call) => ({ functionCall: call })) },
     );
 
@@ -281,7 +383,7 @@ export async function replyToChat(
         }
 
         try {
-          const results = await runSearch(toFilters(call.args));
+          const results = await runSearch(toRequest(call.args));
           found.push(...results);
 
           return {
@@ -311,11 +413,135 @@ export async function replyToChat(
   };
 }
 
+/** Una vuelta del modelo, ya juntada de todos los pedacitos que fueron llegando. */
+interface RoundResult {
+  text: string;
+  functionCalls: FunctionCall[];
+  /**
+   * El turno del modelo tal como vino, parte por parte. Se reenvía intacto en
+   * la vuelta siguiente por la firma que Gemini 3 exige devolver.
+   */
+  parts: Part[];
+}
+
+/**
+ * Una vuelta de conversación, leída de a pedazos.
+ *
+ * POR QUÉ SE PIDE SIEMPRE ASÍ, INCLUSO CUANDO NADIE MIRA
+ *
+ *   Se podría pedir la respuesta entera cuando no hay nadie escuchando los
+ *   pedacitos, y de a partes cuando sí. Serían dos caminos distintos hacia el
+ *   mismo lugar, y el que se usa menos es el que se rompe sin que nadie se
+ *   entere. Acá el camino es uno solo: la respuesta siempre llega de a partes,
+ *   y `onDelta` decide si alguien las mira mientras llegan.
+ *
+ * LO QUE HAY QUE JUNTAR, Y POR QUÉ
+ *
+ *   El texto, para poder devolverlo entero al final. Los pedidos de búsqueda,
+ *   que pueden aparecer en cualquier pedazo. Y las partes crudas del turno: sin
+ *   ellas se pierde la firma interna que Gemini 3 manda con cada pedido de
+ *   herramienta y que hay que devolver intacta, o la API rechaza el pedido
+ *   siguiente con un 400. Es el error del 2026-08-17.
+ */
+async function streamRound(
+  model: string,
+  history: Content[],
+  context: ChatContext,
+  onDelta?: ChatDelta,
+): Promise<RoundResult> {
+  const stream = await pedirAlModelo(() =>
+    gemini().models.generateContentStream({
+      model,
+      contents: history,
+      config: {
+        systemInstruction: systemInstruction(context),
+        tools: [{ functionDeclarations: [SEARCH_DECLARATION] }],
+        temperature: 0.4,
+      },
+    }),
+  );
+
+  const result: RoundResult = { text: '', functionCalls: [], parts: [] };
+
+  await pedirAlModelo(async () => {
+    for await (const chunk of stream) {
+      const piece = chunk.text ?? '';
+
+      if (piece) {
+        result.text += piece;
+        onDelta?.(piece);
+      }
+
+      result.functionCalls.push(...(chunk.functionCalls ?? []));
+      result.parts.push(...(chunk.candidates?.[0]?.content?.parts ?? []));
+    }
+  });
+
+  return result;
+}
+
 /**
  * Lo que devuelve el modelo es texto, no un objeto de confianza. Se convierte
  * campo por campo y se descarta lo que no encaje, en vez de pasárselo tal cual
  * a una consulta contra la base.
+ *
+ * Los filtros de la ficha se copian **sin validar** y se validan en el backend
+ * contra el catálogo, que es el único que sabe qué campos declara cada tipo. Es
+ * la misma regla que protege a la barra de búsqueda: una clave inventada no
+ * llega nunca a la consulta, venga de la dirección o de un modelo.
  */
+function toRequest(args: unknown): ChatSearchRequest {
+  return { filters: toFilters(args), specRequests: toSpecRequests(args) };
+}
+
+function toSpecRequests(args: unknown): SpecRequest[] {
+  if (typeof args !== 'object' || args === null) {
+    return [];
+  }
+
+  const raw = (args as Record<string, unknown>).ficha;
+
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  const requests: SpecRequest[] = [];
+
+  for (const item of raw) {
+    const entry = item as Record<string, unknown> | null;
+    const key = text(entry?.clave);
+    const value = text(entry?.valor) ?? numberAsText(entry?.valor);
+    const operator = entry?.operador;
+
+    if (!key || value === undefined) {
+      continue;
+    }
+
+    if (operator === 'minimo') {
+      requests.push({ key, op: 'gte', value });
+    } else if (operator === 'maximo') {
+      requests.push({ key, op: 'lte', value });
+    } else if (operator === 'igual') {
+      requests.push({ key, op: 'eq', value });
+    }
+  }
+
+  return requests;
+}
+
+/** El modelo a veces manda el valor como número aunque el esquema pida texto. */
+function numberAsText(raw: unknown): string | undefined {
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
+
+  if (typeof raw === 'boolean') {
+    return String(raw);
+  }
+
+  return undefined;
+}
+
 function toFilters(args: unknown): ListingSearchFilters {
   if (typeof args !== 'object' || args === null) {
     return {};

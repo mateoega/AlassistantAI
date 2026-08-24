@@ -123,4 +123,4 @@ El título de la sección decía **"Datos del moto"**. Estaba deducido del géne
 
 ## Lo que este sprint deja abierto
 
-- **El asistente todavía no puede filtrar por la ficha.** Sabe buscar por tipo, marca, precio, año, kilómetros y provincia, pero no entiende "motos de más de 250cc". Para que pueda, hay que pasarle los campos del catálogo dentro de su herramienta de búsqueda, y eso cambia el prompt. Es la única diferencia de capacidad entre las dos puertas de entrada — lo que ya comparten es **qué significa** cada filtro.
+- **El asistente todavía no puede filtrar por la ficha.** Sabe buscar por tipo, marca, precio, año, kilómetros y provincia, pero no entiende "motos de más de 250cc". Para que pueda, hay que pasarle los campos del catálogo dentro de su herramienta de búsqueda, y eso cambia el prompt. Es la única diferencia de capacidad entre las dos puertas de entrada — lo que ya comparten es **qué significa** cada filtro. **Cerrado en el [Sprint 6](sprint6.md)**, y sin escribir una validación aparte: lo que el asistente pide se traduce al mismo parámetro que usaría la dirección y lo valida la misma función que el muro.

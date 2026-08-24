@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { api, ApiError } from '@/lib/api';
+import { apiStream, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { useAssistant, type ChatMessage } from '@/components/AssistantProvider';
 import { inputClass } from '@/components/ui';
@@ -36,7 +36,16 @@ const SUGGESTIONS = [
 export function AssistantChat() {
   const { session } = useSession();
   const pathname = usePathname();
-  const { open, setOpen, messages, setMessages, thinking, setThinking } = useAssistant();
+  const {
+    open,
+    setOpen,
+    messages,
+    setMessages,
+    thinking,
+    setThinking,
+    streamingText,
+    setStreamingText,
+  } = useAssistant();
 
   const [draft, setDraft] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
@@ -45,9 +54,11 @@ export function AssistantChat() {
   // El id del aviso abierto, si la persona está en una pantalla de vehículo.
   const listingId = pathname.startsWith('/vehiculo/') ? pathname.split('/')[2] : undefined;
 
+  // Acompaña la respuesta mientras se escribe: sin `streamingText` acá, el
+  // texto crecería por debajo del borde de la pantalla.
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, thinking]);
+  }, [messages, thinking, streamingText]);
 
   // Sin sesión no hay asistente: el backend necesita saber quién pregunta para
   // que las reglas de acceso valgan también en las búsquedas.
@@ -68,17 +79,20 @@ export function AssistantChat() {
     setDraft('');
     setProblem(null);
     setThinking(true);
+    setStreamingText('');
 
     try {
-      const reply = await api<{ text: string; results: ListingSearchResult[] }>(
-        '/api/assistant/chat',
+      // La respuesta llega de a pedazos y se va mostrando. Lo que vuelve al
+      // final es la respuesta entera: el hilo se arma con eso y no juntando los
+      // pedacitos a mano, para que lo que queda guardado sea exactamente lo que
+      // el servidor dio por respuesta.
+      const reply = await apiStream<{ text: string; results: ListingSearchResult[] }>(
+        '/api/assistant/chat/stream',
         {
-          method: 'POST',
-          body: {
-            messages: next.map((message) => ({ role: message.role, text: message.text })),
-            ...(listingId ? { listing_id: listingId } : {}),
-          },
+          messages: next.map((message) => ({ role: message.role, text: message.text })),
+          ...(listingId ? { listing_id: listingId } : {}),
         },
+        (delta) => setStreamingText((current) => current + delta),
       );
 
       setMessages([
@@ -100,6 +114,7 @@ export function AssistantChat() {
       setMessages(messages);
     } finally {
       setThinking(false);
+      setStreamingText('');
     }
   }
 
@@ -179,11 +194,17 @@ export function AssistantChat() {
           <Bubble key={`${index}-${message.text.slice(0, 24)}`} message={message} />
         ))}
 
-        {thinking && (
-          <p className="text-sm text-muted" role="status">
-            Pensando…
-          </p>
-        )}
+        {/* Mientras el modelo escribe se muestra lo que va llegando. "Pensando…"
+            queda solo para el rato en que todavía no llegó ni una letra —que es
+            cuando está mirando el aviso o buscando publicaciones. */}
+        {thinking &&
+          (streamingText ? (
+            <Bubble message={{ role: 'model', text: streamingText }} />
+          ) : (
+            <p className="text-sm text-muted" role="status">
+              Pensando…
+            </p>
+          ))}
 
         {problem && (
           <p className="rounded-lg border border-brand-deep/40 bg-brand-soft px-3 py-2 text-sm text-body">

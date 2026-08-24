@@ -1,12 +1,20 @@
 import { Router } from 'express';
 import { auth, requireAuth } from '../middleware/auth.js';
 import { chat } from '../services/assistant.js';
+import { HttpError } from '../lib/http-error.js';
 
 /**
  * El chat del asistente.
  *
- * Una sola ruta y sin estado: la conversación entera viaja en cada pedido y no
- * se guarda nada del lado del servidor. Ver `services/assistant.ts`.
+ * Sin estado: la conversación entera viaja en cada pedido y no se guarda nada
+ * del lado del servidor. Ver `services/assistant.ts`.
+ *
+ * DOS RUTAS, UNA SOLA IMPLEMENTACIÓN. `/chat` devuelve la respuesta terminada
+ * y `/chat/stream` la va mandando mientras el modelo escribe. Por dentro las
+ * dos llaman a la misma función: la única diferencia es si alguien mira los
+ * pedacitos pasar. La pantalla usa la segunda; la primera queda porque es la
+ * que se puede probar con `curl` y la que sirve de red si el navegador no
+ * soporta leer una respuesta de a partes.
  */
 export const assistantRouter = Router();
 
@@ -25,4 +33,76 @@ assistantRouter.post('/chat', async (req, res) => {
   const listingId = typeof body.listing_id === 'string' ? body.listing_id : null;
 
   res.json(await chat(supabase, body.messages, listingId));
+});
+
+/**
+ * POST /api/assistant/chat/stream — lo mismo, pero contestando mientras piensa.
+ *
+ * Manda eventos en formato SSE (`text/event-stream`):
+ *
+ *   delta  { text }                 un pedacito de la respuesta, apenas llega
+ *   done   { text, results }        la respuesta entera y los avisos encontrados
+ *   error  { error, details }       algo falló DESPUÉS de haber empezado a escribir
+ *
+ * LOS ENCABEZADOS NO SE MANDAN HASTA QUE HAY ALGO QUE MANDAR. Es a propósito:
+ * mientras no se escribió un solo byte, un error todavía puede viajar como una
+ * respuesta HTTP normal —con su código y su mensaje— y lo contesta el manejador
+ * de errores de siempre. Si se abriera el stream de entrada, hasta un "falta la
+ * clave de Gemini" tendría que llegar como un evento adentro de una respuesta
+ * 200, que es exactamente el tipo de error disfrazado que costó encontrar en el
+ * Sprint 2.
+ *
+ * NO SE USA `EventSource`. Esa API del navegador no permite mandar el
+ * encabezado de sesión, y acá cada pedido va firmado como el usuario que
+ * pregunta: la respuesta se lee con `fetch`.
+ */
+assistantRouter.post('/chat/stream', async (req, res) => {
+  const { supabase } = auth(req);
+  const body = (req.body ?? {}) as { messages?: unknown; listing_id?: unknown };
+  const listingId = typeof body.listing_id === 'string' ? body.listing_id : null;
+
+  let started = false;
+
+  const send = (event: string, payload: unknown): void => {
+    if (!started) {
+      started = true;
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream; charset=utf-8',
+        'Cache-Control': 'no-cache, no-transform',
+        Connection: 'keep-alive',
+        // Algunos intermediarios juntan la respuesta antes de entregarla, que
+        // es justo lo contrario de lo que se busca acá.
+        'X-Accel-Buffering': 'no',
+      });
+    }
+
+    res.write(`event: ${event}\ndata: ${JSON.stringify(payload)}\n\n`);
+  };
+
+  try {
+    const reply = await chat(supabase, body.messages, listingId, (text) => send('delta', { text }));
+
+    send('done', reply);
+    res.end();
+  } catch (error) {
+    // Todavía no salió nada: que lo conteste el manejador de errores, con su
+    // código HTTP y su mensaje, como cualquier otra ruta.
+    if (!started) {
+      throw error;
+    }
+
+    send('error', {
+      error:
+        error instanceof HttpError
+          ? error.message
+          : 'Ocurrió un problema en el servidor. Probá de nuevo en un momento.',
+      ...(error instanceof HttpError && error.details?.length ? { details: error.details } : {}),
+    });
+
+    if (!(error instanceof HttpError)) {
+      console.error('[error inesperado] al transmitir la respuesta del asistente', error);
+    }
+
+    res.end();
+  }
 });

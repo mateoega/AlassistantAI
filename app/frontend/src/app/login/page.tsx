@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useSession } from '@/components/SessionProvider';
@@ -151,6 +152,14 @@ export default function LoginPage() {
           >
             {mode === 'login' ? 'Crear una' : 'Iniciar sesión'}
           </button>
+        </p>
+
+        {/* El descargo se puede leer ANTES de crear la cuenta. Uno que solo se
+            alcanza estando adentro llega tarde. */}
+        <p className="mt-4 text-center text-xs text-muted">
+          <Link href="/legales" className="hover:underline">
+            Términos y responsabilidad
+          </Link>
         </p>
       </Card>
     </div>

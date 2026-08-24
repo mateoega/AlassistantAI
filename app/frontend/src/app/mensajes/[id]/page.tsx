@@ -7,6 +7,7 @@ import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { useMessages } from '@/components/MessagesProvider';
 import { Notice, Spinner } from '@/components/ui';
+import { BlockedNotice, ModerationControls } from '@/components/ModerationControls';
 import { formatDayLabel, formatPrice, formatTime } from '@/lib/format';
 import type { ConversationMessage, ConversationThread } from '@/lib/types';
 
@@ -208,12 +209,35 @@ export default function ConversacionPage() {
         <div ref={endOfThread} />
       </div>
 
-      <Composer
-        value={draft}
-        onChange={setDraft}
-        onSend={() => void send()}
-        sending={sending}
-        counterpart={thread.counterpart.display_name}
+      {/* Con un bloqueo de por medio no hay dónde escribir: el campo no se
+          deshabilita, se reemplaza por lo que está pasando. Un campo apagado
+          sin explicación se lee como una falla de la aplicación. */}
+      {thread.moderation.blocked ? (
+        <BlockedNotice
+          moderation={thread.moderation}
+          counterpartName={thread.counterpart.display_name}
+        />
+      ) : (
+        <Composer
+          value={draft}
+          onChange={setDraft}
+          onSend={() => void send()}
+          sending={sending}
+          counterpart={thread.counterpart.display_name}
+        />
+      )}
+
+      <ModerationControls
+        conversationId={conversationId}
+        counterpartName={thread.counterpart.display_name}
+        moderation={thread.moderation}
+        onChanged={(cambio) => {
+          // Lo que ya se sabe se aplica en el acto; el hilo que vuelve manda.
+          setThread((current) =>
+            current ? { ...current, moderation: { ...current.moderation, ...cambio } } : current,
+          );
+          void load(true);
+        }}
       />
     </div>
   );

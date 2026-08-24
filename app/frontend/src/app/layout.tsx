@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { SessionProvider } from '@/components/SessionProvider';
 import { SiteHeader } from '@/components/SiteHeader';
 import { MobileNav } from '@/components/MobileNav';
+import { SiteFooter } from '@/components/SiteFooter';
 import { AssistantProvider } from '@/components/AssistantProvider';
 import { FavoritesProvider } from '@/components/FavoritesProvider';
 import { MessagesProvider } from '@/components/MessagesProvider';
@@ -32,10 +33,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                   panel, entrar a un aviso borraría el hilo. */}
               <AssistantProvider>
                 <SiteHeader />
-                {/* El pb-24 de abajo deja lugar para la barra de navegación fija
-                    del celular, para que no tape el último elemento de la
-                    pantalla. */}
-                <main className="mx-auto max-w-7xl px-4 py-6 pb-24 md:pb-6">{children}</main>
+                <main className="mx-auto max-w-7xl px-4 py-6">{children}</main>
+                {/* El pie reserva el lugar de la barra de navegación fija del
+                    celular (pb-24), que antes reservaba el <main>. */}
+                <SiteFooter />
                 <MobileNav />
                 <AssistantChat />
               </AssistantProvider>

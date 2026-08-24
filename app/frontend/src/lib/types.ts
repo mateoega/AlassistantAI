@@ -275,6 +275,28 @@ export interface ConversationMessage {
   created_at: string;
 }
 
+/**
+ * Si hay un bloqueo de por medio y si ya se denunció esta conversación.
+ *
+ * `blocked` es "hay un bloqueo, venga de donde venga" y `blocked_by_me` es "lo
+ * puse yo". La pantalla usa los dos para decir cosas distintas: quien bloqueó
+ * ve que puede deshacerlo, y quien fue bloqueado ve que no se puede escribir,
+ * **sin que se le diga quién lo decidió**.
+ */
+export interface ConversationModeration {
+  counterpart_id: string;
+  blocked: boolean;
+  blocked_by_me: boolean;
+  reported_by_me: boolean;
+}
+
 export interface ConversationThread extends Conversation {
   messages: ConversationMessage[];
+  moderation: ConversationModeration;
+}
+
+/** Un motivo de denuncia, tal como lo declara el backend. */
+export interface ReportReason {
+  value: string;
+  label: string;
 }

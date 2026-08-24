@@ -4,11 +4,18 @@ import { HttpError } from '../lib/http-error.js';
 import {
   countUnread,
   getConversation,
+  getCounterpartId,
   listConversations,
   markRead,
   openConversation,
   sendMessage,
 } from '../services/conversations.js';
+import {
+  REPORT_REASONS,
+  blockCounterpart,
+  reportConversation,
+  unblockCounterpart,
+} from '../services/moderation.js';
 
 /**
  * La mensajería interna: comprador y vendedor hablando adentro de la
@@ -17,6 +24,9 @@ import {
  * Reemplaza el contacto por WhatsApp que el Sprint 1.6 había puesto como
  * provisorio. Nadie puede leer una conversación de la que no es parte, y no
  * hay ninguna ruta que diga cuántas personas preguntaron por un aviso.
+ *
+ * Acá viven también bloquear y denunciar (Sprint 6): son acciones sobre una
+ * conversación, y es donde la persona las va a buscar.
  */
 export const conversationsRouter = Router();
 
@@ -59,6 +69,20 @@ conversationsRouter.post('/', async (req, res) => {
   res.json({ id: await openConversation(supabase, userId, listingId.trim()) });
 });
 
+/**
+ * Los motivos que se pueden elegir al denunciar.
+ *
+ * Los manda el servidor y no los escribe la pantalla, por lo mismo que el
+ * formulario de publicar no tiene una lista de tipos de vehículo adentro: lo
+ * que la API acepta lo decide la API.
+ *
+ * Va antes de las rutas con `:id` a propósito — si no, "report-reasons" se
+ * leería como el identificador de una conversación.
+ */
+conversationsRouter.get('/report-reasons', (_req, res) => {
+  res.json({ reasons: REPORT_REASONS });
+});
+
 /** GET /api/conversations/:id → la conversación con todos sus mensajes. */
 conversationsRouter.get('/:id', async (req, res) => {
   const { userId, supabase } = auth(req);
@@ -88,6 +112,43 @@ conversationsRouter.post('/:id/messages', async (req, res) => {
 conversationsRouter.post('/:id/read', async (req, res) => {
   const { userId, supabase } = auth(req);
   await markRead(supabase, userId, requireId(req.params.id));
+  res.status(204).end();
+});
+
+/**
+ * POST /api/conversations/:id/block → bloquear a la otra persona.
+ * DELETE /api/conversations/:id/block → deshacerlo.
+ *
+ * Se bloquea desde una conversación y no desde un perfil: es donde aparece el
+ * problema, y es la única pantalla donde las dos personas ya se cruzaron.
+ */
+conversationsRouter.post('/:id/block', async (req, res) => {
+  const { userId, supabase } = auth(req);
+  const counterpartId = await getCounterpartId(supabase, userId, requireId(req.params.id));
+
+  await blockCounterpart(supabase, userId, counterpartId);
+  res.status(204).end();
+});
+
+conversationsRouter.delete('/:id/block', async (req, res) => {
+  const { userId, supabase } = auth(req);
+  const counterpartId = await getCounterpartId(supabase, userId, requireId(req.params.id));
+
+  await unblockCounterpart(supabase, userId, counterpartId);
+  res.status(204).end();
+});
+
+/**
+ * POST /api/conversations/:id/report { reason, detail? } → denunciar.
+ *
+ * No bloquea por su cuenta: son dos decisiones y las toma la persona, no la
+ * plataforma. Ver `services/moderation.ts`.
+ */
+conversationsRouter.post('/:id/report', async (req, res) => {
+  const { userId, supabase } = auth(req);
+  const body = (req.body ?? {}) as { reason?: unknown; detail?: unknown };
+
+  await reportConversation(supabase, userId, requireId(req.params.id), body.reason, body.detail);
   res.status(204).end();
 });
 

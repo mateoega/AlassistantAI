@@ -82,7 +82,9 @@ Actualizado el 2026-08-08, después de aplicar todo contra el proyecto real de S
 - ✅ Las reglas de acceso funcionan: un visitante sin sesión ve los catálogos pero ninguna publicación ni perfil.
 - ✅ El frontend carga sin errores de consola y no desborda horizontalmente en 375px de ancho.
 
-**Lo que falta verificar:** el recorrido completo con una cuenta real — publicar, editar, marcar como vendido, contactar por WhatsApp. Requiere iniciar sesión, así que lo hace el equipo.
+**Lo que falta verificar:** el recorrido completo con una cuenta real — publicar, editar, marcar como vendido. (Iba también "contactar por WhatsApp", que dejó de existir en el Sprint 5.)
+
+> **Sigue abierto al cerrar el Sprint 5.** Desde el Sprint 3 hay forma de entrar como un usuario real sin usar contraseñas, y así se verificaron la estimación, los favoritos y la mensajería — pero el recorrido del que publica nunca entró en esas corridas. Quedó en la lista de lo que hay que hacer antes de poner la aplicación online: ver [`roadmap.md`](roadmap.md), "Lo que sigue".
 
 ## Qué se sumó después de este sprint
 
