@@ -51,7 +51,12 @@ export const PAGE_SIZE = 24;
 export async function listListings(
   supabase: SupabaseClient,
   scope: ListingScope,
-  userId: string,
+  /**
+   * `null` cuando quien mira no tiene cuenta. Solo se usa para el alcance
+   * `mine`, que la ruta ya rechaza sin sesión: el muro público no necesita
+   * saber quién pregunta, porque lo que puede ver lo decide la base.
+   */
+  userId: string | null,
   page = 0,
   filters: ListingFilters = {},
 ) {

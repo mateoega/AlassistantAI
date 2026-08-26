@@ -15,6 +15,7 @@
     "seed:demo": "tsx scripts/seed-demo.ts",
     "verificar:estimacion": "tsx scripts/verificar-estimacion.ts",
     "verificar:recorrido": "tsx scripts/verificar-recorrido.ts",
+    "verificar:acceso": "tsx scripts/verificar-acceso-publico.ts",
     "cargar:referencias": "tsx scripts/cargar-referencias.ts"
   },
   "dependencies": {

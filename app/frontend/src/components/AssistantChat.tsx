@@ -60,9 +60,11 @@ export function AssistantChat() {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, thinking, streamingText]);
 
-  // Sin sesión no hay asistente: el backend necesita saber quién pregunta para
-  // que las reglas de acceso valgan también en las búsquedas.
-  if (!session || pathname === '/login') {
+  // El asistente también atiende sin cuenta. Quien mira un vehículo y tiene
+  // una duda la tiene en ese momento: mandarlo a registrarse es perder la
+  // pregunta. Sin sesión, el backend consulta con el cliente anónimo y la base
+  // le muestra exactamente lo mismo que el muro público.
+  if (pathname === '/login') {
     return null;
   }
 

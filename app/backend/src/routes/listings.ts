@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { auth, requireAuth } from '../middleware/auth.js';
+import { auth, optionalAuth, requireAuth, visitor } from '../middleware/auth.js';
 import { HttpError } from '../lib/http-error.js';
 import { parseListingInput } from '../validation/listing-input.js';
 import {
@@ -19,8 +19,21 @@ import { listVehicleTypes } from '../services/catalog.js';
 
 export const listingsRouter = Router();
 
-// Todo lo de publicaciones requiere sesión iniciada.
-listingsRouter.use(requireAuth);
+// La sesión se pide POR RUTA y no de una sola vez para todo el router.
+//
+// Mirar no necesita cuenta: el muro, la ficha de un vehículo, su análisis ya
+// hecho y su precio de referencia se abren sin sesión. Hacer sí: publicar,
+// editar, cambiar de estado, borrar y pedir un análisis nuevo la exigen.
+//
+// La línea `listingsRouter.use(requireAuth)` que estaba acá era cómoda y por
+// eso duró seis sprints: una sola línea cerraba todo. El costo era que para
+// ver un aviso había que crear una cuenta, que en un clasificado es la
+// barrera más cara que existe.
+//
+// En las rutas abiertas, `optionalAuth` deja el cliente anónimo cuando no hay
+// sesión, y de ahí en adelante **qué se puede ver lo decide la base**: las
+// políticas de `anon` de la migración 014 alcanzan lo publicado y lo vendido,
+// y nada más. Acá no hay ningún filtro escrito a mano que las duplique.
 
 /**
  * GET /api/listings?scope=public|mine&page=0
@@ -31,9 +44,16 @@ listingsRouter.use(requireAuth);
  * `marca`, `provincia`, `precio_min`...). No hay una ruta `/buscar` aparte
  * porque buscar no es ir a otro lado: es el mismo muro con menos vehículos.
  */
-listingsRouter.get('/', async (req, res) => {
-  const { userId, supabase } = auth(req);
+listingsRouter.get('/', optionalAuth, async (req, res) => {
+  const { userId, supabase } = visitor(req);
   const scope: ListingScope = req.query.scope === 'mine' ? 'mine' : 'public';
+
+  // Lo único de esta ruta que no se puede mirar sin cuenta. No es una regla de
+  // seguridad —sin sesión la base no devolvería borradores de nadie— sino de
+  // sentido: sin identidad no hay "mis".
+  if (scope === 'mine' && !userId) {
+    throw HttpError.unauthorized();
+  }
   const page = Math.max(0, Number(req.query.page) || 0);
 
   const filters = parseFilters(req.query);
@@ -62,12 +82,12 @@ async function parseSpecFilters(typeSlug: string | undefined, query: Record<stri
   return type ? buildSpecFilters(type.fields, query) : [];
 }
 
-listingsRouter.get('/:id', async (req, res) => {
-  const { supabase } = auth(req);
+listingsRouter.get('/:id', optionalAuth, async (req, res) => {
+  const { supabase } = visitor(req);
   res.json({ listing: await getListing(supabase, requireId(req.params.id)) });
 });
 
-listingsRouter.post('/', async (req, res) => {
+listingsRouter.post('/', requireAuth, async (req, res) => {
   const { userId, supabase } = auth(req);
   const { input, errors } = parseListingInput(req.body);
 
@@ -75,7 +95,7 @@ listingsRouter.post('/', async (req, res) => {
   res.status(201).json({ listing });
 });
 
-listingsRouter.put('/:id', async (req, res) => {
+listingsRouter.put('/:id', requireAuth, async (req, res) => {
   const { userId, supabase } = auth(req);
   const { input, errors } = parseListingInput(req.body);
 
@@ -90,7 +110,7 @@ listingsRouter.put('/:id', async (req, res) => {
  * pausar o marcar como vendido son decisiones, no efectos secundarios de
  * corregir un dato.
  */
-listingsRouter.post('/:id/status', async (req, res) => {
+listingsRouter.post('/:id/status', requireAuth, async (req, res) => {
   const { supabase } = auth(req);
   const status = (req.body as { status?: unknown } | undefined)?.status;
 
@@ -114,12 +134,14 @@ listingsRouter.post('/:id/status', async (req, res) => {
  *   POST → lo dispara. Responde enseguida, con el análisis "corriendo": el
  *          navegador vuelve a preguntar con el GET hasta que esté listo.
  */
-listingsRouter.get('/:id/analysis', async (req, res) => {
-  const { supabase } = auth(req);
+listingsRouter.get('/:id/analysis', optionalAuth, async (req, res) => {
+  const { supabase } = visitor(req);
   res.json({ analysis: await getAnalysis(supabase, requireId(req.params.id)) });
 });
 
-listingsRouter.post('/:id/analysis', async (req, res) => {
+// Pedir uno nuevo sí necesita cuenta: cada análisis es una llamada paga al
+// modelo. Leer el que ya existe no cuesta nada; generarlo, sí.
+listingsRouter.post('/:id/analysis', requireAuth, async (req, res) => {
   const { supabase } = auth(req);
   res.status(202).json({ analysis: await startAnalysis(supabase, requireId(req.params.id)) });
 });
@@ -134,12 +156,12 @@ listingsRouter.post('/:id/analysis', async (req, res) => {
  * calcula en el momento y no se guarda — no cuesta plata, y cambia cada vez
  * que se publica un aviso parecido.
  */
-listingsRouter.get('/:id/estimacion', async (req, res) => {
-  const { supabase } = auth(req);
+listingsRouter.get('/:id/estimacion', optionalAuth, async (req, res) => {
+  const { supabase } = visitor(req);
   res.json({ estimacion: await estimarPrecio(supabase, requireId(req.params.id)) });
 });
 
-listingsRouter.delete('/:id', async (req, res) => {
+listingsRouter.delete('/:id', requireAuth, async (req, res) => {
   const { supabase } = auth(req);
   await deleteListing(supabase, requireId(req.params.id));
   res.status(204).end();
@@ -201,8 +223,19 @@ function num(value: unknown): number | undefined {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
 
-function requireId(id: string | undefined): string {
-  if (!id) {
+/**
+ * El identificador que viene en la dirección, comprobado.
+ *
+ * Recibe `unknown` a propósito. Al pedir la sesión por ruta —`get('/:id',
+ * optionalAuth, ...)` en vez de un `use()` para todo el router— los tipos de
+ * Express pasan a describir `req.params.id` como `string | string[]`, porque
+ * esa forma de declarar una ruta admite parámetros repetidos. Escribir un
+ * `as string` para callar al compilador sería tapar la única advertencia
+ * verdadera que hay acá: que lo que llega en la dirección lo escribe quien
+ * hace el pedido, y hasta que no se lo mira no se sabe qué es.
+ */
+function requireId(id: unknown): string {
+  if (typeof id !== 'string' || !id) {
     throw HttpError.notFound();
   }
   return id;

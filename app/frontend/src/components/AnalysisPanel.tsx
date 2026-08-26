@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
 import { Button, Card, Notice } from '@/components/ui';
+import { useSession } from '@/components/SessionProvider';
 import type { AnalysisRecord, Confidence, VehicleAnalysis } from '@/lib/types';
 
 /**
@@ -25,6 +26,7 @@ import type { AnalysisRecord, Confidence, VehicleAnalysis } from '@/lib/types';
 const POLL_INTERVAL_MS = 3000;
 
 export function AnalysisPanel({ listingId }: { listingId: string }) {
+  const { session } = useSession();
   const [analysis, setAnalysis] = useState<AnalysisRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
@@ -142,7 +144,19 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
 
       {result && <AnalysisResult analysis={result} />}
 
-      {!running && (
+      {/* El análisis ya hecho se lee sin cuenta; pedir uno nuevo no. Cada
+          análisis es una llamada paga al modelo, y sin sesión no hay a quién
+          atribuirle el pedido. */}
+      {!running && !session && (
+        <Link
+          href="/login"
+          className="block w-full rounded-lg bg-brand-deep px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+        >
+          {result ? 'Iniciá sesión para analizarlo de nuevo' : 'Iniciá sesión para analizarlo'}
+        </Link>
+      )}
+
+      {!running && session && (
         <Button onClick={() => void run()} disabled={starting} full={!result}>
           {starting
             ? 'Un momento…'

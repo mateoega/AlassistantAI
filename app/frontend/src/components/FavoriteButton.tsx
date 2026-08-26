@@ -1,7 +1,9 @@
 'use client';
 
 import type { MouseEvent } from 'react';
+import Link from 'next/link';
 import { useFavorites } from './FavoritesProvider';
+import { useSession } from './SessionProvider';
 
 /**
  * El botón de guardar un vehículo.
@@ -21,6 +23,34 @@ export function FavoriteButton({
   variant?: 'icon' | 'labeled';
 }) {
   const { ids, isFavorite, toggle } = useFavorites();
+  const { session } = useSession();
+
+  /**
+   * Sin cuenta el corazón se dibuja igual, y lleva a iniciar sesión.
+   *
+   * Podría no dibujarse, pero entonces quien mira sin cuenta no se entera de
+   * que los vehículos se pueden guardar — y guardar es exactamente el motivo
+   * por el que a alguien le conviene tener una. Un botón que explica para qué
+   * sirve la cuenta vale más que uno escondido.
+   */
+  if (!session) {
+    return (
+      <Link
+        href="/login"
+        title="Iniciá sesión para guardar este vehículo"
+        aria-label="Iniciá sesión para guardar este vehículo"
+        onClick={(event) => event.stopPropagation()}
+        className={
+          variant === 'icon'
+            ? 'flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface/90 text-muted backdrop-blur-sm transition-colors hover:border-brand'
+            : 'flex items-center gap-2 rounded-lg border border-line bg-surface px-5 py-2.5 text-sm text-body transition-colors hover:border-brand'
+        }
+      >
+        <HeartIcon filled={false} />
+        {variant === 'labeled' && 'Guardar'}
+      </Link>
+    );
+  }
 
   // Todavía no se sabe qué está guardado. Se deja el lugar ocupado en vez de
   // dibujar un corazón vacío que un segundo después salte a lleno.

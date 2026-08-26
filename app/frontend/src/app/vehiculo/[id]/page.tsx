@@ -25,12 +25,6 @@ export default function VehiculoPage() {
 
   const listingId = params.id;
 
-  useEffect(() => {
-    if (!sessionLoading && !session) {
-      router.replace('/login');
-    }
-  }, [sessionLoading, session, router]);
-
   const load = useCallback(async () => {
     setLoading(true);
     setProblem(null);
@@ -357,8 +351,35 @@ export default function VehiculoPage() {
  */
 function ContactSeller({ listing }: { listing: Listing }) {
   const router = useRouter();
+  const { session } = useSession();
   const [opening, setOpening] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+
+  /**
+   * Sin cuenta, el botón lleva a iniciar sesión en vez de desaparecer.
+   *
+   * Es la única acción de esta pantalla que la persona vino a hacer, y es
+   * también el mejor argumento que tiene la plataforma para pedirle una
+   * cuenta: escribirle al vendedor necesita saber quién escribe, porque del
+   * otro lado hay alguien que va a contestar. Esconder el botón sería dejar al
+   * comprador interesado mirando la pantalla sin salida, que es exactamente lo
+   * que el Sprint 5 arregló.
+   */
+  if (!session) {
+    return (
+      <div className="space-y-2">
+        <Link
+          href="/login"
+          className="block w-full rounded-lg bg-brand-deep px-5 py-3 text-center font-semibold text-white transition-colors hover:bg-brand-deep/90"
+        >
+          Iniciá sesión para consultar
+        </Link>
+        <p className="text-center text-xs text-muted">
+          La conversación queda dentro de AIassistant, junto a este aviso.
+        </p>
+      </div>
+    );
+  }
 
   async function open() {
     setOpening(true);

@@ -67,12 +67,6 @@ export function Wall() {
   const filtered = values.q !== '' || countFineFilters(values) > 0;
   const query = useMemo(() => toQuery(values), [values]);
 
-  useEffect(() => {
-    if (!sessionLoading && !session) {
-      router.replace('/login');
-    }
-  }, [sessionLoading, session, router]);
-
   const load = useCallback(async () => {
     setLoading(true);
     setProblem(null);

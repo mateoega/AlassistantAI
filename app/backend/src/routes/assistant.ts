@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { auth, requireAuth } from '../middleware/auth.js';
+import { optionalAuth, visitor } from '../middleware/auth.js';
 import { chat } from '../services/assistant.js';
 import { HttpError } from '../lib/http-error.js';
 
@@ -18,7 +18,24 @@ import { HttpError } from '../lib/http-error.js';
  */
 export const assistantRouter = Router();
 
-assistantRouter.use(requireAuth);
+/**
+ * El asistente se puede usar sin cuenta.
+ *
+ * Es una decisión de producto tomada al abrir el muro: quien está mirando un
+ * vehículo y tiene una duda la tiene EN ESE MOMENTO, no después de crear una
+ * cuenta. Mandarlo a registrarse es perder la pregunta.
+ *
+ * `optionalAuth` deja el cliente anónimo cuando no hay sesión, así que la
+ * herramienta de búsqueda del asistente ve exactamente lo mismo que el muro
+ * público: lo publicado y lo vendido. No hay forma de que le cuente a una
+ * visita algo que la visita no podría abrir por su cuenta.
+ *
+ * LO QUE ESTO CUESTA, dicho en voz alta: cada respuesta es una llamada paga a
+ * Gemini y sin sesión no hay a quién limitarle el uso. Hoy no hay límite por
+ * dirección de IP. Si la factura del modelo aparece rara, este es el primer
+ * lugar donde mirar.
+ */
+assistantRouter.use(optionalAuth);
 
 /**
  * POST /api/assistant/chat
@@ -28,7 +45,7 @@ assistantRouter.use(requireAuth);
  * que le permite al asistente responder sobre "este vehículo".
  */
 assistantRouter.post('/chat', async (req, res) => {
-  const { supabase } = auth(req);
+  const { supabase } = visitor(req);
   const body = (req.body ?? {}) as { messages?: unknown; listing_id?: unknown };
   const listingId = typeof body.listing_id === 'string' ? body.listing_id : null;
 
@@ -57,7 +74,7 @@ assistantRouter.post('/chat', async (req, res) => {
  * pregunta: la respuesta se lee con `fetch`.
  */
 assistantRouter.post('/chat/stream', async (req, res) => {
-  const { supabase } = auth(req);
+  const { supabase } = visitor(req);
   const body = (req.body ?? {}) as { messages?: unknown; listing_id?: unknown };
   const listingId = typeof body.listing_id === 'string' ? body.listing_id : null;
 

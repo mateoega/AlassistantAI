@@ -21,6 +21,12 @@ import { useMessages } from './MessagesProvider';
  * de "Perfil", que se fue a la barra de arriba. Seis botones en 375px son 62px
  * cada uno: entran a la fuerza y con el texto cortado. El perfil es lo que
  * menos se toca de los seis, así que es el que se va.
+ *
+ * SIN CUENTA NO SE DIBUJA. Cuatro de los cinco botones llevan a pantallas que
+ * necesitan sesión, y el quinto es la pantalla donde ya está parada la
+ * persona. Una barra donde todo manda a iniciar sesión no es navegación, es un
+ * cartel repetido cinco veces: quien no tiene cuenta la ve en el encabezado,
+ * una sola vez y donde la espera.
  */
 export function MobileNav() {
   const { session } = useSession();

@@ -42,6 +42,15 @@ export function SiteHeader() {
           <span>assistant</span>
         </Link>
 
+        {!session && (
+          <Link
+            href="/login"
+            className="rounded-lg bg-brand-deep px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+          >
+            Iniciar sesión
+          </Link>
+        )}
+
         {session && (
           <>
             <nav className="hidden items-center gap-2 text-sm md:flex">

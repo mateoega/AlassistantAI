@@ -701,3 +701,41 @@ Es el tercer uso de la clave de servicio en el proyecto y quedó documentado en 
 ### La migración 013 quedó aplicada y verificada
 
 Aplicada desde el panel y comprobada desde afuera con el script, que es lo que vale: que el editor diga "Success" no alcanza.
+
+## 2026-08-26 — La aplicación online, y el muro que deja de pedir cuenta
+
+Dos cosas en el mismo día, y la segunda salió de mirar la primera andando.
+
+### Primero, ponerla online
+
+El [roadmap](../docs/roadmap.md) tenía el despliegue como lo único pendiente después del Sprint 6. Quedó en dos plataformas: el backend en Render, el frontend en Vercel. El procedimiento entero está en [`despliegue.md`](../docs/despliegue.md).
+
+**Son dos plataformas porque son dos aplicaciones.** La tentación era Vercel sola y un panel único, y se descartó por dos números que ya estaban medidos en esta bitácora: el chat contesta por SSE con pedazos que llegan a los 28s, contra un tope de 60s por invocación en las funciones del plan gratuito — anda, pero sin margen para el día que el modelo se demore. Y `photos.ts` redimensiona con sharp, que es lo más pesado del proyecto y no quiere arrancar en frío en cada pedido. El backend ya era un servicio de larga vida: se lo dejó siéndolo.
+
+**Tres cosas del código no hubo que tocarlas**, y por suerte, porque son las que suelen obligar a una rama para producción: las direcciones ya salían del entorno con `localhost` solo como valor por omisión; `dotenv` no pisa lo que ya existe, así que donde no hay archivo los valores salen del panel; y `next.config.ts` lista una por una las variables que pasa al navegador, sin la clave de servicio ni la de Gemini.
+
+**La trampa fue el orden.** `NEXT_PUBLIC_API_URL` se hornea al compilar el frontend: queda escrita adentro de los archivos que baja el navegador. Cambiarla no es tocar una variable en un panel, es volver a desplegar. Por eso el backend primero.
+
+**Quedó una asimetría anotada:** el backend se despliega solo con cada push; el frontend no, porque la cuenta de Vercel no tiene vinculado un acceso de GitHub y `vercel link` no pudo conectar el repositorio. Se va a cobrar sola el día que alguien pushee un cambio de pantalla y no lo vea.
+
+### Y después, mirar la pantalla de login y darse cuenta
+
+Con la aplicación arriba, lo primero que ve cualquiera es un formulario de login. **Para ver un solo aviso había que crear una cuenta.** En un clasificado esa es la barrera más cara que existe: quien busca un auto no se registra para mirar, mira y después decide.
+
+La regla nueva es corta: **mirar no necesita cuenta; hacer, sí.** Se abren el muro, la búsqueda, la ficha, el precio de referencia, el análisis ya hecho y el chat del asistente. Siguen pidiendo sesión guardar, escribirle al vendedor, publicar, editar, borrar y **pedir un análisis nuevo** — cada análisis es una llamada paga al modelo.
+
+**Del chat se dejó constancia del costo.** Se ofreció dejarlo detrás del login por eso mismo y la decisión fue abrirlo: la duda la tiene la persona en el momento en que mira el vehículo, no después de registrarse. Hoy no hay límite por IP y está escrito en el propio `routes/assistant.ts`: si la factura de Gemini aparece rara, ese es el primer lugar donde mirar.
+
+**El detalle que ordenó la migración fue el nombre del vendedor.** El muro lo trae con un join a `profiles`. Para que una visita anónima lo vea hay que abrirle esa tabla, y ahí está la trampa: **las reglas de acceso de Postgres son por fila, no por columna.** Una política `using (true)` no deja pasar el nombre, deja pasar la fila entera — con el teléfono adentro, que el Sprint 5 hizo privado justamente para que dejara de repartirse solo.
+
+La herramienta correcta para recortar columnas no es la política, son los permisos de tabla: `revoke select on profiles from anon` y después `grant select (id, display_name)`. Hacen falta las dos, y es la contracara exacta de lo que apareció en el Sprint 6 con `blocked_with`: allá el modo por omisión de Postgres era demasiado estrecho y había que rodearlo, acá es demasiado ancho y hay que recortarlo. **En las dos, el modo por omisión era el equivocado.**
+
+### Un error de cinco sprints que apareció de paso
+
+Al leer las políticas para escribir las nuevas apareció otra cosa. El Sprint 1.6 amplió la de `listings` a `('published', 'sold')` para que un aviso vendido se siguiera viendo por enlace — pero no tocó la de `listing_photos`, que siguió exigiendo `published`. **Un aviso vendido se abre con todos sus datos y sin una sola foto**, y así estuvo desde el 2026-08-08.
+
+Nadie lo reportó porque para verlo hay que abrir por enlace directo un aviso vendido que no es tuyo, que es exactamente el caso que nadie prueba a mano. Va arreglado en la misma migración, y la regla que deja es que `listing_photos` y `listing_analyses` heredan la visibilidad de su publicación: si cambia la de arriba, se revisan las de abajo.
+
+### Cómo se verificó
+
+`npm run verificar:acceso`, un script nuevo que consulta con la **clave anónima** y no con la de servicio — con la de servicio esto no probaría nada, porque esa clave se saltea las reglas. **13 comprobaciones, todas en verde:** ve los 68 avisos con fotos y nombre del vendedor, y no ve borradores, pausados, favoritos ni mensajes. El teléfono lo rechaza la base, no la pantalla.
