@@ -6,6 +6,34 @@ No agrega funcionalidad. Es el paso que el [roadmap](roadmap.md) dejó anotado a
 
 ---
 
+## Dónde está desplegado hoy
+
+Primera salida online: **2026-08-26**, desde el commit `fa155e1`.
+
+| Pieza | Dirección | Plataforma |
+|---|---|---|
+| Frontend | https://aiassistant-ruddy.vercel.app | Vercel, proyecto `aiassistant` |
+| Backend | https://aiassistant-backend-djg7.onrender.com | Render, servicio `aiassistant-backend` |
+
+**Render le agregó el sufijo `-djg7` al dominio** porque `aiassistant-backend` ya estaba tomado por otra cuenta. En el plan gratuito no se elige, y esa dirección es la que quedó horneada adentro del frontend.
+
+### Cómo se vuelve a desplegar cada uno, y por qué no es igual
+
+**El backend se despliega solo con cada push a `master`.** La aplicación de GitHub de Render quedó instalada y limitada a este repositorio.
+
+**El frontend no.** La cuenta de Vercel no tiene vinculado un método de acceso de GitHub, así que `vercel link` no pudo conectar el repositorio: los despliegues son a mano, subiendo la carpeta.
+
+```
+cd app/frontend
+npx.cmd --yes vercel@latest deploy --prod
+```
+
+Es una asimetría que se cobra sola el día que alguien pushee un cambio de pantalla y no lo vea online. Se arregla vinculando GitHub en la cuenta de Vercel y corriendo `vercel git connect`.
+
+> **En PowerShell va `npx.cmd`, no `npx`.** La política de ejecución de scripts de la máquina de desarrollo está en `Restricted` y bloquea el envoltorio `npx.ps1`. Mismo comando, otro archivo.
+
+---
+
 ## Por qué dos plataformas y no una
 
 AIassistant son **dos aplicaciones**, no una:
