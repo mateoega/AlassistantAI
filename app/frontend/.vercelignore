@@ -1,0 +1,20 @@
+# Qué NO se sube a Vercel.
+#
+# Vercel toma `app/frontend` como raíz del proyecto, así que el `.gitignore`
+# de la raíz del repositorio —el que excluye `.next/` y `.next-build/`— le
+# queda fuera de la vista: el único que mira es el de esta carpeta, y ese lo
+# creó la CLI al vincular el proyecto, con `.vercel` y `.env*` nada más.
+#
+# Sin este archivo, cada despliegue sube 268 MB de compilados locales:
+# `.next` de las corridas de desarrollo y `.next-build` de las pruebas de
+# producción. No solo tarda — es al pedo, porque Vercel compila del código
+# fuente y descarta lo que uno le mande compilado.
+#
+# Se notó porque el segundo despliegue se colgó donde el primero había
+# tardado 46 segundos.
+
+node_modules
+.next
+.next-build
+out
+*.log
