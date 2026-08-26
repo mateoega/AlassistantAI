@@ -4,6 +4,9 @@
   "private": true,
   "description": "API de AIassistant: publicaciones de vehículos del rubro automotor",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",

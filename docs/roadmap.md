@@ -120,7 +120,7 @@ No agrega funciones a la lista de arriba: cierra lo que los cinco sprints anteri
 
 Con el Sprint 6 no queda nada pendiente de los sprints anteriores: lo que estaba abierto está cerrado o está anotado con la señal que lo destraba.
 
-Lo que viene no es un sprint más de funcionalidades, sino la decisión tomada el 2026-08-21: **poner la aplicación online y mirar si se usa.** Queda el despliegue en sí —hoy todo corre en la máquina de quien programa— y, en paralelo, que un abogado lea el descargo (punto 5 de [`para_mas_adelante.md`](para_mas_adelante.md)).
+Lo que viene no es un sprint más de funcionalidades, sino la decisión tomada el 2026-08-21: **poner la aplicación online y mirar si se usa.** El procedimiento está escrito en [`despliegue.md`](despliegue.md): el backend a Render como servicio de larga vida, el frontend a Vercel, y en ese orden — la dirección de la API se hornea al compilar el frontend, así que primero tiene que existir. En paralelo sigue pendiente que un abogado lea el descargo (punto 5 de [`para_mas_adelante.md`](para_mas_adelante.md)).
 
 ---
 

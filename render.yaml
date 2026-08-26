@@ -1,0 +1,56 @@
+# Despliegue del backend de AIassistant en Render.
+#
+# El backend es un servidor Express de larga vida y acá se queda como tal: no
+# se lo envuelve en funciones. Dos razones concretas, las dos medidas y no
+# supuestas:
+#
+#   - El chat del asistente contesta por SSE y los pedazos llegan a los 7,0s,
+#     7,1s y 28s (ver bitácora del 2026-08-24). Cualquier plataforma que corte
+#     la invocación al minuto deja la respuesta cortada a la mitad cuando el
+#     modelo se demora un poco más de lo habitual.
+#   - `ia/photos.ts` redimensiona las fotos con sharp antes de mandarlas a
+#     Gemini. Es lo más pesado del proyecto y no quiere arrancar en frío en
+#     cada pedido.
+#
+# El frontend NO va acá: es Next.js y vive en Vercel. Ver docs/despliegue.md.
+
+services:
+  - type: web
+    name: aiassistant-backend
+    runtime: node
+    plan: free
+    region: oregon
+    rootDir: app/backend
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+
+    # Render pregunta por acá si el servicio está vivo antes de mandarle
+    # tráfico. La ruta existe desde el Sprint 0 y no toca la base: si
+    # respondiera consultando Supabase, una caída de la base se leería como
+    # una caída del backend, que es justo la confusión que la bitácora ya
+    # anotó tres veces.
+    healthCheckPath: /api/health
+
+    envVars:
+      # `sync: false` significa: Render pide el valor a mano la primera vez y
+      # no lo guarda en este archivo. Ninguna clave entra al repositorio.
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+      # De dónde se aceptan pedidos (CORS). Es el dominio de Vercel, y hay que
+      # completarlo DESPUÉS del primer despliegue del frontend: recién ahí se
+      # sabe. Acepta varios separados por coma.
+      - key: FRONTEND_URL
+        sync: false
+
+      - key: GEMINI_MODEL
+        value: gemini-3.6-flash
+
+      # PORT lo pone Render solo, y `config/env.ts` ya lo lee de process.env.
+      # No hace falta declararlo.
