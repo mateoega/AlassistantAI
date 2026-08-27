@@ -174,6 +174,9 @@ CÓMO HABLÁS
 - Español rioplatense, tratando de "vos". Simple y directo, sin tecnicismos de taller.
 - Respuestas cortas. Esto es un chat al costado de la pantalla, no un informe.
 - Si no sabés algo, decilo. No inventes datos de un vehículo que no tenés.
+- TEXTO PLANO, SIN MARKDOWN. La pantalla muestra tu respuesta tal cual la escribís: no
+  interpreta asteriscos ni almohadillas. Un "**Precio:**" se lee con los asteriscos puestos.
+  Para enumerar usá un guion al principio del renglón, y para destacar algo, escribilo primero.
 
 QUÉ PODÉS Y QUÉ NO
 - Podés buscar publicaciones reales de la plataforma con la herramienta ${SEARCH_TOOL_NAME}.
@@ -325,11 +328,28 @@ async function pedirAlModelo<T>(llamada: () => Promise<T>): Promise<T> {
  */
 export type ChatDelta = (text: string) => void;
 
+/**
+ * En qué anda el asistente mientras no escribe nada.
+ *
+ * Una respuesta puede tardar bastante y el silencio es todo igual desde
+ * afuera: no se distingue "está pensando" de "se colgó". La diferencia más
+ * grande la hacen las búsquedas — cuando el modelo pide buscar publicaciones,
+ * la vuelta entera se va sin una sola letra en pantalla, y esa es justo la
+ * pregunta que más tarda. Con esto la pantalla puede decir qué está pasando.
+ *
+ *   pensando   el modelo está armando la respuesta
+ *   buscando   se está ejecutando una búsqueda que el modelo pidió
+ *
+ * Es opcional, como `onDelta`: quien no la pasa no se entera de nada de esto.
+ */
+export type ChatStep = (step: 'pensando' | 'buscando') => void;
+
 export async function replyToChat(
   messages: ChatMessage[],
   context: ChatContext,
   runSearch: SearchRunner,
   onDelta?: ChatDelta,
+  onStep?: ChatStep,
 ): Promise<ChatReply> {
   const model = geminiModel();
 
@@ -341,6 +361,24 @@ export async function replyToChat(
   const found: ListingSearchResult[] = [];
 
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round += 1) {
+    /**
+     * En la primera vuelta NO se avisa nada, y es a propósito.
+     *
+     * Que está pensando la pantalla ya lo sabe —fue ella la que mandó la
+     * pregunta—, así que avisarlo no agrega nada. Lo que sí importa es que
+     * mientras no salió un solo byte, un error todavía puede viajar como
+     * respuesta HTTP normal: si acá se mandara un aviso, hasta un "el modelo
+     * está saturado" tendría que llegar disfrazado adentro de una respuesta
+     * 200. Ver el comentario de la ruta `/chat/stream`.
+     *
+     * De la segunda vuelta en adelante ya hubo una llamada al modelo que
+     * anduvo, y ahí sí conviene contar que se volvió a pensar después de
+     * buscar.
+     */
+    if (round > 0) {
+      onStep?.('pensando');
+    }
+
     const response = await streamRound(model, history, context, onDelta);
 
     const calls = response.functionCalls;
@@ -383,6 +421,8 @@ export async function replyToChat(
         }
 
         try {
+          onStep?.('buscando');
+
           const results = await runSearch(toRequest(call.args));
           found.push(...results);
 

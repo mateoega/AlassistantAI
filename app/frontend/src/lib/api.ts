@@ -73,11 +73,16 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
  * HTTP normal y acá sale un `ApiError` igual que en cualquier otra llamada. Si
  * falla después, llega como un evento `error` — y también sale un `ApiError`,
  * para que la pantalla no tenga que distinguir dos formas de fallar.
+ *
+ * `onStep` recibe los avisos de en qué anda el servidor mientras todavía no
+ * mandó texto ("buscando", "pensando"). Es opcional: sin ella, esos eventos se
+ * ignoran y la llamada se comporta igual que antes.
  */
 export async function apiStream<T>(
   path: string,
   body: unknown,
   onDelta: (text: string) => void,
+  onStep?: (step: string) => void,
 ): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -133,6 +138,11 @@ export async function apiStream<T>(
 
       if (event.name === 'delta') {
         onDelta((event.payload as { text?: string }).text ?? '');
+      } else if (event.name === 'paso') {
+        const paso = (event.payload as { paso?: string }).paso;
+        if (paso) {
+          onStep?.(paso);
+        }
       } else if (event.name === 'done') {
         result = event.payload as T;
       } else if (event.name === 'error') {

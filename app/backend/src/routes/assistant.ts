@@ -57,9 +57,16 @@ assistantRouter.post('/chat', async (req, res) => {
  *
  * Manda eventos en formato SSE (`text/event-stream`):
  *
+ *   paso   { paso }                 en qué anda mientras todavía no escribe nada
  *   delta  { text }                 un pedacito de la respuesta, apenas llega
  *   done   { text, results }        la respuesta entera y los avisos encontrados
  *   error  { error, details }       algo falló DESPUÉS de haber empezado a escribir
+ *
+ * PARA QUÉ ESTÁ `paso`. Una pregunta que hace buscar publicaciones se pasa
+ * vueltas enteras del modelo sin mandar una sola letra, y desde el navegador
+ * ese silencio es idéntico al de "se colgó" — que es exactamente lo que
+ * reportó el cliente al probar desde el celular. Contar en qué anda cuesta unos
+ * bytes y convierte una espera muda en una espera con noticias.
  *
  * LOS ENCABEZADOS NO SE MANDAN HASTA QUE HAY ALGO QUE MANDAR. Es a propósito:
  * mientras no se escribió un solo byte, un error todavía puede viajar como una
@@ -67,7 +74,8 @@ assistantRouter.post('/chat', async (req, res) => {
  * de errores de siempre. Si se abriera el stream de entrada, hasta un "falta la
  * clave de Gemini" tendría que llegar como un evento adentro de una respuesta
  * 200, que es exactamente el tipo de error disfrazado que costó encontrar en el
- * Sprint 2.
+ * Sprint 2. `paso` respeta esa regla: el primero no sale hasta que hubo una
+ * llamada al modelo que anduvo — ver el comentario del bucle en `ia/chat.ts`.
  *
  * NO SE USA `EventSource`. Esa API del navegador no permite mandar el
  * encabezado de sesión, y acá cada pedido va firmado como el usuario que
@@ -97,7 +105,13 @@ assistantRouter.post('/chat/stream', async (req, res) => {
   };
 
   try {
-    const reply = await chat(supabase, body.messages, listingId, (text) => send('delta', { text }));
+    const reply = await chat(
+      supabase,
+      body.messages,
+      listingId,
+      (text) => send('delta', { text }),
+      (paso) => send('paso', { paso }),
+    );
 
     send('done', reply);
     res.end();

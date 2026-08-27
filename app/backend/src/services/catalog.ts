@@ -6,7 +6,72 @@ import type { Brand, City, Province, VehicleType, VehicleTypeField } from '../ty
  * Lectura del catálogo: qué tipos de vehículo existen y qué campos pide cada
  * uno. Es la fuente de verdad tanto para dibujar el formulario (frontend)
  * como para validarlo (backend).
+ *
+ * SE GUARDA EN MEMORIA POR UNOS MINUTOS, y esto no es una optimización
+ * prematura: el catálogo lo lee TODO. Cada respuesta del asistente arranca
+ * pidiendo los tipos y las provincias para armar el prompt; cada búsqueda del
+ * muro los pide para dibujar los filtros; cada publicación que se guarda pide
+ * su tipo para validar la ficha. Son cuatro consultas a Supabase que se
+ * repiten decenas de veces por minuto para traer siempre lo mismo, y contra
+ * una base que está del otro lado de internet cada una cuesta entre 50 y 300
+ * milisegundos. Sobre una respuesta de IA que ya tarda, eso es tiempo que la
+ * persona mira una pantalla quieta.
+ *
+ * Se puede guardar porque el catálogo es PÚBLICO e IGUAL PARA TODOS: se lee
+ * con la clave anónima (`supabasePublic`), así que acá no hay dato de nadie ni
+ * respuesta que dependa de quién pregunta. Guardar en memoria algo que se lee
+ * con la sesión del usuario sería otra cosa muy distinta, y no se hace.
+ *
+ * El precio de tenerlo guardado: cargar un tipo de vehículo nuevo en la base
+ * tarda hasta CATALOG_TTL_MS en aparecer. Es el mismo trato que ya tiene la
+ * cotización del dólar en `exchange-rate.ts`.
  */
+
+/** Cuánto vale lo guardado antes de volver a preguntar. */
+const CATALOG_TTL_MS = 5 * 60_000;
+
+interface Cached<T> {
+  value: T;
+  expires: number;
+}
+
+/**
+ * Guarda lo que devuelve `read` por un rato.
+ *
+ * La promesa se guarda ANTES de que termine, a propósito: si llegan cinco
+ * pedidos juntos con la memoria vencida —lo normal cuando se despierta el
+ * servidor— los cinco esperan la misma consulta en vez de disparar cinco. Y si
+ * esa consulta falla, lo guardado se tira para que el pedido siguiente vuelva
+ * a intentar en vez de heredar el error por cinco minutos.
+ */
+function remember<T>(slot: { current: Cached<Promise<T>> | null }, read: () => Promise<T>): Promise<T> {
+  const now = Date.now();
+
+  if (slot.current && slot.current.expires > now) {
+    return slot.current.value;
+  }
+
+  const value = read().catch((error: unknown) => {
+    slot.current = null;
+    throw error;
+  });
+
+  slot.current = { value, expires: now + CATALOG_TTL_MS };
+
+  return value;
+}
+
+const vehicleTypesCache: { current: Cached<Promise<VehicleType[]>> | null } = { current: null };
+const provincesCache: { current: Cached<Promise<Province[]>> | null } = { current: null };
+
+/**
+ * Tira lo guardado. Para los scripts que cargan catálogo y para las pruebas:
+ * la aplicación no la llama, se espera al vencimiento.
+ */
+export function forgetCatalog(): void {
+  vehicleTypesCache.current = null;
+  provincesCache.current = null;
+}
 
 interface VehicleTypeRow {
   id: string;
@@ -29,54 +94,54 @@ const VEHICLE_TYPE_SELECT = `
 `;
 
 /** Todos los tipos activos, con sus campos específicos, listos para el formulario. */
-export async function listVehicleTypes(): Promise<VehicleType[]> {
-  const { data, error } = await supabasePublic
-    .from('vehicle_types')
-    .select(VEHICLE_TYPE_SELECT)
-    .eq('is_active', true)
-    .order('sort_order', { ascending: true });
+export function listVehicleTypes(): Promise<VehicleType[]> {
+  return remember(vehicleTypesCache, async () => {
+    const { data, error } = await supabasePublic
+      .from('vehicle_types')
+      .select(VEHICLE_TYPE_SELECT)
+      .eq('is_active', true)
+      .order('sort_order', { ascending: true });
 
-  if (error) {
-    throw new Error(`No se pudo leer el catálogo de tipos de vehículo: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`No se pudo leer el catálogo de tipos de vehículo: ${error.message}`);
+    }
 
-  return ((data ?? []) as VehicleTypeRow[]).map(toVehicleType);
+    return ((data ?? []) as VehicleTypeRow[]).map(toVehicleType);
+  });
 }
 
 /**
  * Un tipo puntual. Se usa antes de guardar una publicación, para saber contra
  * qué campos hay que validar la ficha `specs`.
+ *
+ * Sale de la misma lista que `listVehicleTypes` y no de una consulta propia:
+ * son los mismos tipos activos con los mismos campos, y así una sola consulta
+ * sirve para las dos cosas. La condición `is_active` viaja adentro de la lista,
+ * así que un tipo dado de baja sigue dando el mismo error que antes.
  */
 export async function getVehicleTypeById(vehicleTypeId: string): Promise<VehicleType> {
-  const { data, error } = await supabasePublic
-    .from('vehicle_types')
-    .select(VEHICLE_TYPE_SELECT)
-    .eq('id', vehicleTypeId)
-    .eq('is_active', true)
-    .maybeSingle();
+  const found = (await listVehicleTypes()).find((type) => type.id === vehicleTypeId);
 
-  if (error) {
-    throw new Error(`No se pudo leer el tipo de vehículo: ${error.message}`);
-  }
-
-  if (!data) {
+  if (!found) {
     throw HttpError.badRequest('El tipo de vehículo elegido no existe o ya no está disponible.');
   }
 
-  return toVehicleType(data as VehicleTypeRow);
+  return found;
 }
 
-export async function listProvinces(): Promise<Province[]> {
-  const { data, error } = await supabasePublic
-    .from('provinces')
-    .select('id, slug, name')
-    .order('sort_order', { ascending: true });
+export function listProvinces(): Promise<Province[]> {
+  return remember(provincesCache, async () => {
+    const { data, error } = await supabasePublic
+      .from('provinces')
+      .select('id, slug, name')
+      .order('sort_order', { ascending: true });
 
-  if (error) {
-    throw new Error(`No se pudieron leer las provincias: ${error.message}`);
-  }
+    if (error) {
+      throw new Error(`No se pudieron leer las provincias: ${error.message}`);
+    }
 
-  return (data ?? []) as Province[];
+    return (data ?? []) as Province[];
+  });
 }
 
 /**

@@ -11,6 +11,7 @@ import { describePriceEstimate } from '../ia/price-context.js';
 import {
   replyToChat,
   type ChatDelta,
+  type ChatStep,
   type ChatMessage,
   type ChatReply,
   type ChatSearchRequest,
@@ -43,6 +44,7 @@ export async function chat(
   rawMessages: unknown,
   listingId: string | null,
   onDelta?: ChatDelta,
+  onStep?: ChatStep,
 ): Promise<ChatReply> {
   if (!isAiConfigured()) {
     throw HttpError.unavailable('El asistente todavía no está configurado en este servidor.', [
@@ -75,6 +77,7 @@ export async function chat(
     // base siguen valiendo aunque el pedido venga de un modelo.
     (request) => searchListings(supabase, resolveFilters(request, vehicleTypes)),
     onDelta,
+    onStep,
   );
 }
 
@@ -122,12 +125,27 @@ async function describeCurrentListing(
   }
 
   try {
-    const listing = await getListing(supabase, listingId);
+    /**
+     * Las tres van juntas y no una atrás de la otra.
+     *
+     * Ninguna necesita el resultado de las otras —`getAnalysis` y
+     * `estimarPrecio` reciben el id, no la publicación— y encadenadas eran
+     * cuatro idas y vueltas a Supabase antes de que el modelo empezara a
+     * pensar, en cada mensaje del chat. La estimación sola son tres consultas
+     * más. Contra una base remota eso es alrededor de un segundo de pantalla
+     * quieta que se cobraba en cada pregunta.
+     */
+    const [listing, analysis, estimacion] = await Promise.all([
+      getListing(supabase, listingId),
+      getAnalysis(supabase, listingId),
+      estimarPrecio(supabase, listingId),
+    ]);
 
     if (!listing.vehicle_type) {
       return { listing: null, analysis: null, estimate: null };
     }
 
+    // El catálogo está guardado en memoria, así que esto no vuelve a la base.
     const vehicleType = await getVehicleTypeById(listing.vehicle_type.id);
 
     const described = describeVehicle(
@@ -146,11 +164,6 @@ async function describeCurrentListing(
       },
       vehicleType,
     );
-
-    const [analysis, estimacion] = await Promise.all([
-      getAnalysis(supabase, listingId),
-      estimarPrecio(supabase, listingId),
-    ]);
 
     return {
       listing: described,
