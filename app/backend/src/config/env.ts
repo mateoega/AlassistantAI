@@ -65,8 +65,31 @@ export const env = {
   /**
    * Modelo de la familia Flash con capacidad de visión. Se deja configurable
    * para poder cambiarlo sin tocar código cuando Google publique uno nuevo.
+   *
+   * POR QUÉ HOY DICE 3.5 Y NO 3.6 — ES TEMPORAL.
+   *
+   * El 2026-08-27 el asistente dejó de contestar en producción con un
+   * 429 RESOURCE_EXHAUSTED. La causa no era saturación sino la cuota del
+   * tramo gratuito de `gemini-3.6-flash`:
+   *
+   *   quotaId : GenerateRequestsPerDayPerProjectPerModel-FreeTier
+   *   limit   : 20
+   *
+   * **Veinte llamadas por día**, no por minuto — el `quotaId` dice `PerDay` y
+   * se confirmó esperando: sigue en 429 después de 90 segundos limpios. Una
+   * sola pregunta que hace buscar publicaciones cuesta entre 2 y 4 llamadas,
+   * así que una prueba de veinte minutos la agota. Y afecta también al
+   * análisis de fotos, que usa este mismo valor.
+   *
+   * `gemini-3.5-flash` tiene su propia cuota diaria y responde con la misma
+   * clave — probado el mismo día. Es un parche, no una solución: también se
+   * agota, y es un modelo anterior.
+   *
+   * SE VUELVE A 3.6 cuando el proyecto de Google tenga facturación activa.
+   * Cambiar este valor y el de `render.yaml`, que es el que manda en
+   * producción.
    */
-  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.6-flash',
+  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.5-flash',
 
   /**
    * Clave de servicio: se saltea las reglas de acceso de la base. Su ÚNICO uso

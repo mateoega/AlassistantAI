@@ -49,8 +49,21 @@ services:
       - key: FRONTEND_URL
         sync: false
 
+      # TEMPORAL — se vuelve a gemini-3.6-flash cuando el proyecto de Google
+      # tenga facturación activa.
+      #
+      # El 2026-08-27 el asistente dejó de contestar en producción: la cuota
+      # del tramo gratuito de 3.6-flash es de VEINTE LLAMADAS POR DÍA
+      # (quotaId GenerateRequestsPerDayPerProjectPerModel-FreeTier, limit 20),
+      # y una pregunta que hace buscar publicaciones cuesta entre 2 y 4. Se
+      # agota en una tarde de pruebas, y se lleva puesto también el análisis
+      # de fotos, que usa este mismo valor. 3.5-flash tiene su propia cuota
+      # diaria y respondía con la misma clave.
+      #
+      # Este archivo es el que manda en producción: el valor de acá pisa al
+      # que tenga el panel de Render cuando se vuelve a desplegar.
       - key: GEMINI_MODEL
-        value: gemini-3.6-flash
+        value: gemini-3.5-flash
 
       # PORT lo pone Render solo, y `config/env.ts` ya lo lee de process.env.
       # No hace falta declararlo.
