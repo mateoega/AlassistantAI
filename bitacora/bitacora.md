@@ -793,3 +793,120 @@ Lo que n8n daba: una primera versión sin escribir código, historial visual de 
 - **No está en git ni se despliega con el push**, y sería una tercera pieza para hostear y vigilar.
 
 **Dónde sí encaja:** avisar fuera de la aplicación, el punto 6 de `para_mas_adelante.md`. Eso tiene forma de flujo — corre solo, nadie lo mira, y necesita conectores de mail o WhatsApp que hoy no existen en el proyecto.
+
+
+## 2026-08-27 — La prueba del cliente en un celular real
+
+El cliente probó el MVP entero desde un teléfono y devolvió trece puntos ordenados por prioridad. No pidió funciones nuevas: pidió corregir y pulir lo que ya está. Lo que anduvo y no había que romper —navegar sin cuenta, la ficha, el precio de referencia, el análisis de fotos y el chat contextual— sigue igual.
+
+Trece puntos, nueve cambios: varios eran el mismo problema visto desde dos pantallas distintas.
+
+### El botón del asistente, que se apoyaba sobre todo
+
+El síntoma era "se superpone con campos, textos, botones y publicaciones". Eran tres causas y cada una necesitaba su arreglo:
+
+1. **Era un cartel de 140×46.** En un celular de 375px eso cubre tres o cuatro renglones. Ahora en celular es un círculo de 56px sin la palabra; el cartel con texto vuelve de tablet para arriba, donde sobra ancho.
+2. **Esquivaba una barra que no siempre está.** Tenía un `bottom-20` fijo para no pisar la barra de navegación de abajo — pero esa barra no existe sin sesión, que es justo como el cliente recorrió la aplicación. El botón flotaba a 80px del borde, en el aire, encima del contenido. Y entre 640 y 768px la barra sí existe y el botón le caía encima. La condición ahora se escribe **una sola vez**, en `useMobileNavVisible()`, y la miran el botón y el pie.
+3. **Nadie le reservaba lugar.** El pie reservaba el de la barra, no el del botón: el último renglón de cada pantalla quedaba abajo de él.
+
+Con eso resuelto todavía quedaba lo peor. **Se midió el muro entero, de arriba abajo: 13 posiciones de scroll, 13 tarjetas tapadas, y en una de ellas el corazón de guardar.** Con un botón quieto no hay lugar en la pantalla donde eso no pase — las tarjetas ocupan el ancho completo. Así que **mientras la persona baja, el botón se corre solo, y vuelve apenas sube**. Es lo que hace cualquier aplicación con barra flotante: leyendo no hay nada encima del contenido, y el asistente sigue a un gesto. Arriba de todo siempre se ve, que es donde se entra a cada pantalla. Solo en celular: de 768px para arriba el botón queda en un margen vacío, y aparecer y desaparecer con la rueda del mouse sería un tic.
+
+### La pregunta que se envió sola
+
+El cliente reportó que en una prueba una pregunta salió sin que nadie tocara "Enviar". Se buscó el camino y hay uno solo: **las tres sugerencias que el asistente ofrece al abrirse enviaban en el acto**. Se veían como tres renglones de texto para leer —del ancho del panel, sin forma de botón—, así que alcanzaba con apoyar el dedo.
+
+Ahora **tocar una sugerencia la escribe en la caja y deja el cursor ahí**. La pregunta queda a la vista antes de salir, se puede editar o borrar, y son etiquetas chicas con forma de botón. Cuesta un toque más y ninguna pregunta se va sola.
+
+Se descartó el resto: `Button` es `type="button"` por omisión, así que ningún botón suelto envía un formulario por accidente, y las preguntas sugeridas del análisis de fotos son texto, no botones.
+
+### El minuto de espera, y el silencio
+
+La demora que reportaron (varios segundos lo normal, cerca de un minuto una vez) tenía dos partes, y las dos se atacaron.
+
+**Lo que se podía medir y sacar.** Cada respuesta del asistente arrancaba pidiéndole a Supabase el catálogo de tipos y provincias, y en la ficha de un vehículo además la publicación, su tipo, su análisis y su estimación —que por dentro vuelve a pedir la publicación y el tipo—. Diez idas y vueltas contra una base que está del otro lado de internet, **antes de que el modelo empezara a pensar**, y repetidas en cada mensaje. Dos cambios:
+
+- **El catálogo se guarda en memoria cinco minutos.** Se puede porque es público e igual para todos: se lee con la clave anónima, no con la sesión de nadie. El precio asumido es que un tipo de vehículo nuevo tarda hasta cinco minutos en aparecer, el mismo trato que ya tenía la cotización del dólar. `getVehicleTypeById` ahora sale de esa misma lista en vez de hacer su propia consulta.
+- **Las tres consultas de la ficha van juntas.** Ninguna necesitaba el resultado de la otra; estaban encadenadas nada más que por cómo se escribieron.
+
+**Lo que no se puede sacar, pero sí contar.** Cuando la pregunta hace que el asistente salga a buscar publicaciones, hay vueltas enteras del modelo sin una sola letra en pantalla, y desde afuera ese silencio es idéntico al de "se colgó". Ahora el servidor manda **en qué anda** (`paso`) y la pantalla lo muestra con tres puntos que se mueven: "Pensando…", "Buscando publicaciones…", y a los quince segundos "está tardando más que de costumbre, pero sigue trabajando".
+
+**El primer aviso no sale hasta que hubo una llamada al modelo que anduvo**, para no romper la regla del Sprint 2: mientras no salió un byte, un error todavía puede viajar como respuesta HTTP normal en vez de disfrazado adentro de un 200.
+
+**Lo que se midió después**, contra el servidor y no contra la pantalla, para no mezclar el tiempo del modelo con el del navegador:
+
+| | |
+|---|---|
+| Catálogo de tipos, primera vez / con memoria | 467 ms → **76 ms** |
+| Provincias, primera vez / con memoria | 348 ms → **75 ms** |
+| Pregunta sobre el vehículo abierto, de punta a punta | **4,7 – 5,6 s** |
+| Pregunta que obliga a buscar publicaciones, de punta a punta | **11,5 s** |
+
+En la que busca, el desglose muestra dónde se va el tiempo y por qué hacía falta contarlo: 6,8 s hasta que el modelo decide buscar, 1 s de búsqueda, 3,3 s más hasta la primera letra de la respuesta. **Casi once segundos sin una sola palabra en pantalla** — ahí es donde antes no pasaba nada y ahora se lee "Buscando publicaciones…".
+
+**El minuto que reportó el cliente no se reprodujo.** Lo que se sacó son las idas y vueltas a la base, que son medibles y constantes; lo que puede tardar un minuto es el modelo, y eso no está en nuestras manos. Por eso la otra mitad del arreglo es contar la espera en vez de dejarla muda.
+
+De paso: el modelo contestaba en markdown y la pantalla muestra el texto tal cual, así que se leían los asteriscos de `**Precio:**`. Se le pidió texto plano en el prompt, que es más barato que meter un intérprete de markdown en el navegador.
+
+### Los filtros, que estaban a dos pantallas de distancia
+
+Dos puntos del cliente —los filtros ocupan demasiado, y no se entiende qué hace "Filtros"— eran el mismo componente. Cuatro reglas nuevas, escritas arriba de `SearchBar`:
+
+- **Un solo botón de enviar a la vista.** Convivían "Buscar" arriba y "Aplicar filtros" abajo haciendo exactamente lo mismo. "Buscar" ahora existe solo con el panel cerrado.
+- **El botón que abre dice qué va a hacer:** "Filtros" cuando va a abrir, "Ocultar filtros" cuando va a cerrar, con el número de filtros puestos siempre a la vista.
+- **"Aplicar filtros" no se persigue scrolleando.** El panel tiene su propia altura máxima y hace scroll adentro. Medido a 375×812: el botón queda a 712px del borde de arriba **sin scrollear nada**, y con un tipo de vehículo elegido —que suma los filtros de la ficha— sigue a 723 aunque adentro haya 715px de campos. Antes había que recorrer casi dos pantallas.
+- **Enviar cierra el panel**, y la pantalla se para en los resultados.
+
+Además los campos pasaron a dos columnas en celular, y "desde/hasta" de precio y año dejaron de ser cuatro filtros sueltos para ser dos rangos: cuatro renglones menos.
+
+### Dónde queda la pantalla después de cada acción
+
+Dos lugares donde había que ir a buscar el resultado a mano:
+
+- **Después de buscar**, la pantalla se para donde empiezan los resultados. Solo cuando la búsqueda la pidió alguien: entrar al muro no mueve la pantalla de nadie.
+- **Cuando termina el análisis de fotos** —que tarda entre diez y treinta segundos y aparece en una tarjeta bien abajo de la ficha—, la pantalla va hasta él. Solo si lo pidió esa persona desde ese botón: entrar a un aviso que ya tenía análisis hecho no salta a ningún lado, y el cartel que dice "podés seguir navegando" no puede terminar arrastrando a quien le hizo caso.
+
+### Las tarjetas cortadas
+
+Se veían "Chevrolet Cruze Premie…" y "Cañuelas, Buen…". En dos columnas de 375px cada tarjeta mide 166px, y ahí no entran el modelo con el año pegado atrás ni el kilometraje y la ubicación compartiendo renglón. Ahora cada dato tiene su lugar: precio, marca y modelo hasta en dos renglones, "año · kilómetros" juntos porque son cortos, y la ubicación sola con el ancho entero. **El año salió del renglón del modelo justamente para devolverle ese lugar.**
+
+Y una repetición que se notaba solo en los avisos de Capital: `formatLocation` decía "Ciudad Autónoma de Buenos Aires, Ciudad Autónoma de Buenos Aires" —435px en una tarjeta de 166—. Ahora, cuando la localidad y la provincia se llaman igual, se dice una sola vez. No es un caso escrito a mano para CABA: es la regla general de no repetir un nombre dos veces seguidas.
+
+**Medido después: cero textos cortados en el muro y cero en la ficha del vehículo.**
+
+### Un `<a>` adentro de otro `<a>`, en cada tarjeta del muro
+
+Lo cantaba la consola del navegador y no lo había reportado nadie: **dos errores de hidratación de React por cada carga del muro**. La tarjeta entera era un enlace al aviso, y adentro vivía el corazón de guardar, que **sin sesión también es un enlace** —lleva a iniciar sesión—. Un `<a>` adentro de otro `<a>` es HTML inválido, el navegador deshace el anidado al parsear, y lo que React dibuja deja de coincidir con lo que hay en la página.
+
+Es anterior a esta tanda: entró cuando el muro se abrió a las visitas sin cuenta. **Solo se ve navegando sin sesión**, que es la única forma en que nadie lo había mirado con la consola abierta — y es exactamente como recorrió la aplicación el cliente.
+
+Va arreglado con el patrón de siempre: **el enlace envuelve solo el nombre del vehículo** y se estira sobre la tarjeta con un pseudo-elemento. La tarjeta se sigue tocando entera —verificado punto por punto: la foto, el precio y hasta el último píxel de abajo abren el aviso—, el corazón queda por encima del estirado y sigue llevando a iniciar sesión, y de paso el enlace pasó a tener un texto de verdad para un lector de pantalla ("Chevrolet Cruze Premier") en lugar del contenido entero de la tarjeta.
+
+**Medido después: cero anchors anidados y cero errores en la consola**, en el muro y en la ficha del vehículo.
+
+### El texto chico y el aire de más
+
+- **`text-xs` pasó de 12 a 13px**, en la escala y no clase por clase: es la clase de todo lo secundario de la aplicación —las ayudas de los campos, la fecha de publicación, el último mensaje de cada conversación— y el próximo texto que alguien escriba también tiene que quedar cubierto. Misma idea que la regla de los 16px en los campos.
+- **El gris de los textos secundarios se oscureció** de `#5a6472` a `#4c5768`: 7,3:1 sobre el blanco de las tarjetas y 6,5:1 sobre el fondo, contra el 4,5:1 que pide la norma. En un monitor el anterior pasaba; en un celular al sol, no.
+- **Menos aire vertical en celular**: el margen de la página, el relleno de las tarjetas, los carteles de pantalla vacía y la bajada del muro —que es marca, no información, y empujaba la búsqueda hacia abajo—. De tablet para arriba queda todo como estaba. El muro terminó **más corto que antes** aun con un renglón más por tarjeta.
+
+### La tipografía
+
+La aplicación usaba `system-ui`: la letra que traiga el sistema operativo. La misma pantalla se veía con una letra en un iPhone, otra en Android y otra en Windows, y ninguna era una decisión de nadie. Es buena parte de la "sensación de prototipo" del punto 12.
+
+Ahora usa **Inter**, dibujada para pantallas y para textos chicos —precios, kilometrajes, fichas—, con números de ancho fijo que alinean solos una columna de precios. **No es una dependencia nueva ni un pedido a Google:** `next/font` viene dentro de Next, baja los archivos en el build y los sirve desde el mismo dominio, así que el navegador de la persona no le pide nada a un tercero.
+
+### La ficha del vehículo, dada vuelta
+
+Las dos cosas que la plataforma quiere que pasen estaban al final de la pantalla. Se levantó la pregunta como decisión de producto y Mateo la resolvió: suben las dos.
+
+**"Consultar al vendedor" pasó de 2.790px a 612px.** Vivía adentro de la tarjeta del vendedor, al fondo de todo. Es la salida del embudo —lo único que el comprador vino a hacer— y estaba atrás de la descripción, la ficha técnica, el precio y el análisis. Ahora va pegado al precio, con "Guardar" al lado: son las dos mitades de la misma decisión, escribir ahora o dejarlo anotado para después.
+
+**El análisis de fotos pasó de ~2.100px a 795px, y eso da vuelta una decisión del Sprint 3.** El precio de referencia iba primero con este argumento: es lo primero que se quiere saber y aparece sin que nadie apriete nada. La segunda mitad de esa frase es justamente lo que lo manda atrás. **El precio se dibuja solo, así que se ve igual un lugar más abajo; el análisis no existe hasta que alguien toca el botón**, y un botón que está a dos pantallas de distancia no se toca. Estar abajo no cuesta lo mismo en los dos casos. Y es la pieza que diferencia esta plataforma de cualquier otro clasificado: en la prueba fue lo que más les interesó al cliente. Enterrarla era esconder el producto.
+
+El orden nuevo en celular, medido: acciones a 612 y 716, el análisis a 795, el precio de referencia a 2.005, la descripción a 2.264, la ficha técnica a 2.391 y el vendedor —ya solo el nombre y la fecha, sin acciones— a 2.661.
+
+### El saludo del asistente dejó de prometer lo que no hace
+
+Decía "preguntame lo que quieras, sobre un aviso **o sobre cómo funciona la aplicación**". Probándolo salió que era mentira: preguntado por cómo funciona el análisis de fotos contesta "no tengo esa información". Y tiene razón — el asistente conoce el catálogo, el aviso que hay en pantalla, su análisis y su estimación, pero nadie le contó nunca cómo funciona la plataforma. **La primera pregunta de alguien que le creyera al saludo terminaba en un no.**
+
+Se sacó la frase, del saludo y de la bajada del encabezado, que repetía la misma promesa en letra chica. Quedan nombradas las tres cosas que sí hace. La alternativa —contarle al modelo cómo funciona la plataforma— es agrandar el prompt de todos los pedidos para una pregunta que casi nadie hace; si algún día se hace, la frase vuelve.

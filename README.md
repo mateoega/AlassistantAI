@@ -2,7 +2,9 @@
 
 Plataforma que usa inteligencia artificial para dar más confianza al comprar y vender vehículos de **todo el rubro automotor** — autos, camionetas, utilitarios, motos, cuatriciclos, camiones, buses y cualquier vehículo motorizado terrestre. Analiza las fotos, detecta inconsistencias entre lo declarado y lo que se ve, y estima un precio de mercado con su justificación.
 
-**Estado actual: Sprint 6 — cerrado lo que los cinco sprints anteriores dejaron abierto.** El descargo de responsabilidad, bloquear y denunciar en los mensajes, el asistente filtrando por los datos propios de cada tipo, el chat contestando mientras escribe, y el recorrido del que publica verificado con cuentas reales. Ver [`docs/roadmap.md`](docs/roadmap.md).
+**Estado actual: Sprint 6 cerrado, más la primera pasada de correcciones del cliente.** El Sprint 6 cerró lo que los cinco anteriores dejaron abierto: el descargo de responsabilidad, bloquear y denunciar en los mensajes, el asistente filtrando por los datos propios de cada tipo, el chat contestando mientras escribe, y el recorrido del que publica verificado con cuentas reales. Ver [`docs/roadmap.md`](docs/roadmap.md).
+
+El **2026-08-27** el cliente probó el MVP entero desde un celular real y devolvió trece puntos: nada de funciones nuevas, todo corregir y pulir. Se corrigieron los seis urgentes —el botón flotante que se apoyaba sobre el contenido, dónde queda la pantalla después de cada acción, una pregunta que se enviaba sola, la espera del asistente, los filtros que estaban a dos pantallas de distancia y los dos botones de buscar que convivían— la pasada de usabilidad y presentación en celular —textos que se cortaban, tamaño y contraste de los secundarios, aire de más y tipografía— y el reordenamiento de la ficha del vehículo, donde consultar al vendedor y el análisis de fotos pasaron del fondo de la pantalla a arriba de todo. El detalle, con lo que se midió antes y después, está en [`bitacora/bitacora.md`](bitacora/bitacora.md).
 
 ---
 
