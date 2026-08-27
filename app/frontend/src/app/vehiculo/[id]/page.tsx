@@ -258,18 +258,61 @@ export default function VehiculoPage() {
             </div>
           )}
 
-          {/* Guardar está arriba, junto al precio y antes de todo lo demás: es
-              lo que se aprieta cuando el vehículo gusta y todavía no se
-              decidió nada. Al dueño no se le ofrece — ya tiene su aviso en
-              "Mis publicaciones". */}
+          {/* LAS DOS ACCIONES DEL QUE MIRA, ARRIBA Y JUNTAS.
+
+              El contacto vivía al final de la pantalla, adentro de la tarjeta
+              del vendedor: en celular, unos 2.900px de scroll después del
+              precio. Es la salida del embudo —lo único que el comprador vino a
+              hacer— y estaba atrás de todo lo demás.
+
+              Guardar la acompaña porque es la otra mitad de la misma decisión:
+              escribir ahora, o dejarlo anotado para después.
+
+              Al dueño no se le ofrece ninguna de las dos: nadie se escribe a sí
+              mismo, y su aviso ya está en "Mis publicaciones". */}
           {!isOwner && (
-            <div className="flex flex-wrap gap-3">
-              <FavoriteButton listingId={listing.id} variant="labeled" />
+            <div className="space-y-3">
+              {/* Escribirle a alguien por un vehículo ya vendido es hacerle
+                  perder el tiempo a los dos. La explicación va donde estaría el
+                  botón, no perdida al final de la pantalla. */}
+              {listing.status === 'published' && <ContactSeller listing={listing} />}
+
+              {listing.status === 'sold' && (
+                <p className="text-sm text-muted">
+                  Este vehículo ya se vendió, así que no se puede contactar al vendedor por esta
+                  publicación.
+                </p>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <FavoriteButton listingId={listing.id} variant="labeled" />
+              </div>
             </div>
           )}
 
+          {/* EL ANÁLISIS DE FOTOS VA PRIMERO, Y ESTO DA VUELTA UNA DECISIÓN
+              ANTERIOR.
+
+              Hasta hoy el precio de referencia iba adelante, con este
+              argumento: es lo primero que se quiere saber y aparece sin que
+              nadie apriete nada. La segunda mitad de esa frase es justamente lo
+              que lo manda atrás. El precio se dibuja solo, así que se ve igual
+              un lugar más abajo; el análisis NO EXISTE hasta que alguien toca
+              el botón, y un botón que está a dos pantallas de distancia no se
+              toca. Estar abajo no cuesta lo mismo en los dos casos.
+
+              Y es la pieza que diferencia esta plataforma de cualquier otro
+              clasificado: en la prueba del cliente fue lo que más les
+              interesó. Enterrarla es esconder el producto.
+
+              Sin fotos no tiene nada que mirar, así que ahí no se ofrece —
+              pasa solo en borradores a medio hacer. */}
+          {listing.photos.length > 0 && <AnalysisPanel listingId={listing.id} />}
+
+          <PriceEstimatePanel listingId={listing.id} />
+
           {listing.description && (
-            <Card className="space-y-2 p-5">
+            <Card className="space-y-2 p-4 sm:p-5">
               <h2 className="font-semibold text-ink">Descripción</h2>
               <p className="whitespace-pre-line text-sm leading-relaxed text-body">
                 {listing.description}
@@ -280,7 +323,7 @@ export default function VehiculoPage() {
           {/* La ficha propia del tipo de vehículo. El backend ya la devuelve
               traducida a "etiqueta: valor"; acá solo se muestra. */}
           {listing.specs_display.length > 0 && (
-            <Card className="p-5">
+            <Card className="p-4 sm:p-5">
               <h2 className="mb-3 font-semibold text-ink">
                 Detalles {listing.vehicle_type ? `de ${listing.vehicle_type.name.toLowerCase()}` : ''}
               </h2>
@@ -295,16 +338,9 @@ export default function VehiculoPage() {
             </Card>
           )}
 
-          {/* El precio de referencia va ANTES del análisis de fotos: es lo
-              primero que quiere saber quien mira un aviso, y no depende de que
-              el comprador apriete nada. */}
-          <PriceEstimatePanel listingId={listing.id} />
-
-          {/* El asistente de IA. Sin fotos no tiene nada que mirar, así que no
-              se ofrece — pasa solo en borradores a medio hacer. */}
-          {listing.photos.length > 0 && <AnalysisPanel listingId={listing.id} />}
-
-          <Card className="space-y-3 p-5">
+          {/* Quién vende, al final: es dato de respaldo, no una acción. El
+              botón para escribirle está arriba, junto al precio. */}
+          <Card className="space-y-3 p-4 sm:p-5">
             <div>
               <h2 className="font-semibold text-ink">Vendedor</h2>
               <p className="text-body">{listing.seller?.display_name ?? 'Sin nombre cargado'}</p>
@@ -314,19 +350,6 @@ export default function VehiculoPage() {
                 </p>
               )}
             </div>
-
-            {/* El contacto solo tiene sentido para quien mira el vehículo de
-                otro (nadie se escribe a sí mismo) y solo si sigue disponible:
-                escribirle a alguien por un vehículo ya vendido es hacerle
-                perder el tiempo a los dos. */}
-            {!isOwner && listing.status === 'published' && <ContactSeller listing={listing} />}
-
-            {!isOwner && listing.status === 'sold' && (
-              <p className="text-sm text-muted">
-                Este vehículo ya se vendió, así que no se puede contactar al vendedor por esta
-                publicación.
-              </p>
-            )}
 
             {isOwner && (
               <p className="text-sm text-muted">
