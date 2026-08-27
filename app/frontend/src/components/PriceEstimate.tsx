@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { api } from '@/lib/api';
 import { Card, Notice } from '@/components/ui';
 import { formatKilometers, formatPrice } from '@/lib/format';
@@ -99,11 +98,7 @@ function NoDisponible({ estimate }: { estimate: Extract<Estimate, { disponible: 
       {estimate.referencia_externa && <Referencia referencia={estimate.referencia_externa} />}
 
       <p className="text-xs text-muted">
-        A medida que se publiquen más vehículos de este modelo, va a poder estimarse.{' '}
-        <Link href="/legales" className="font-medium text-brand-deep hover:underline">
-          Qué alcance tiene
-        </Link>
-        .
+        A medida que se publiquen más vehículos de este modelo, va a poder estimarse.
       </p>
     </div>
   );
@@ -148,13 +143,6 @@ function Disponible({ estimate }: { estimate: Extract<Estimate, { disponible: tr
 
       {estimate.comparables.length > 0 && <Comparables comparables={estimate.comparables} />}
 
-      <p className="text-xs text-muted">
-        {descargo(estimate)}{' '}
-        <Link href="/legales" className="font-medium text-brand-deep hover:underline">
-          Qué alcance tiene
-        </Link>
-        .
-      </p>
     </div>
   );
 }
@@ -228,18 +216,13 @@ function comoSeCalculo(estimate: Extract<Estimate, { disponible: true }>): strin
         ? ', que son pocos: tomalo como un orden de magnitud.'
         : '.';
 
-  return base + confianza;
-}
-
-function descargo(estimate: Extract<Estimate, { disponible: true }>): string {
+  // De qué cotización salió la comparación entre pesos y dólares. Venía en el
+  // descargo que se sacó, pero no es un descargo: es parte de la cuenta, y
+  // quien mira el rango tiene derecho a saber con qué dólar se armó.
   const monedas =
     estimate.cotizacion !== null
       ? ` Los precios en pesos y en dólares se comparan usando el ${estimate.cotizacion.fuente}.`
       : '';
 
-  return (
-    'Es una referencia orientativa, no una tasación. Sale de precios que los vendedores están ' +
-    'pidiendo, que no son necesariamente precios de venta.' +
-    monedas
-  );
+  return base + confianza + monedas;
 }

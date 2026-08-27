@@ -20,6 +20,9 @@ export default function LoginPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
+  // La casilla de los términos. Solo existe al crear la cuenta: el que ya tiene
+  // una los aceptó el día que la creó, o en el cartel de la primera visita.
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   useEffect(() => {
     if (!loading && session) {
@@ -37,7 +40,13 @@ export default function LoginPage() {
       const { data, error } = await supabase.auth.signUp({
         email: email.trim(),
         password,
-        options: { data: { display_name: displayName.trim() } },
+        // `terms_accepted` es una marca, no una fecha: la fecha la pone el
+        // disparador de la base con `now()`. Un dato de tiempo escrito por el
+        // navegador no sirve como constancia de nada. Ver la migración
+        // 20260827000001.
+        options: {
+          data: { display_name: displayName.trim(), terms_accepted: true },
+        },
       });
 
       setWorking(false);
@@ -131,6 +140,29 @@ export default function LoginPage() {
           />
         </Field>
 
+          {/* La aceptación se pide ACÁ y no después de entrar: un descargo que
+              se lee estando adentro llega tarde. Es `required`, así que el
+              navegador no deja enviar el formulario sin tildarla — no hace
+              falta validarlo a mano. */}
+          {mode === 'signup' && (
+            <label className="flex items-start gap-2.5 text-sm text-body">
+              <input
+                type="checkbox"
+                required
+                checked={acceptedTerms}
+                onChange={(event) => setAcceptedTerms(event.target.checked)}
+                className="mt-0.5 size-4 shrink-0 accent-brand-deep"
+              />
+              <span>
+                Leí y acepto los{' '}
+                <Link href="/legales" className="font-medium text-brand-deep hover:underline">
+                  términos y el descargo de responsabilidad
+                </Link>
+                .
+              </span>
+            </label>
+          )}
+
           {problem && <Notice tone="alert" title={problem} />}
           {message && <Notice title={message} />}
 
@@ -148,19 +180,13 @@ export default function LoginPage() {
               setMode(mode === 'login' ? 'signup' : 'login');
               setProblem(null);
               setMessage(null);
+              setAcceptedTerms(false);
             }}
           >
             {mode === 'login' ? 'Crear una' : 'Iniciar sesión'}
           </button>
         </p>
 
-        {/* El descargo se puede leer ANTES de crear la cuenta. Uno que solo se
-            alcanza estando adentro llega tarde. */}
-        <p className="mt-4 text-center text-xs text-muted">
-          <Link href="/legales" className="hover:underline">
-            Términos y responsabilidad
-          </Link>
-        </p>
       </Card>
     </div>
   );

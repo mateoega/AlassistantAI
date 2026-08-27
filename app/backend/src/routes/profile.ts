@@ -17,7 +17,7 @@ profileRouter.get('/', async (req, res) => {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, phone')
+    .select('id, display_name, phone, terms_accepted_at')
     .eq('id', userId)
     .maybeSingle();
 
@@ -25,7 +25,9 @@ profileRouter.get('/', async (req, res) => {
     throw new Error(`No se pudo leer el perfil: ${error.message}`);
   }
 
-  res.json({ profile: data ?? { id: userId, display_name: null, phone: null } });
+  res.json({
+    profile: data ?? { id: userId, display_name: null, phone: null, terms_accepted_at: null },
+  });
 });
 
 profileRouter.put('/', async (req, res) => {
@@ -48,7 +50,7 @@ profileRouter.put('/', async (req, res) => {
     .from('profiles')
     .update({ display_name: displayName, phone })
     .eq('id', userId)
-    .select('id, display_name, phone')
+    .select('id, display_name, phone, terms_accepted_at')
     .maybeSingle();
 
   if (error) {
@@ -60,6 +62,43 @@ profileRouter.put('/', async (req, res) => {
   }
 
   res.json({ profile: data });
+});
+
+/**
+ * Dejar constancia de que esta persona aceptó los términos de `/legales`.
+ *
+ * QUIÉN LA LLAMA. El cartel de aceptación que se muestra la primera vez. Al que
+ * se registra hoy la fecha se la pone el disparador de la base al crear la
+ * cuenta, así que esta ruta es para los otros dos casos: las cuentas que ya
+ * existían antes de que la aceptación existiera, y cualquiera cuyo perfil haya
+ * quedado sin la marca.
+ *
+ * LA FECHA LA PONE EL SERVIDOR, no el navegador — igual que en el disparador.
+ * Y NO SE PISA una aceptación anterior: la constancia que vale es la primera,
+ * y volver a entrar no debería mover esa fecha hacia adelante.
+ *
+ * Es idempotente a propósito: el cartel puede llamarla dos veces —dos pestañas
+ * abiertas, un reintento— y la segunda no cambia nada.
+ */
+profileRouter.post('/terms', async (req, res) => {
+  const { userId, supabase } = auth(req);
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ terms_accepted_at: new Date().toISOString() })
+    .eq('id', userId)
+    .is('terms_accepted_at', null)
+    .select('terms_accepted_at')
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`No se pudo registrar la aceptación: ${error.message}`);
+  }
+
+  // `data` viene vacío cuando ya estaba aceptado: la condición `is null` no
+  // encontró ninguna fila. No es un error — es el caso normal de la segunda
+  // llamada.
+  res.json({ terms_accepted_at: data?.terms_accepted_at ?? null });
 });
 
 function optionalText(

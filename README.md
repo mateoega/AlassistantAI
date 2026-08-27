@@ -56,7 +56,7 @@ La IA de AIassistant trabaja **para quien compra, no para quien vende**. El que 
 
 **La IA no entra en los mensajes** *(Sprint 5)*. La conversación entre comprador y vendedor es privada: nadie más que sus dos participantes la lee, tampoco el asistente. Leer charlas ajenas para "ayudar" es exactamente lo que esta plataforma no hace. En cada conversación se puede **bloquear** —la base corta los mensajes en las dos direcciones, sin decirle a nadie quién lo decidió— y **denunciar** *(Sprint 6)*.
 
-**Qué alcance tiene todo esto está escrito y a la vista**, en [`/legales`](app/frontend/src/app/legales/page.tsx): la estimación sale de precios pedidos y no es una tasación, el análisis lo hace un programa que se puede equivocar, y las publicaciones las escriben las personas que venden.
+**Qué alcance tiene todo esto está escrito en [`/legales`](app/frontend/src/app/legales/page.tsx)**: la estimación sale de precios pedidos y no es una tasación, el análisis lo hace un programa que se puede equivocar, y las publicaciones las escriben las personas que venden. Desde el 2026-08-27 ese texto **se acepta una vez** —un cartel en la primera visita y una casilla obligatoria al crear la cuenta— en vez de repetirse como descargo en cada pantalla. Queda un enlace en el pie para releerlo.
 
 ---
 

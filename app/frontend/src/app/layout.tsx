@@ -8,6 +8,7 @@ import { AssistantProvider } from '@/components/AssistantProvider';
 import { FavoritesProvider } from '@/components/FavoritesProvider';
 import { MessagesProvider } from '@/components/MessagesProvider';
 import { AssistantChat } from '@/components/AssistantChat';
+import { TermsGate } from '@/components/TermsGate';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -39,6 +40,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 <SiteFooter />
                 <MobileNav />
                 <AssistantChat />
+                {/* Va al final y por encima de todo (z-60): mientras no se
+                    aceptan los términos, no se toca nada de lo de atrás. Se
+                    muestra una sola vez por navegador y sabe en qué pantalla
+                    NO aparecer — ver el comentario del componente. */}
+                <TermsGate />
               </AssistantProvider>
             </MessagesProvider>
           </FavoritesProvider>

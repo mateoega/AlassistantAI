@@ -26,6 +26,23 @@ import type { ListingSearchResult } from '@/lib/types';
  * salida.
  */
 
+/**
+ * Lo primero que se lee al abrir el asistente, antes de escribir nada.
+ *
+ * Dice para quién trabaja —el que compra— y que se le puede preguntar
+ * cualquier cosa, incluso sobre la aplicación misma y no solo sobre un
+ * vehículo: quien abre un chat por primera vez no sabe qué se le puede pedir, y
+ * si no se lo dicen, prueba una vez y no vuelve.
+ *
+ * NO SE MANDA AL MODELO. Vive solo en la pantalla: `messages` sigue arrancando
+ * vacío, así que este texto no viaja en el historial ni gasta una llamada. Lo
+ * que el asistente contesta sale de su prompt, que está en el backend.
+ */
+const WELCOME =
+  'Hola. Estoy para ayudarte a hacer una compra inteligente: puedo mirar un vehículo con ' +
+  'ojo crítico, contarte de dónde sale su precio de referencia y buscarte otras opciones. ' +
+  'Preguntame lo que quieras, sobre un aviso o sobre cómo funciona la aplicación.';
+
 const SUGGESTIONS = [
   '¿Qué le preguntarías al vendedor?',
   '¿El kilometraje es mucho para el año?',
@@ -170,10 +187,12 @@ export function AssistantChat() {
       <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
         {messages.length === 0 && (
           <div className="space-y-3">
-            <p className="text-sm text-body">
-              Te ayudo a mirar un vehículo con ojo crítico, a entender su precio y a encontrar
-              opciones.
-            </p>
+            {/* El saludo se dibuja como un mensaje del asistente y no como un
+                texto de pantalla vacía: quien abre el chat por primera vez tiene
+                que ver que del otro lado hay alguien que ya le habló, no un
+                cartel explicando para qué sirve la caja. Es el primer globito
+                del hilo y usa el mismo componente que los demás. */}
+            <Bubble message={{ role: 'model', text: WELCOME }} />
             <ul className="space-y-2">
               {SUGGESTIONS.map((suggestion) => (
                 <li key={suggestion}>

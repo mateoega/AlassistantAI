@@ -62,3 +62,32 @@ body {
   outline: 2px solid var(--color-brand);
   outline-offset: 2px;
 }
+
+/* ---------------------------------------------------------------------------
+ * POR QUÉ LOS CAMPOS MIDEN 16px EN CELULAR
+ *
+ * Safari de iPhone agranda la pantalla solo al tocar un campo cuyo texto mide
+ * menos de 16px — y NO la vuelve a achicar cuando el campo pierde el foco. El
+ * zoom queda puesto y sobrevive a la navegación: se toca el buscador del muro,
+ * se entra a un vehículo, y la ficha se ve agrandada. Desde afuera parece un
+ * error de tamaño de pantalla, pero no hay nada que se desborde: la aplicación
+ * mide 375 de ancho en una pantalla de 375, verificado en el sitio online.
+ *
+ * Todos los campos de la aplicación usan `text-sm` (14px), así que el problema
+ * estaba en todas las pantallas que tienen uno.
+ *
+ * Va acá y no campo por campo a propósito: son más de treinta, y un campo nuevo
+ * que alguien agregue mañana también tiene que quedar cubierto.
+ *
+ * La regla está FUERA de toda capa de Tailwind, que es lo que la deja ganarle a
+ * `text-sm` sin usar `!important` — igual que las reglas de `html, body` de más
+ * arriba. Y se corta en 639px, el límite de `sm`: de tablet para arriba los
+ * campos siguen midiendo 14px, porque ahí ningún navegador agranda nada.
+ * ------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

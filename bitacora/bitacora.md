@@ -739,3 +739,57 @@ Nadie lo reportó porque para verlo hay que abrir por enlace directo un aviso ve
 ### Cómo se verificó
 
 `npm run verificar:acceso`, un script nuevo que consulta con la **clave anónima** y no con la de servicio — con la de servicio esto no probaría nada, porque esa clave se saltea las reglas. **13 comprobaciones, todas en verde:** ve los 68 avisos con fotos y nombre del vendedor, y no ve borradores, pausados, favoritos ni mensajes. El teléfono lo rechaza la base, no la pantalla.
+
+## 2026-08-27 — Ajustes de cliente antes del MVP
+
+Primera tanda de cambios que no salen de un sprint sino de mirar la aplicación andando: dos los notó Mateo usándola y uno lo pidió el cliente.
+
+### El zoom que parecía un error de resolución
+
+El síntoma era claro y engañoso: se toca algo, se pasa a otra pantalla y la pantalla nueva se ve agrandada, como una foto a la que hay que hacerle zoom out. Parecía la aplicación calculando mal el tamaño de la pantalla.
+
+No era eso, y conviene que quede escrito porque el reflejo es buscar un desborde. **Se midió el sitio online a 375px de ancho y la página mide exactamente 375**: no hay nada que se salga. Lo que pasa es de iPhone — **Safari agranda la pantalla solo al enfocar un campo cuyo texto mide menos de 16px, y no la vuelve a achicar cuando el campo pierde el foco.** El zoom queda puesto y sobrevive a la navegación, así que el error se ve en una pantalla que no tiene ningún campo.
+
+Todos los campos de la aplicación usaban `text-sm`, que son 14px. Va arreglado con **una sola regla en `globals.css`** y no campo por campo: son más de treinta y un campo nuevo también tiene que quedar cubierto. La regla vive **fuera de toda capa de Tailwind**, que es lo que la deja ganarle a `text-sm` sin `!important`, y se corta en 639px: de tablet para arriba los campos siguen midiendo 14px, porque ahí ningún navegador agranda nada.
+
+Verificado a los dos anchos: 16px a 375, 14px a 750.
+
+### El asistente ahora saluda primero
+
+Al abrir el chat lo primero que había era un texto de pantalla vacía explicando para qué servía la caja. Ahora es **un globito del asistente**, con el mismo componente que el resto de los mensajes: quien lo abre por primera vez ve que del otro lado ya le hablaron.
+
+**El saludo no se le manda al modelo.** Vive solo en la pantalla y `messages` sigue arrancando vacío, así que no viaja en el historial ni gasta una llamada. Lo que el asistente contesta sigue saliendo de su prompt, que está en el backend.
+
+### Los términos: de leerse en todas las pantallas a aceptarse una vez
+
+Este es el cambio de fondo, y es una decisión de producto del cliente que **da vuelta lo que hizo el Sprint 6**.
+
+El Sprint 6 puso el descargo a la vista en todas partes: en el pie de cada pantalla, debajo del análisis, debajo de la estimación de precio y en el login. La idea era que nadie pudiera decir que no lo había visto. En la práctica el cliente lo leyó como ruido: un cartel legal que aparece todo el tiempo deja de informar.
+
+**La regla nueva es que los términos se aceptan una vez, y después no vuelven a aparecer.** Se sacaron los cuatro párrafos con sus enlaces "Qué alcance tiene". Queda un solo enlace discreto en el pie, para el que los quiera releer.
+
+En su lugar, dos puertas:
+
+1. **Un cartel en la primera visita**, una vez por navegador. No aparece en `/legales` —taparlo sería pedir que acepten algo que no los deja leer— ni en `/login`, donde la casilla del formulario ya lo pregunta.
+2. **Una casilla obligatoria al crear la cuenta.** Es `required`, así que el navegador no deja enviar el formulario sin tildarla.
+
+**La constancia se guarda en dos lados y por motivos distintos.** En el navegador, que es el único lugar posible para quien mira sin cuenta —el muro, la ficha, el precio y el asistente se abren sin sesión, así que no hay a quién atar la aceptación—; y en `profiles.terms_accepted_at`, que sí sobrevive al navegador. La consecuencia asumida: **el que mira sin cuenta y borra los datos del navegador vuelve a ver el cartel.** No hay forma de evitarlo sin pedirle una cuenta para mirar, que es justamente lo que el 2026-08-26 se decidió no hacer.
+
+**La fecha la pone el servidor, nunca el navegador.** El formulario manda `terms_accepted: true` —una marca, no un tiempo— y el disparador de la base la convierte en `now()`. Un dato de tiempo escrito por el cliente no sirve como constancia de nada. Por el mismo motivo `POST /api/profile/terms` **no pisa una aceptación anterior**: la constancia que vale es la primera, y volver a entrar no debería mover esa fecha hacia adelante.
+
+**Una frase se mudó en vez de borrarse.** El descargo del precio terminaba con "los precios en pesos y en dólares se comparan usando el {fuente}". Eso no es un descargo: es parte de la cuenta, y quien mira el rango tiene derecho a saber con qué dólar se armó. Pasó a la línea que explica de dónde sale el número.
+
+**Lo que esto no cambia:** el texto de `/legales` es el mismo, y sigue pendiente que lo lea alguien del oficio — punto 5 de `para_mas_adelante.md`. Aceptar un texto que ningún abogado revisó es exactamente igual de sólido que mostrarlo sin aceptar.
+
+### Sobre hacer el chat en n8n
+
+Apareció la pregunta de por qué el asistente no se armó como un flujo de n8n. Queda anotada la respuesta porque va a volver.
+
+Lo que n8n daba: una primera versión sin escribir código, historial visual de cada ejecución, reintentos y conectores ya hechos. Lo que costaba, y por lo que se descartó para **este** caso:
+
+- **El chat contesta mientras escribe.** n8n es pedido → respuesta entre nodos; mandar la respuesta de a pedazos al navegador no es para lo que está hecho.
+- **Quién ve qué lo decide la base.** El chat consulta con la sesión de quien pregunta, así que las reglas de acceso se aplican solas y el asistente ve lo mismo que el muro público. Un flujo corre con las credenciales cargadas en n8n —en la práctica, una clave de servicio—: sería una segunda puerta a los datos que no obedece las políticas, y habría que reimplementar adentro del flujo quién puede ver qué. Es la regla que este proyecto tiene escrita desde el Sprint 6.
+- **Qué significa cada filtro se decide en un solo lugar.** El buscador del muro y el del asistente comparten `listing-filters.ts`. En n8n el del asistente viviría en un nodo, fuera del repositorio.
+- **No está en git ni se despliega con el push**, y sería una tercera pieza para hostear y vigilar.
+
+**Dónde sí encaja:** avisar fuera de la aplicación, el punto 6 de `para_mas_adelante.md`. Eso tiene forma de flujo — corre solo, nadie lo mira, y necesita conectores de mail o WhatsApp que hoy no existen en el proyecto.
