@@ -12,8 +12,23 @@ export function formatKilometers(kilometers: number): string {
   return `${numberFormat.format(kilometers)} km`;
 }
 
+/**
+ * Dónde está el vehículo: "Cañuelas, Buenos Aires".
+ *
+ * CUANDO LA LOCALIDAD Y LA PROVINCIA SON LA MISMA, SE DICE UNA SOLA VEZ. Pasa
+ * con la Ciudad Autónoma de Buenos Aires, que es las dos cosas: repetida
+ * medía 435px en una tarjeta de 166 y salía cortada por la mitad en todos los
+ * avisos de Capital, que no son pocos. No es un caso especial escrito a mano
+ * —no dice "si es CABA"—: es la regla general de no repetir un nombre dos
+ * veces seguidas, y sirve igual para cualquier provincia que mañana se llame
+ * como su capital.
+ */
 export function formatLocation(listing: Pick<Listing, 'city' | 'province'>): string {
-  return listing.province ? `${listing.city}, ${listing.province.name}` : listing.city;
+  if (!listing.province || listing.province.name === listing.city) {
+    return listing.city;
+  }
+
+  return `${listing.city}, ${listing.province.name}`;
 }
 
 export function formatDate(iso: string | null): string {
