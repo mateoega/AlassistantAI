@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
@@ -41,6 +41,23 @@ export function Wall() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+
+  /**
+   * Dónde empiezan los resultados, para poder llevar la pantalla hasta ahí
+   * después de buscar. Ver `justSearched`.
+   */
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  /**
+   * Si los resultados que están por llegar son de una búsqueda que alguien
+   * pidió recién, y no de la carga normal de la pantalla.
+   *
+   * Es la diferencia entre acompañar y ser molesto: al entrar al muro, mover
+   * la pantalla sola sería sacarle a la persona el lugar donde estaba parada.
+   * Después de apretar "Buscar", en cambio, dejarla donde estaba la obliga a
+   * ir a buscar los resultados a mano — que es lo que reportó el cliente.
+   */
+  const justSearched = useRef(false);
 
   const values: SearchValues = useMemo(
     () => ({
@@ -135,9 +152,30 @@ export function Wall() {
    * de sacar al usuario de la aplicación.
    */
   function search(next: SearchValues) {
+    justSearched.current = true;
+
     const params = toQuery(next);
     router.push(params === '' ? '/' : `/?${params.slice(1)}`);
   }
+
+  /**
+   * Después de una búsqueda, la pantalla se para en los resultados.
+   *
+   * Corre cuando terminó de cargar y no antes: si se moviera al apretar el
+   * botón, llevaría a un lugar que todavía dice "Cargando…" y que al llegar
+   * los avisos cambia de alto, dejando la pantalla en cualquier parte.
+   *
+   * `block: 'start'` y no `center`: lo que tiene que quedar arriba de todo es
+   * el primer resultado, no el medio de la lista.
+   */
+  useEffect(() => {
+    if (loading || !justSearched.current) {
+      return;
+    }
+
+    justSearched.current = false;
+    resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [loading]);
 
   // Solo mientras no se sabe si hay sesión. Antes decía `|| !session`, que
   // ahora sería esconderle el muro justamente a quien vino a mirarlo.
@@ -146,16 +184,30 @@ export function Wall() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Vehículos publicados</h1>
-        <p className="mt-1 text-sm text-muted">Todo el rubro automotor en un mismo lugar.</p>
+        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+          Vehículos publicados
+        </h1>
+        {/* La bajada no aparece en celular. Es marca, no información: quien
+            abrió la aplicación ya sabe qué está mirando, y en una pantalla
+            donde cada renglón se paga en scroll, ese renglón empuja la
+            búsqueda y los avisos hacia abajo sin darle nada a nadie. */}
+        <p className="mt-1 hidden text-sm text-muted sm:block">
+          Todo el rubro automotor en un mismo lugar.
+        </p>
       </div>
 
       <SearchBar values={values} onSearch={search} />
 
       {problem && <Notice tone="alert" title={problem} />}
 
+      {/* ACÁ EMPIEZAN LOS RESULTADOS, y por eso el `ref` está en esta caja y no
+          adentro de alguna de las ramas: después de buscar hay que poder llevar
+          la pantalla hasta este punto sin importar si lo que llegó son avisos,
+          un cartel de "ninguno coincide" o todavía el "Cargando…". El
+          `scroll-mt` deja lugar para la barra de arriba, que es fija. */}
+      <div ref={resultsRef} className="scroll-mt-20 space-y-4 sm:space-y-6">
       {loading ? (
         <Spinner />
       ) : listings.length === 0 ? (
@@ -181,7 +233,7 @@ export function Wall() {
             </div>
           )}
 
-          <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
             {listings.map((listing) => (
               <li key={listing.id}>
                 <ListingCard listing={listing} />
@@ -198,6 +250,7 @@ export function Wall() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -231,7 +284,7 @@ function toQuery(values: SearchValues): string {
  */
 function NoResults({ onClear }: { onClear: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-20 text-center">
+    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
       <p className="font-medium text-ink">Ningún vehículo coincide con esa búsqueda.</p>
       <p className="mt-1 text-sm text-muted">
         Probá con menos filtros, o escribiendo solo la marca.
@@ -247,7 +300,7 @@ function NoResults({ onClear }: { onClear: () => void }) {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-20 text-center">
+    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
       <p className="font-medium text-ink">Todavía no hay publicaciones.</p>
       <p className="mt-1 text-sm text-muted">
         Elegí el tipo de vehículo y el formulario se arma solo.
