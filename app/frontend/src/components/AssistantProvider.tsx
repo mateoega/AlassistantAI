@@ -52,7 +52,23 @@ interface AssistantState {
    */
   streamingText: string;
   setStreamingText: Dispatch<SetStateAction<string>>;
+  /**
+   * En qué anda el servidor mientras todavía no mandó una letra.
+   *
+   * Vive acá arriba por la misma razón que `streamingText`: el panel se puede
+   * cerrar en medio de una respuesta y al volver a abrirlo tiene que seguir
+   * contando lo mismo, no arrancar de cero.
+   */
+  step: AssistantStep;
+  setStep: (step: AssistantStep) => void;
 }
+
+/**
+ * "pensando" es el estado de arranque —lo pone la pantalla al mandar la
+ * pregunta— y "buscando" lo avisa el servidor cuando el asistente sale a
+ * recorrer las publicaciones, que es la vuelta que más tarda.
+ */
+export type AssistantStep = 'pensando' | 'buscando';
 
 const AssistantContext = createContext<AssistantState | null>(null);
 
@@ -61,6 +77,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [thinking, setThinking] = useState(false);
   const [streamingText, setStreamingText] = useState('');
+  const [step, setStep] = useState<AssistantStep>('pensando');
 
   return (
     <AssistantContext.Provider
@@ -73,6 +90,8 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
         setThinking,
         streamingText,
         setStreamingText,
+        step,
+        setStep,
       }}
     >
       {children}

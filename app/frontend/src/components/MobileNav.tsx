@@ -29,11 +29,11 @@ import { useMessages } from './MessagesProvider';
  * una sola vez y donde la espera.
  */
 export function MobileNav() {
-  const { session } = useSession();
   const { unread } = useMessages();
   const pathname = usePathname();
+  const visible = useMobileNavVisible();
 
-  if (!session || pathname === '/login') {
+  if (!visible) {
     return null;
   }
 
@@ -74,6 +74,27 @@ export function MobileNav() {
       </ul>
     </nav>
   );
+}
+
+/**
+ * Si la barra de abajo está montada en esta pantalla.
+ *
+ * La preguntan el botón flotante del asistente —que se tiene que apoyar encima
+ * de la barra, no sobre ella ni levantado en el aire cuando no está— y el pie,
+ * que le reserva el lugar. Vive acá para que la condición se escriba una sola
+ * vez: estaba copiada como un `bottom-20` fijo en el botón, así que mirar el
+ * muro sin cuenta lo dejaba flotando a 80px del borde esquivando una barra que
+ * no existía, justo encima del contenido.
+ *
+ * DICE SI ESTÁ MONTADA, NO SI SE VE. La barra además se esconde de 768px para
+ * arriba con `md:hidden`, y eso lo sabe solo el CSS. Quien use este dato tiene
+ * que poner su propio corte en `md`, con el mismo número.
+ */
+export function useMobileNavVisible(): boolean {
+  const { session } = useSession();
+  const pathname = usePathname();
+
+  return Boolean(session) && pathname !== '/login';
 }
 
 function Item({

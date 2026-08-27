@@ -1,10 +1,15 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { apiStream, ApiError } from '@/lib/api';
-import { useAssistant, type ChatMessage } from '@/components/AssistantProvider';
+import {
+  useAssistant,
+  type AssistantStep,
+  type ChatMessage,
+} from '@/components/AssistantProvider';
+import { useMobileNavVisible } from '@/components/MobileNav';
 import { inputClass } from '@/components/ui';
 import { formatPrice, formatKilometers } from '@/lib/format';
 import type { ListingSearchResult } from '@/lib/types';
@@ -20,19 +25,30 @@ import type { ListingSearchResult } from '@/lib/types';
  * al backend, y ahí el asistente puede responder sobre "este vehículo" con los
  * datos reales de la publicación y su análisis de fotos, si ya se hizo.
  *
- * EN CELULAR NO PUEDE TAPAR LA BARRA INFERIOR. Es el problema de espacio que
- * costó el Sprint 1.6: el botón flotante se levanta por encima de la barra de
- * navegación, y el panel abierto la cubre entero a propósito, con su propia
- * salida.
+ * EN CELULAR NO PUEDE TAPAR NI LA BARRA INFERIOR NI EL CONTENIDO. El panel
+ * abierto cubre la pantalla entera a propósito, con su propia salida. El botón
+ * cerrado es lo que costó trabajo: es un círculo chico, se apoya encima de la
+ * barra de abajo cuando la hay, el pie le reserva el lugar, y mientras la
+ * persona baja leyendo se corre solo. Ver `useVisibleWhileReading` y el
+ * comentario largo donde se dibuja el botón.
  */
 
 /**
  * Lo primero que se lee al abrir el asistente, antes de escribir nada.
  *
- * Dice para quién trabaja —el que compra— y que se le puede preguntar
- * cualquier cosa, incluso sobre la aplicación misma y no solo sobre un
- * vehículo: quien abre un chat por primera vez no sabe qué se le puede pedir, y
- * si no se lo dicen, prueba una vez y no vuelve.
+ * Dice para quién trabaja —el que compra— y qué se le puede pedir: quien abre
+ * un chat por primera vez no sabe, y si no se lo dicen, prueba una vez y no
+ * vuelve.
+ *
+ * SOLO PROMETE LO QUE SABE HACER. Decía además "o sobre cómo funciona la
+ * aplicación", y era mentira: el asistente conoce el catálogo, el aviso que
+ * hay en pantalla y su análisis, pero nadie le contó cómo funciona la
+ * plataforma. Preguntado por eso contestaba "no tengo esa información" — la
+ * primera pregunta de alguien que le creyó al saludo terminaba en un no. Las
+ * tres cosas que sí hace están nombradas una por una arriba, y las
+ * sugerencias de abajo son de lo mismo.
+ *
+ * Si algún día se le pasa cómo funciona la plataforma, esta frase vuelve.
  *
  * NO SE MANDA AL MODELO. Vive solo en la pantalla: `messages` sigue arrancando
  * vacío, así que este texto no viaja en el historial ni gasta una llamada. Lo
@@ -41,13 +57,74 @@ import type { ListingSearchResult } from '@/lib/types';
 const WELCOME =
   'Hola. Estoy para ayudarte a hacer una compra inteligente: puedo mirar un vehículo con ' +
   'ojo crítico, contarte de dónde sale su precio de referencia y buscarte otras opciones. ' +
-  'Preguntame lo que quieras, sobre un aviso o sobre cómo funciona la aplicación.';
+  'Preguntame lo que quieras sobre un aviso.';
 
 const SUGGESTIONS = [
   '¿Qué le preguntarías al vendedor?',
   '¿El kilometraje es mucho para el año?',
   'Mostrame otras opciones parecidas',
 ];
+
+/**
+ * Si el botón flotante tiene que estar a la vista en este momento.
+ *
+ * EL PROBLEMA QUE RESUELVE. Achicarlo a un círculo y subirlo por encima de la
+ * barra no alcanzó: en el muro las tarjetas ocupan el ancho entero, así que un
+ * botón fijo abajo a la derecha se apoya SIEMPRE sobre alguna. Se midió
+ * recorriendo el muro de arriba abajo — 13 posiciones de scroll, 13 tarjetas
+ * tapadas, y en una de ellas el corazón de guardar. Con un botón quieto no hay
+ * lugar en la pantalla donde eso no pase.
+ *
+ * LA SALIDA. Mientras la persona baja —que es cuando está mirando— el botón se
+ * va. Apenas sube un poco, vuelve. Es lo que hace cualquier aplicación con
+ * barra flotante, y da lo que pidió el cliente: leyendo no hay nada encima del
+ * contenido, y el asistente sigue a un gesto de distancia.
+ *
+ * SOLO EN CELULAR. De 768px para arriba la pantalla es ancha, el botón queda
+ * en un margen donde no hay nada, y un botón que aparece y desaparece con la
+ * rueda del mouse sería un tic molesto. El corte es el mismo `md` que usan la
+ * barra de abajo y la de arriba.
+ *
+ * Arriba de todo siempre se ve: es donde se entra a cada pantalla, y es el
+ * momento en que hay que poder encontrarlo sin saber que existe.
+ */
+function useVisibleWhileReading(): boolean {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const small = window.matchMedia('(max-width: 767px)');
+    let last = window.scrollY;
+
+    function onScroll() {
+      const now = window.scrollY;
+      const moved = now - last;
+
+      // El umbral evita que el temblor del dedo, o el rebote del final de la
+      // página, lo hagan parpadear.
+      if (Math.abs(moved) > 8) {
+        setVisible(!small.matches || moved < 0 || now < 80);
+        last = now;
+      }
+    }
+
+    // Al pasar a pantalla ancha tiene que volver, aunque se hubiera ido
+    // scrolleando en angosta.
+    function onChange() {
+      setVisible(true);
+      last = window.scrollY;
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    small.addEventListener('change', onChange);
+
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      small.removeEventListener('change', onChange);
+    };
+  }, []);
+
+  return visible;
+}
 
 export function AssistantChat() {
   const pathname = usePathname();
@@ -60,11 +137,17 @@ export function AssistantChat() {
     setThinking,
     streamingText,
     setStreamingText,
+    step,
+    setStep,
   } = useAssistant();
+
+  const navVisible = useMobileNavVisible();
+  const buttonVisible = useVisibleWhileReading();
 
   const [draft, setDraft] = useState('');
   const [problem, setProblem] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // El id del aviso abierto, si la persona está en una pantalla de vehículo.
   const listingId = pathname.startsWith('/vehiculo/') ? pathname.split('/')[2] : undefined;
@@ -97,6 +180,7 @@ export function AssistantChat() {
     setProblem(null);
     setThinking(true);
     setStreamingText('');
+    setStep('pensando');
 
     try {
       // La respuesta llega de a pedazos y se va mostrando. Lo que vuelve al
@@ -110,6 +194,9 @@ export function AssistantChat() {
           ...(listingId ? { listing_id: listingId } : {}),
         },
         (delta) => setStreamingText((current) => current + delta),
+        // El servidor avisa cuándo sale a buscar publicaciones. Es la vuelta
+        // que más tarda y la que no manda una sola letra mientras corre.
+        (paso) => setStep(paso === 'buscando' ? 'buscando' : 'pensando'),
       );
 
       setMessages([
@@ -141,15 +228,49 @@ export function AssistantChat() {
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir el asistente"
+        style={{
+          // Dónde se apoya el botón en celular. Es una variable y no una clase
+          // fija porque depende de si abajo hay barra de navegación, y eso
+          // cambia de pantalla en pantalla. `env(safe-area-inset-bottom)` es la
+          // franja de gestos de los celulares sin botón físico.
+          //
+          //   con barra:  4.25rem — justo encima de ella, sin pisarla
+          //   sin barra:  1rem    — a un dedo del borde
+          //
+          // El corte de `md:bottom-6` de abajo tiene que ser el mismo que el
+          // `md:hidden` de la barra: entre 640 y 768 la barra existe, y con el
+          // `sm:` que había antes el botón le caía encima.
+          '--assistant-bottom': navVisible
+            ? 'calc(4.25rem + env(safe-area-inset-bottom))'
+            : 'calc(1rem + env(safe-area-inset-bottom))',
+        } as CSSProperties}
         className={[
-          'fixed right-4 z-40 flex items-center gap-2 rounded-full bg-brand-deep px-5 py-3',
-          'text-sm font-semibold text-white shadow-lg transition-colors hover:bg-brand-deep/90',
-          // En celular sube para no quedar debajo de la barra de navegación.
-          'bottom-20 sm:bottom-6',
+          'fixed right-4 z-40 flex items-center justify-center rounded-full bg-brand-deep',
+          'text-white shadow-lg transition-colors hover:bg-brand-deep/90',
+          // CELULAR: un círculo de 56px, sin la palabra. El cartel con texto
+          // medía 140px de ancho y se apoyaba sobre tres o cuatro renglones de
+          // cualquier pantalla — campos, precios, tarjetas del listado. Un
+          // círculo tapa la cuarta parte de eso, y sigue siendo un blanco
+          // cómodo para el pulgar. El nombre no se pierde: está en el
+          // `aria-label` y en el encabezado del panel apenas se abre.
+          'h-14 w-14',
+          // De tablet para arriba vuelve el cartel con el texto: ahí sobra
+          // ancho y el botón no le compite a nada.
+          'sm:h-auto sm:w-auto sm:gap-2 sm:px-5 sm:py-3 sm:text-sm sm:font-semibold',
+          'bottom-[var(--assistant-bottom)] md:bottom-6',
+          // Se va deslizando hacia abajo, no de golpe: un botón que
+          // desaparece se lee como un error, uno que se corre se lee como que
+          // se hizo a un lado. Con el teclado vuelve al recibir el foco, así
+          // que nunca queda inalcanzable para quien no usa el dedo.
+          'transition-[transform,opacity] duration-200',
+          'focus-visible:translate-y-0 focus-visible:opacity-100',
+          buttonVisible
+            ? 'translate-y-0 opacity-100'
+            : 'pointer-events-none translate-y-28 opacity-0',
         ].join(' ')}
       >
         <SparkIcon />
-        Asistente
+        <span className="hidden sm:inline">Asistente</span>
       </button>
     );
   }
@@ -172,7 +293,8 @@ export function AssistantChat() {
             Asistente <span className="text-brand-deep">AI</span>
           </h2>
           <p className="text-xs text-muted">
-            {listingId ? 'Sabe qué vehículo estás mirando' : 'Preguntale lo que quieras'}
+            {/* Igual que el saludo: nombra lo que hace, no "lo que quieras". */}
+            {listingId ? 'Sabe qué vehículo estás mirando' : 'Buscá vehículos o preguntá por un aviso'}
           </p>
         </div>
         <button
@@ -193,13 +315,24 @@ export function AssistantChat() {
                 cartel explicando para qué sirve la caja. Es el primer globito
                 del hilo y usa el mismo componente que los demás. */}
             <Bubble message={{ role: 'model', text: WELCOME }} />
-            <ul className="space-y-2">
+            {/* TOCAR UNA SUGERENCIA NO LA ENVÍA: la escribe en la caja y
+                deja el cursor ahí. Antes enviaba en el acto, y como se veían
+                como tres renglones de texto para leer —del ancho del panel, sin
+                forma de botón— alcanzaba con apoyar el dedo para mandar una
+                pregunta sin querer. Le pasó al cliente en la prueba del
+                2026-08-27. Ahora son etiquetas chicas con forma de botón, la
+                pregunta queda a la vista antes de salir, y se puede editar o
+                borrar. Cuesta un toque más y ninguna pregunta se va sola. */}
+            <ul className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
                 <li key={suggestion}>
                   <button
                     type="button"
-                    onClick={() => void send(suggestion)}
-                    className="w-full rounded-lg border border-line px-3 py-2 text-left text-sm text-body transition-colors hover:border-brand"
+                    onClick={() => {
+                      setDraft(suggestion);
+                      inputRef.current?.focus();
+                    }}
+                    className="rounded-full border border-line px-3 py-1.5 text-left text-sm text-body transition-colors hover:border-brand hover:bg-brand-soft"
                   >
                     {suggestion}
                   </button>
@@ -220,9 +353,7 @@ export function AssistantChat() {
           (streamingText ? (
             <Bubble message={{ role: 'model', text: streamingText }} />
           ) : (
-            <p className="text-sm text-muted" role="status">
-              Pensando…
-            </p>
+            <Working step={step} />
           ))}
 
         {problem && (
@@ -243,6 +374,7 @@ export function AssistantChat() {
         style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
       >
         <input
+          ref={inputRef}
           type="text"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
@@ -259,6 +391,59 @@ export function AssistantChat() {
         </button>
       </form>
     </aside>
+  );
+}
+
+/**
+ * La espera, mientras el asistente todavía no escribió una letra.
+ *
+ * Reemplaza al "Pensando…" quieto que había antes. Son tres cosas, y cada una
+ * responde a algo que el cliente reportó al probar desde el celular:
+ *
+ *   - LOS PUNTOS SE MUEVEN. Un texto quieto en una pantalla quieta no
+ *     distingue "está trabajando" de "se colgó". El movimiento sí.
+ *   - DICE QUÉ ESTÁ HACIENDO. Buscar publicaciones es la vuelta más larga y la
+ *     que no manda texto mientras corre; el servidor la avisa y acá se cuenta.
+ *   - A LOS QUINCE SEGUNDOS SE HACE CARGO DE LA DEMORA. Una espera larga que
+ *     nadie nombra se siente rota; nombrada, se espera. No es un error: la
+ *     respuesta sigue viniendo, y cuando llega reemplaza a esto.
+ */
+function Working({ step }: { step: AssistantStep }) {
+  const [slow, setSlow] = useState(false);
+
+  // El reloj arranca de nuevo con cada paso: buscar y volver a pensar son dos
+  // esperas distintas, y la segunda no hereda la impaciencia de la primera.
+  useEffect(() => {
+    setSlow(false);
+    const timer = setTimeout(() => setSlow(true), 15_000);
+    return () => clearTimeout(timer);
+  }, [step]);
+
+  return (
+    <div className="space-y-1" role="status" aria-live="polite">
+      <p className="flex items-center gap-2 text-sm text-body">
+        <span className="flex gap-1" aria-hidden>
+          <Dot />
+          <Dot delay="150ms" />
+          <Dot delay="300ms" />
+        </span>
+        {step === 'buscando' ? 'Buscando publicaciones…' : 'Pensando…'}
+      </p>
+      {slow && (
+        <p className="text-sm text-muted">
+          Está tardando más que de costumbre, pero sigue trabajando.
+        </p>
+      )}
+    </div>
+  );
+}
+
+function Dot({ delay }: { delay?: string }) {
+  return (
+    <span
+      className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-deep"
+      style={delay ? { animationDelay: delay } : undefined}
+    />
   );
 }
 
@@ -315,6 +500,9 @@ function SparkIcon() {
       strokeWidth={1.8}
       strokeLinecap="round"
       strokeLinejoin="round"
+      // Adentro del círculo de 56px un ícono de 18 queda perdido; en el cartel
+      // de tablet para arriba vuelve a su tamaño, al lado del texto.
+      className="h-6 w-6 sm:h-[18px] sm:w-[18px]"
       aria-hidden
     >
       <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
