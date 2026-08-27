@@ -68,7 +68,7 @@ export function PriceEstimatePanel({ listingId }: { listingId: string }) {
  */
 export function PriceEstimateView({ estimate }: { estimate: Estimate }) {
   return (
-    <Card className="space-y-4 p-5">
+    <Card className="space-y-4 p-4 sm:p-5">
       <header className="space-y-1">
         <h2 className="font-semibold text-ink">Precio de referencia</h2>
         <p className="text-sm text-muted">

@@ -30,14 +30,49 @@
   --color-line: #dde1e7;
 
   --color-ink: #05070d;
-  --color-body: #3d4654;
-  --color-muted: #5a6472;
+  --color-body: #3a4353;
+  /**
+   * El gris de los textos secundarios se oscureció (era #5a6472).
+   *
+   * En el monitor pasaba; en un celular al sol, a 12 o 13px, el cliente lo
+   * reportó como "poco contraste". Medido: sobre el blanco de las tarjetas da
+   * 7,3:1 y sobre el plateado del fondo 6,5:1 — bien arriba del 4,5:1 que pide
+   * la norma para texto chico, con margen para una pantalla con brillo de más.
+   * Sigue siendo claramente secundario frente a `ink`, que es lo que tiene que
+   * hacer.
+   */
+  --color-muted: #4c5768;
 
   --color-brand: #2e9eff;
   --color-brand-deep: #1565c0;
   --color-brand-soft: #e8f2fd;
 
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  /**
+   * EL TEXTO CHICO MIDE 13px, NO 12.
+   *
+   * `text-xs` es la clase de todo lo secundario de la aplicación: las ayudas
+   * debajo de los campos, la fecha de publicación, el último mensaje de cada
+   * conversación. A 12px el cliente lo reportó como "demasiado chico para leer
+   * cómodamente desde el teléfono", y tenía razón: 12px es un tamaño de
+   * etiqueta, no de lectura.
+   *
+   * Se cambia acá, en la escala, y no clase por clase: son más de veinte
+   * lugares y el próximo texto secundario que alguien escriba también tiene que
+   * quedar cubierto. Es la misma idea que la regla de los 16px en los campos,
+   * unas líneas más abajo.
+   *
+   * Un punto no suena a nada hasta que se mira al sol; y sigue siendo
+   * claramente más chico que los 14px del texto normal, así que la jerarquía
+   * no se pierde.
+   */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: calc(1.125 / 0.8125);
+
+  /* Inter la carga el layout con `next/font` y la deja en `--font-inter`. La
+     lista que sigue es la red por si el archivo no llegó: la pantalla se ve
+     con la letra del sistema, nunca sin letra. */
+  --font-sans: var(--font-inter), system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial,
+    sans-serif;
 }
 
 html,
@@ -49,6 +84,16 @@ body {
 body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Los títulos respiran distinto que un párrafo: sin esto, un título de dos
+   renglones se lee tan separado como el texto que lo sigue y la jerarquía se
+   pierde justo donde más se necesita. */
+h1,
+h2,
+h3 {
+  line-height: 1.25;
+  letter-spacing: -0.011em;
 }
 
 ::selection {

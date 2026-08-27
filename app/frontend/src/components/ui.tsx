@@ -1,6 +1,6 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { digitsOnly, groupThousands } from '@/lib/format';
 import { STATUS_LABEL, type ListingStatus } from '@/lib/types';
 
@@ -87,15 +87,25 @@ export function Field({
   label,
   hint,
   required,
+  wide,
   children,
 }: {
   label: string;
   hint?: string | null;
   required?: boolean;
+  /**
+   * Que ocupe las dos columnas en celular.
+   *
+   * Lo usan los campos que llevan dos cajas adentro —un desde y un hasta—:
+   * partidos por la mitad de una pantalla de 375px quedan dos cajas de setenta
+   * píxeles donde no entra un precio. De tablet para arriba vuelven a ocupar
+   * una sola columna, que ahí sobra ancho.
+   */
+  wide?: boolean;
   children: ReactNode;
 }) {
   return (
-    <label className="block">
+    <label className={wide ? 'col-span-2 block lg:col-span-1' : 'block'}>
       <span className="mb-1.5 block text-sm font-medium text-ink">
         {label}
         {required && <span className="ml-1 text-brand-deep">*</span>}
@@ -192,14 +202,28 @@ export function StatusBadge({ status }: { status: ListingStatus }) {
 
 export function Spinner({ label = 'Cargando…' }: { label?: string }) {
   return (
-    <p className="py-16 text-center text-sm text-muted" role="status">
+    <p className="py-10 text-center text-sm text-muted sm:py-16" role="status">
       {label}
     </p>
   );
 }
 
-export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
+/**
+ * `ref` opcional: hay pantallas que necesitan traer una tarjeta a la vista
+ * cuando termina algo que tarda —el análisis de fotos, por ejemplo—.
+ */
+export function Card({
+  children,
+  className = '',
+  ref,
+}: {
+  children: ReactNode;
+  className?: string;
+  ref?: Ref<HTMLElement>;
+}) {
   return (
-    <section className={`rounded-xl border border-line bg-surface ${className}`}>{children}</section>
+    <section ref={ref} className={`rounded-xl border border-line bg-surface ${className}`}>
+      {children}
+    </section>
   );
 }

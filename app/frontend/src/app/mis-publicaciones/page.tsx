@@ -131,7 +131,7 @@ export default function MisPublicacionesPage() {
       {problem && <Notice tone="alert" title={problem} />}
 
       {listings.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-20 text-center">
+        <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
           <p className="font-medium text-ink">Acá van a aparecer los vehículos que publiques.</p>
           <p className="mt-1 text-sm text-muted">
             Elegí el tipo de vehículo y el formulario se arma solo.

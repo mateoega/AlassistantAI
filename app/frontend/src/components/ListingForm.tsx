@@ -191,7 +191,7 @@ export function ListingForm({
         }}
       >
         {/* ---- 1. Fotos: lo primero, porque es lo que más vende ------------ */}
-        <Card className="space-y-3 p-5">
+        <Card className="space-y-3 p-4 sm:p-5">
           <div>
             <h2 className="font-semibold text-ink">
               Fotos <span className="text-brand-deep">*</span>
@@ -210,7 +210,7 @@ export function ListingForm({
         </Card>
 
         {/* ---- 2. Lo mínimo indispensable ---------------------------------- */}
-        <Card className="space-y-4 p-5">
+        <Card className="space-y-4 p-4 sm:p-5">
           <h2 className="font-semibold text-ink">Datos del vehículo</h2>
 
           <Field label="Tipo de vehículo" required>

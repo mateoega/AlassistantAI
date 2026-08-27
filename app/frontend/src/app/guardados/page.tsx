@@ -127,7 +127,7 @@ function EmptyState({ unavailable }: { unavailable: number }) {
   const nuncaGuardo = unavailable === 0;
 
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-20 text-center">
+    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
       <p className="font-medium text-ink">
         {nuncaGuardo
           ? 'Todavía no guardaste ningún vehículo.'

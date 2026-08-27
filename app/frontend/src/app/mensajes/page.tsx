@@ -153,7 +153,7 @@ function ConversationRow({ conversation }: { conversation: Conversation }) {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-20 text-center">
+    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
       <p className="font-medium text-ink">Todavía no tenés conversaciones.</p>
       <p className="mt-1 text-sm text-muted">
         Cuando preguntes por un vehículo —o alguien pregunte por el tuyo— la charla queda acá

@@ -127,7 +127,7 @@ export default function PerfilPage() {
       {/* Cerrar sesión vive acá y no en el encabezado: es algo que se hace una
           vez cada tanto, y en el encabezado ocupaba lugar que en un celular no
           sobra. */}
-      <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
+      <Card className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
         <div>
           <p className="font-medium text-ink">Cerrar sesión</p>
           <p className="text-sm text-muted">Vas a tener que volver a entrar con tu email.</p>
