@@ -17,7 +17,7 @@ profileRouter.get('/', async (req, res) => {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, display_name, phone, terms_accepted_at')
+    .select('id, display_name, phone')
     .eq('id', userId)
     .maybeSingle();
 
@@ -25,9 +25,7 @@ profileRouter.get('/', async (req, res) => {
     throw new Error(`No se pudo leer el perfil: ${error.message}`);
   }
 
-  res.json({
-    profile: data ?? { id: userId, display_name: null, phone: null, terms_accepted_at: null },
-  });
+  res.json({ profile: data ?? { id: userId, display_name: null, phone: null } });
 });
 
 profileRouter.put('/', async (req, res) => {
@@ -50,7 +48,7 @@ profileRouter.put('/', async (req, res) => {
     .from('profiles')
     .update({ display_name: displayName, phone })
     .eq('id', userId)
-    .select('id, display_name, phone, terms_accepted_at')
+    .select('id, display_name, phone')
     .maybeSingle();
 
   if (error) {
@@ -79,6 +77,12 @@ profileRouter.put('/', async (req, res) => {
  *
  * Es idempotente a propósito: el cartel puede llamarla dos veces —dos pestañas
  * abiertas, un reintento— y la segunda no cambia nada.
+ *
+ * ES LA ÚNICA RUTA QUE TOCA `terms_accepted_at`. El resto del perfil no la lee,
+ * a propósito: ninguna pantalla la usa, y pedirla en el `select` ataba todo el
+ * perfil a que la migración estuviera aplicada. Así el frontend y el backend se
+ * pueden desplegar antes que la migración sin romper nada — lo único que pasa en
+ * ese rato es que esta llamada falla, y quien la hace ya la ignora.
  */
 profileRouter.post('/terms', async (req, res) => {
   const { userId, supabase } = auth(req);
