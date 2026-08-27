@@ -36,6 +36,25 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
   // intente actualizar algo que ya no existe.
   const alive = useRef(true);
 
+  /** El panel en la pantalla, para poder traerlo a la vista al terminar. */
+  const panelRef = useRef<HTMLElement>(null);
+
+  /**
+   * Si el análisis que está corriendo lo pidió esta persona, recién, desde
+   * este botón.
+   *
+   * El resultado tarda entre diez y treinta segundos y aparece adentro de una
+   * tarjeta que está bien abajo de la ficha: quien lo pidió mientras tanto
+   * siguió leyendo, y cuando el análisis llega no hay nada que se lo diga. Iba
+   * a buscarlo scrolleando — el punto 2 de la devolución del cliente.
+   *
+   * Se anota que fue pedido acá para no mover la pantalla de nadie más: entrar
+   * a un aviso que YA tenía un análisis hecho no tiene por qué saltar a él, y
+   * la barra que dice "podés seguir navegando" no puede terminar arrastrando a
+   * quien le hizo caso.
+   */
+  const requestedHere = useRef(false);
+
   useEffect(() => {
     alive.current = true;
     return () => {
@@ -82,6 +101,7 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
   async function run() {
     setStarting(true);
     setProblem(null);
+    requestedHere.current = true;
 
     try {
       const data = await api<{ analysis: AnalysisRecord }>(
@@ -100,6 +120,21 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
     }
   }
 
+  /**
+   * Cuando el análisis que se pidió acá termina, la pantalla va hasta él.
+   *
+   * `block: 'start'` deja el título de la tarjeta arriba de todo, para que se
+   * lea desde el principio y no desde la mitad.
+   */
+  useEffect(() => {
+    if (analysis?.status !== 'done' || !requestedHere.current) {
+      return;
+    }
+
+    requestedHere.current = false;
+    panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [analysis?.status]);
+
   if (loading) {
     return null;
   }
@@ -108,7 +143,7 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
   const result = analysis?.status === 'done' ? analysis.result : null;
 
   return (
-    <Card className="space-y-4 p-5">
+    <Card ref={panelRef} className="scroll-mt-20 space-y-4 p-4 sm:p-5">
       <header className="space-y-1">
         <h2 className="font-semibold text-ink">
           Asistente <span className="text-brand-deep">AI</span>
