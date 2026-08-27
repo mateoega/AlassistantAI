@@ -20,7 +20,29 @@ import type { Province, VehicleType } from '@/lib/types';
  *
  * Los tipos de vehículo y las provincias se leen del catálogo, como en todo el
  * resto de la aplicación: si mañana se carga un tipo nuevo, aparece acá solo.
- */
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * TRES REGLAS QUE SALIERON DE LA PRUEBA EN CELULAR DEL 2026-08-27
+ *
+ * 1. HAY UN SOLO BOTÓN DE ENVIAR A LA VISTA, SIEMPRE. Antes convivían
+ *    "Buscar" arriba y "Aplicar filtros" abajo, los dos hacían exactamente lo
+ *    mismo, y con el panel abierto no se entendía cuál correspondía. Ahora
+ *    "Buscar" existe solo con el panel cerrado, y con el panel abierto el
+ *    único envío es "Aplicar filtros".
+ *
+ * 2. EL BOTÓN QUE ABRE EL PANEL DICE QUÉ VA A HACER. "Filtros" no decía si
+ *    abría, cerraba o buscaba. Dice "Filtros" cuando va a abrir y "Ocultar
+ *    filtros" cuando va a cerrar, y el número de filtros puestos sigue a la
+ *    vista para no buscar a ciegas.
+ *
+ * 3. "APLICAR FILTROS" NO SE PERSIGUE SCROLLEANDO. En celular había que
+ *    recorrer casi dos pantallas para llegar. El panel tiene su propia altura
+ *    máxima y hace scroll adentro: el botón queda siempre abajo, en pantalla.
+ *    De tablet para arriba el límite se suelta, que ahí entra todo junto.
+ *
+ * Y al enviar, el panel se cierra: lo que se pidió ya está en la dirección y
+ * lo que sigue son los resultados, no el formulario que los pidió.
+ * ─────────────────────────────────────────────────────────────────────────── */
 
 export interface SearchValues {
   q: string;
@@ -127,11 +149,14 @@ export function SearchBar({
     <form
       onSubmit={(event) => {
         event.preventDefault();
+        // El panel se cierra al buscar: ya cumplió, y dejarlo abierto empuja
+        // los resultados fuera de la pantalla.
+        setOpen(false);
         onSearch(draft);
       }}
-      className="space-y-4 rounded-xl border border-line bg-surface p-4"
+      className="space-y-3 rounded-xl border border-line bg-surface p-3 sm:space-y-4 sm:p-4"
     >
-      <div className="flex flex-col gap-3 sm:flex-row">
+      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
         <input
           type="search"
           value={draft.q}
@@ -141,18 +166,29 @@ export function SearchBar({
           className={inputClass}
         />
         <div className="flex gap-2">
-          <Button type="submit">Buscar</Button>
+          {/* Con el panel abierto no aparece: abajo está "Aplicar filtros",
+              que hace exactamente lo mismo. Dos botones iguales a la vista era
+              la confusión que reportó el cliente. */}
+          {!open && (
+            <span className="flex-1">
+              <Button type="submit" full>
+                Buscar
+              </Button>
+            </span>
+          )}
           <Button variant="quiet" onClick={() => setOpen((current) => !current)}>
             {/* El número deja ver que hay filtros puestos aunque el panel esté
                 cerrado: si no, se busca algo que no aparece y no se entiende
                 por qué. */}
-            Filtros{fineCount > 0 ? ` (${fineCount})` : ''}
+            {open ? 'Ocultar filtros' : 'Filtros'}
+            {fineCount > 0 ? ` (${fineCount})` : ''}
           </Button>
         </div>
       </div>
 
       {open && (
-        <div className="grid grid-cols-1 gap-4 border-t border-line pt-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="space-y-3 border-t border-line pt-3 sm:pt-4">
+        <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:max-h-none sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-3">
           <Field label="Tipo de vehículo">
             <select
               value={draft.tipo}
@@ -166,16 +202,6 @@ export function SearchBar({
                 </option>
               ))}
             </select>
-          </Field>
-
-          <Field label="Marca">
-            <input
-              type="text"
-              value={draft.marca}
-              onChange={(event) => set('marca', event.target.value)}
-              placeholder="Cualquiera"
-              className={inputClass}
-            />
           </Field>
 
           <Field label="Provincia">
@@ -193,10 +219,17 @@ export function SearchBar({
             </select>
           </Field>
 
-          <Field
-            label="Moneda"
-            hint="El precio se filtra dentro de la moneda elegida: pesos y dólares no se mezclan."
-          >
+          <Field label="Marca">
+            <input
+              type="text"
+              value={draft.marca}
+              onChange={(event) => set('marca', event.target.value)}
+              placeholder="Cualquiera"
+              className={inputClass}
+            />
+          </Field>
+
+          <Field label="Moneda" hint="Pesos y dólares no se mezclan.">
             <select
               value={draft.moneda}
               onChange={(event) => set('moneda', event.target.value)}
@@ -208,40 +241,47 @@ export function SearchBar({
             </select>
           </Field>
 
-          <Field label="Precio desde">
-            <NumberInput
-              value={draft.precio_min}
-              onChange={(digits) => set('precio_min', digits)}
-            />
+          {/* DESDE Y HASTA VAN EN UN SOLO CAMPO, uno al lado del otro. Como dos
+              campos separados eran cuatro renglones —precio y año— en una
+              pantalla donde cada renglón se paga en scroll, y además se leían
+              como cuatro filtros sueltos en vez de dos rangos. Es la misma
+              forma que ya usan los filtros de la ficha en `SpecFilters`. */}
+          <Field label="Precio" wide>
+            <div className="flex items-center gap-2">
+              <NumberInput
+                value={draft.precio_min}
+                onChange={(digits) => set('precio_min', digits)}
+                placeholder="Desde"
+              />
+              <NumberInput
+                value={draft.precio_max}
+                onChange={(digits) => set('precio_max', digits)}
+                placeholder="Hasta"
+              />
+            </div>
           </Field>
 
-          <Field label="Precio hasta">
-            <NumberInput
-              value={draft.precio_max}
-              onChange={(digits) => set('precio_max', digits)}
-            />
-          </Field>
-
-          <Field label="Año desde">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={draft.anio_min}
-              onChange={(event) => set('anio_min', digitsOnly(event.target.value).slice(0, 4))}
-              placeholder="Cualquiera"
-              className={inputClass}
-            />
-          </Field>
-
-          <Field label="Año hasta">
-            <input
-              type="text"
-              inputMode="numeric"
-              value={draft.anio_max}
-              onChange={(event) => set('anio_max', digitsOnly(event.target.value).slice(0, 4))}
-              placeholder="Cualquiera"
-              className={inputClass}
-            />
+          <Field label="Año" wide>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={draft.anio_min}
+                onChange={(event) => set('anio_min', digitsOnly(event.target.value).slice(0, 4))}
+                placeholder="Desde"
+                aria-label="Año desde"
+                className={inputClass}
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                value={draft.anio_max}
+                onChange={(event) => set('anio_max', digitsOnly(event.target.value).slice(0, 4))}
+                placeholder="Hasta"
+                aria-label="Año hasta"
+                className={inputClass}
+              />
+            </div>
           </Field>
 
           <Field label="Kilómetros hasta">
@@ -249,6 +289,7 @@ export function SearchBar({
               value={draft.km_max}
               onChange={(digits) => set('km_max', digits)}
               suffix="km"
+              placeholder="Cualquiera"
             />
           </Field>
 
@@ -257,9 +298,16 @@ export function SearchBar({
           {tipoElegido && (
             <SpecFilters type={tipoElegido} values={draft.spec} onChange={setSpec} />
           )}
+        </div>
 
-          <div className="flex items-end gap-2 sm:col-span-2 lg:col-span-3">
-            <Button type="submit">Aplicar filtros</Button>
+          {/* El envío, siempre abajo y siempre en pantalla: lo de arriba hace
+              scroll adentro de su propia caja y esto no se mueve. */}
+          <div className="flex items-center gap-2 border-t border-line pt-3">
+            <span className="flex-1 sm:flex-none">
+              <Button type="submit" full>
+                Aplicar filtros
+              </Button>
+            </span>
             {(fineCount > 0 || draft.q !== '') && (
               <Button variant="quiet" onClick={() => onSearch(EMPTY_SEARCH)}>
                 Limpiar

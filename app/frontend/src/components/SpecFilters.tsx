@@ -51,7 +51,7 @@ export function SpecFilters({
           terminación fallaba justo con el tipo más común — "moto" termina en
           o. Con el plural el problema no existe para ningún tipo, ni para los
           que se carguen mañana. */}
-      <p className="text-sm font-semibold text-ink sm:col-span-2 lg:col-span-3">
+      <p className="col-span-2 text-sm font-semibold text-ink lg:col-span-3">
         Datos de {type.name_plural.toLowerCase()}
       </p>
 
@@ -78,7 +78,7 @@ function SpecField({
 }) {
   if (isNumericField(field)) {
     return (
-      <Field label={field.unit ? `${field.label} (${field.unit})` : field.label}>
+      <Field label={field.unit ? `${field.label} (${field.unit})` : field.label} wide>
         <div className="flex items-center gap-2">
           <input
             type="number"
