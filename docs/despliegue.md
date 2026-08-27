@@ -32,6 +32,32 @@ Es una asimetría que se cobra sola el día que alguien pushee un cambio de pant
 
 > **En PowerShell va `npx.cmd`, no `npx`.** La política de ejecución de scripts de la máquina de desarrollo está en `Restricted` y bloquea el envoltorio `npx.ps1`. Mismo comando, otro archivo.
 
+### Si Vercel dice `Blocked` y no hay log de build
+
+Pasó en el primer día y costó una hora encontrarlo, así que queda escrito.
+
+Tres despliegues seguidos quedaron en estado **`Blocked`**, con el build en `0ms` y sin una línea de log. La CLI no dice nada: informa `UNKNOWN` y se queda esperando. El motivo solo aparece abriendo el despliegue en el panel:
+
+> *The deployment was blocked because the commit email `mateo.e.egana@gmail.com` could not be matched to a GitHub account.*
+
+Vercel lee el autor del commit que sube y, en el plan gratuito, bloquea el build si ese correo no lo puede atribuir al dueño de la cuenta que despliega. Acá no podía porque son dos identidades distintas: los commits van firmados con el correo personal y la cuenta de Vercel es la de `alassistant.soporte@gmail.com`.
+
+**La solución** fue agregar el correo de los commits como segundo correo verificado de la cuenta de Vercel (*Account Settings > Email > Add Another*). El primario no cambia; lo único que cambia es que Vercel ya sabe que ese autor también es el dueño.
+
+Si algún día se despliega desde otra máquina o con otro `git config user.email`, va a volver a pasar. La comprobación es de un renglón:
+
+```
+git log -1 --format=%ae
+```
+
+Ese correo tiene que estar en la lista de correos verificados de la cuenta de Vercel.
+
+### El `.gitignore` que Vercel mira no es el del repositorio
+
+`vercel link` crea un `.gitignore` propio dentro de la carpeta que vincula, con `.vercel` y `.env*` y nada más. Como Vercel toma `app/frontend` como raíz, **ese** es el único que respeta: el de la raíz del repositorio, que excluye `.next/` y `.next-build/`, le queda fuera de la vista.
+
+Sin el [`.vercelignore`](../app/frontend/.vercelignore) que hay ahora, cada despliegue sube 268 MB de compilados locales. Se notó porque el segundo despliegue se colgó donde el primero había tardado 46 segundos. Con el archivo, la subida es de 760 bytes.
+
 ---
 
 ## Por qué dos plataformas y no una
@@ -113,6 +139,8 @@ Dos cosas, las dos fuera del código:
 **En Render**, completar `FRONTEND_URL` con el dominio de Vercel. Sin esto el navegador rechaza cada pedido a la API por CORS y la aplicación se ve entera pero vacía.
 
 **En Supabase**, agregar el dominio de producción a *Authentication > URL Configuration*: como Site URL y en la lista de Redirect URLs. Sin esto el login manda el correo de acceso y el enlace devuelve a `localhost`, que en la máquina de quien lo recibe no existe.
+
+*Hecho el 2026-08-26.* Site URL en `https://aiassistant-ruddy.vercel.app`, y dos direcciones de retorno: la de producción y `http://localhost:3000/**`, para que el login siga andando también en la máquina de desarrollo.
 
 ---
 
