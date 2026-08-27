@@ -49,11 +49,17 @@ export default function VehiculoPage() {
    */
   const userId = session?.user?.id ?? null;
 
+  /**
+   * Igual que en el muro: se carga cuando se sabe si hay o no hay sesión.
+   * `userId` sigue en las dependencias para que, al iniciar sesión, la ficha
+   * se vuelva a pedir con la identidad nueva —de eso dependen el botón de
+   * dueño y el de consultar al vendedor—.
+   */
   useEffect(() => {
-    if (userId && listingId) {
+    if (!sessionLoading && listingId) {
       void load();
     }
-  }, [userId, listingId, load]);
+  }, [sessionLoading, userId, listingId, load]);
 
   async function changeStatus(status: ListingStatus) {
     setWorking(true);
@@ -91,7 +97,7 @@ export default function VehiculoPage() {
     }
   }
 
-  if (sessionLoading || !session || loading) {
+  if (sessionLoading || loading) {
     return <Spinner />;
   }
 
@@ -110,7 +116,9 @@ export default function VehiculoPage() {
     return null;
   }
 
-  const isOwner = session.user?.id === listing.seller_id;
+  // `userId` es null sin sesión, y un aviso nunca tiene `seller_id` null: una
+  // visita anónima nunca es dueña de nada, que es lo correcto.
+  const isOwner = userId === listing.seller_id;
   const cover = listing.photos[activePhoto];
 
   return (

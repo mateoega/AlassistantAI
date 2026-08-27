@@ -110,11 +110,24 @@ export function Wall() {
     }
   }
 
+  /**
+   * Se carga cuando se sabe SI HAY o NO HAY sesión, no cuando hay una.
+   *
+   * La condición era `if (session)`, de cuando el muro exigía cuenta. Al
+   * abrirlo, esa línea dejó la pantalla en "Cargando…" para siempre: sin
+   * sesión el efecto no llamaba a nada y nadie apagaba el cartel.
+   *
+   * La dependencia es el id y no el objeto de sesión, como en todo el
+   * proyecto: la librería de Supabase lo reemplaza al renovar el token y con
+   * el objeto el muro se recargaría solo cada tanto. Que esté en la lista
+   * igual sirve para una cosa — al iniciar sesión, el muro se vuelve a pedir
+   * con la identidad nueva.
+   */
   useEffect(() => {
-    if (session) {
+    if (!sessionLoading) {
       void load();
     }
-  }, [session, load]);
+  }, [sessionLoading, session?.user?.id, load]);
 
   /**
    * Buscar es navegar. Se usa `push` y no `replace` justamente para que cada
@@ -126,7 +139,9 @@ export function Wall() {
     router.push(params === '' ? '/' : `/?${params.slice(1)}`);
   }
 
-  if (sessionLoading || !session) {
+  // Solo mientras no se sabe si hay sesión. Antes decía `|| !session`, que
+  // ahora sería esconderle el muro justamente a quien vino a mirarlo.
+  if (sessionLoading) {
     return <Spinner />;
   }
 

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { apiStream, ApiError } from '@/lib/api';
-import { useSession } from '@/components/SessionProvider';
 import { useAssistant, type ChatMessage } from '@/components/AssistantProvider';
 import { inputClass } from '@/components/ui';
 import { formatPrice, formatKilometers } from '@/lib/format';
@@ -34,7 +33,6 @@ const SUGGESTIONS = [
 ];
 
 export function AssistantChat() {
-  const { session } = useSession();
   const pathname = usePathname();
   const {
     open,
