@@ -910,3 +910,36 @@ El orden nuevo en celular, medido: acciones a 612 y 716, el análisis a 795, el 
 Decía "preguntame lo que quieras, sobre un aviso **o sobre cómo funciona la aplicación**". Probándolo salió que era mentira: preguntado por cómo funciona el análisis de fotos contesta "no tengo esa información". Y tiene razón — el asistente conoce el catálogo, el aviso que hay en pantalla, su análisis y su estimación, pero nadie le contó nunca cómo funciona la plataforma. **La primera pregunta de alguien que le creyera al saludo terminaba en un no.**
 
 Se sacó la frase, del saludo y de la bajada del encabezado, que repetía la misma promesa en letra chica. Quedan nombradas las tres cosas que sí hace. La alternativa —contarle al modelo cómo funciona la plataforma— es agrandar el prompt de todos los pedidos para una pregunta que casi nadie hace; si algún día se hace, la frase vuelve.
+
+## 2026-08-27 — El asistente se quedó sin cuota, y por qué el error mentía
+
+Al terminar de subir las correcciones del cliente, el chat dejó de contestar en producción. El síntoma desde la pantalla era el cartel de siempre: "el asistente está con mucha demanda en este momento, probá de nuevo en unos segundos".
+
+**El cartel mentía, y esa es la parte que hay que recordar.** `pedirAlModelo` mapea al mismo mensaje los dos errores que devuelve Gemini —429 y 503— porque cuando se escribió parecían la misma cosa: el modelo no está disponible ahora, probá después. No son la misma cosa. Un 503 es saturación y se va en segundos; un 429 puede ser una cuota agotada que no se repone hasta mañana. El mensaje mandaba a reintentar algo que no iba a andar por reintentarlo.
+
+### Qué era realmente
+
+Preguntándole a la API directamente con la misma clave:
+
+```
+quotaId : GenerateRequestsPerDayPerProjectPerModel-FreeTier
+metric  : generativelanguage.googleapis.com/generate_content_free_tier_requests
+model   : gemini-3.6-flash
+limit   : 20
+```
+
+**Veinte llamadas por día**, no por minuto. El `quotaId` dice `PerDay`, y se confirmó esperando: después de noventa segundos limpios sin tocar nada, seguía en 429. El campo `retryDelay` que devuelve Google —"retry in 48s"— es lo que más confunde, porque suena a un límite por minuto.
+
+Veinte por día es menos de lo que parece. **Una sola pregunta que hace buscar publicaciones cuesta entre 2 y 4 llamadas**, porque el modelo pide la herramienta de búsqueda y hay que volver a llamarlo con el resultado. Sumado a que cada análisis de fotos es otra llamada y usa el mismo modelo, verificar el asistente durante una tarde alcanza para agotarla. Fue exactamente lo que pasó.
+
+### Qué se hizo
+
+Se pasó `GEMINI_MODEL` a `gemini-3.5-flash`, que tiene su propia cuota diaria y respondía con la misma clave —probado contra la API y contra el backend local antes de tocar producción—. Está escrito como parche en los dos lugares que lo definen, `config/env.ts` y `render.yaml`, con la condición para volver atrás.
+
+**No es una solución.** También se agota, y es un modelo anterior: el análisis de fotos y el chat pueden bajar de calidad. La salida de fondo es activar facturación en el proyecto de Google, y ahí se vuelve a 3.6.
+
+### Lo que queda anotado para después
+
+- **El mensaje de 429 sigue diciendo lo que no es.** Separar cuota agotada de saturación es un cambio chico y no se hizo en el momento para no mezclarlo con el parche. Mientras no se haga, un 429 en producción se va a leer como "esperá un rato" cuando en realidad puede ser "hasta mañana no".
+- **Antes de la prueba completa del cliente hay que resolver la cuota.** Con veinte llamadas por día, el asistente se apaga a las pocas preguntas y el cliente va a reportar como roto algo que no lo está — que es justo lo que pasó acá.
+- **El límite es por proyecto y por modelo**, así que dos personas probando al mismo tiempo comparten las mismas veinte.

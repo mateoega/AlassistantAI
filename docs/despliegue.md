@@ -32,6 +32,22 @@ npx.cmd --yes vercel@latest deploy --prod
 
 > **En PowerShell va `npx.cmd`, no `npx`.** La política de ejecución de scripts de la máquina de desarrollo está en `Restricted` y bloquea el envoltorio `npx.ps1`. Mismo comando, otro archivo.
 
+### Si el asistente contesta "está con mucha demanda" y no se le pasa
+
+No mires Render ni el código: es la cuota de Gemini. El tramo gratuito es **por día, por proyecto y por modelo**, y para `gemini-3.6-flash` son **veinte llamadas diarias**. Una pregunta que hace buscar publicaciones cuesta entre 2 y 4, y cada análisis de fotos, una más.
+
+Para ver en qué estado está, preguntale a la API con la clave del `.env`:
+
+```bash
+curl -s -X POST "https://generativelanguage.googleapis.com/v1beta/models/$GEMINI_MODEL:generateContent" -H "x-goog-api-key: $GEMINI_API_KEY" -H 'Content-Type: application/json' -d '{"contents":[{"parts":[{"text":"hola"}]}]}'
+```
+
+Si vuelve `RESOURCE_EXHAUSTED`, mirá el `quotaId` de los detalles: si dice `PerDay`, no se repone esperando un rato. El `retryDelay` que trae al lado confunde, porque suena a un límite por minuto.
+
+**El cartel que ve el usuario dice "probá de nuevo en unos segundos" en los dos casos**, así que no sirve para distinguirlos. Ver la bitácora del 2026-08-27.
+
+La salida de fondo es activar facturación en el proyecto de Google. El parche es cambiar `GEMINI_MODEL` por otro modelo que tenga su cuota sin agotar, en `render.yaml`.
+
 ### Si Vercel dice `Blocked` y no hay log de build
 
 Pasó en el primer día y costó una hora encontrarlo, así que queda escrito.
