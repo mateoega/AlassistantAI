@@ -73,6 +73,20 @@ export async function getAnalysis(
  *   dos compradores aprietan el botón a la vez, se pagan dos análisis del
  *   mismo vehículo. Dejando la fila en "corriendo", el segundo ve que ya está
  *   en curso y espera el mismo resultado.
+ *
+ * QUIÉN TOMA EL TRABAJO LO DECIDE LA BASE, Y NO ESTE ARCHIVO
+ *
+ *   Hasta el 2026-08-27 acá se preguntaba si había uno corriendo y, si no,
+ *   se escribía la fila. Son dos viajes con un hueco en el medio, y en ese
+ *   hueco entran los dos pedidos simultáneos: los dos leen "no hay nada", los
+ *   dos escriben, y los dos llaman a Gemini. Se reprodujo. La fila única
+ *   evitaba el registro duplicado, no el gasto duplicado.
+ *
+ *   Ahora se pide el trabajo con `claim_listing_analysis`, que toma y anuncia
+ *   en una sola operación indivisible. Quien lo toma se lleva un identificador
+ *   de intento y es el único que arranca el modelo; quien llega segundo se
+ *   lleva un `null` y acompaña el análisis que ya está corriendo. Ver la
+ *   migración 016.
  */
 export async function startAnalysis(
   supabase: SupabaseClient,
@@ -96,36 +110,44 @@ export async function startAnalysis(
   const estimacion = await estimarPrecio(supabase, listingId);
 
   const fingerprint = fingerprintOf(listing, estimacion);
-  const existing = await readRow(supabase, listingId);
-
-  // Ya hay uno corriendo y todavía no se venció: se acompaña ese, no se
-  // arranca otro.
-  if (existing?.status === 'running' && !hasTimedOut(existing.updated_at)) {
-    return toRecord(existing, fingerprint);
-  }
-
   const service = supabaseService();
 
-  const { error } = await service.from('listing_analyses').upsert(
-    {
-      listing_id: listingId,
-      status: 'running',
-      input_fingerprint: fingerprint,
-      result: null,
-      error_message: null,
-      model: null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'listing_id' },
-  );
+  const { data: attemptId, error } = await service.rpc('claim_listing_analysis', {
+    p_listing_id: listingId,
+    p_fingerprint: fingerprint,
+    // La base y este archivo tienen que estar de acuerdo en cuánto se espera a
+    // un análisis colgado, así que el número viaja desde acá y no se escribe
+    // dos veces.
+    p_timeout_seconds: Math.round(RUNNING_TIMEOUT_MS / 1000),
+  });
 
   if (error) {
     throw new Error(`No se pudo registrar el análisis: ${error.message}`);
   }
 
+  // No lo tomamos: hay otro corriendo y sin vencer. Se devuelve ESE, y no se
+  // llama al modelo. Es el caso de los dos toques seguidos al botón.
+  if (!attemptId) {
+    const enCurso = await readRow(supabase, listingId);
+
+    return enCurso
+      ? toRecord(enCurso, fingerprint)
+      : {
+          // Que no esté la fila un instante después de que alguien la tomara
+          // no debería pasar; si pasa, lo honesto es decir que está corriendo
+          // y dejar que el navegador vuelva a preguntar.
+          status: 'running',
+          result: null,
+          error_message: null,
+          model: null,
+          updated_at: new Date().toISOString(),
+          is_stale: false,
+        };
+  }
+
   // Sigue en segundo plano. El `void` y el `catch` son deliberados: si esto
   // fallara sin capturar, tumbaría el proceso entero de Node.
-  void runInBackground(listingId, listing, fingerprint, estimacion);
+  void runInBackground(listingId, listing, fingerprint, estimacion, attemptId as string);
 
   return {
     status: 'running',
@@ -144,6 +166,7 @@ async function runInBackground(
   listing: PresentedListing,
   fingerprint: string,
   estimacion: Estimacion,
+  attemptId: string,
 ): Promise<void> {
   try {
     if (!listing.vehicle_type) {
@@ -174,7 +197,7 @@ async function runInBackground(
       listing.photos.map((photo) => photo.storage_path),
     );
 
-    await saveOutcome(listingId, {
+    await saveOutcome(listingId, attemptId, {
       status: 'done',
       input_fingerprint: fingerprint,
       result: analysis,
@@ -184,7 +207,7 @@ async function runInBackground(
   } catch (error) {
     console.error(`[ia] falló el análisis de la publicación ${listingId}:`, error);
 
-    await saveOutcome(listingId, {
+    await saveOutcome(listingId, attemptId, {
       status: 'failed',
       input_fingerprint: fingerprint,
       result: null,
@@ -197,18 +220,43 @@ async function runInBackground(
   }
 }
 
+/**
+ * Guarda lo que dio el análisis, PERO SOLO SI SIGUE SIENDO EL VIGENTE.
+ *
+ * El caso que cubre `attemptId`: un análisis se vence a los tres minutos y
+ * alguien pide otro; el primero, que estaba lento pero vivo, vuelve después y
+ * escribiría encima del que está corriendo — dejando en "listo" un resultado
+ * viejo mientras la pantalla espera el nuevo. La comparación la hace la base,
+ * en la misma sentencia que escribe. Ver la migración 016.
+ */
 async function saveOutcome(
   listingId: string,
+  attemptId: string,
   row: Omit<AnalysisRow, 'updated_at'>,
 ): Promise<void> {
   try {
-    const { error } = await supabaseService()
-      .from('listing_analyses')
-      .update({ ...row, updated_at: new Date().toISOString() })
-      .eq('listing_id', listingId);
+    const { data: guardado, error } = await supabaseService().rpc('finish_listing_analysis', {
+      p_listing_id: listingId,
+      p_attempt_id: attemptId,
+      p_status: row.status,
+      p_fingerprint: row.input_fingerprint,
+      p_result: row.result,
+      p_error_message: row.error_message,
+      p_model: row.model,
+    });
 
     if (error) {
       console.error(`[ia] no se pudo guardar el análisis de ${listingId}:`, error.message);
+      return;
+    }
+
+    if (guardado === false) {
+      // No es un error: es el trabajo que llegó tarde, encontrando que ya hay
+      // otro intento en curso. Se anota porque, si aparece seguido, quiere
+      // decir que el vencimiento de tres minutos quedó corto.
+      console.warn(
+        `[ia] el análisis de ${listingId} terminó fuera de tiempo y no se guardó: ya hay otro intento.`,
+      );
     }
   } catch (error) {
     // Si ni siquiera se puede guardar el fracaso, la fila queda en "corriendo"

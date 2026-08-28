@@ -943,3 +943,62 @@ Se pasó `GEMINI_MODEL` a `gemini-3.5-flash`, que tiene su propia cuota diaria y
 - **El mensaje de 429 sigue diciendo lo que no es.** Separar cuota agotada de saturación es un cambio chico y no se hizo en el momento para no mezclarlo con el parche. Mientras no se haga, un 429 en producción se va a leer como "esperá un rato" cuando en realidad puede ser "hasta mañana no".
 - **Antes de la prueba completa del cliente hay que resolver la cuota.** Con veinte llamadas por día, el asistente se apaga a las pocas preguntas y el cliente va a reportar como roto algo que no lo está — que es justo lo que pasó acá.
 - **El límite es por proyecto y por modelo**, así que dos personas probando al mismo tiempo comparten las mismas veinte.
+
+## 2026-08-27 — La revisión de Norber: cuatro agujeros que no se veían mirando la pantalla
+
+Norber revisó el código del ZIP y devolvió cuatro puntos. Ninguno se ve probando la aplicación con calma: los cuatro aparecen cuando dos cosas pasan al mismo tiempo, o cuando algo del otro lado no se comporta como se espera. Los cuatro se corrigieron el mismo día.
+
+### 1. El asistente no tenía ningún freno de consumo
+
+El chat se puede usar sin cuenta —es una decisión de producto y sigue igual—, y cada respuesta es una llamada paga a Gemini. No había límite de ningún tipo: ni por visitante, ni por día, ni por servidor. El comentario del propio archivo lo decía en voz alta desde el Sprint 2 y quedó ahí.
+
+Ahora hay **dos frenos**, en `middleware/rate-limit.ts`, y **cortan antes de llamar al modelo**:
+
+- **Por visitante** —doce pedidos cada cinco minutos—, contados por usuario cuando hay sesión y por dirección de IP cuando no la hay. No protege de nadie decidido; protege de que un solo navegador insistiendo se lleve puesta la prueba de los demás.
+- **Global del día** —ciento veinte pedidos en todo el servidor—, que es el único que se puede comparar contra la cuota de Google y el único que sirve cuando quien insiste son veinte visitantes distintos.
+
+**El orden importa y está escrito en el código:** primero se mira el freno del visitante y después el del día. Al revés, cada insistencia de alguien ya frenado le comería presupuesto a los demás sin llegar nunca al modelo.
+
+**El freno cubre también el análisis de fotos**, que gasta de la misma cuota. Cubrir solo el chat era dejar abierta la otra mitad de la canilla. Que el análisis pida cuenta no es un límite: crear una es gratis.
+
+**`app.set('trust proxy', 1)`** en `index.ts` es parte de la corrección, no un detalle: detrás del proxy de Render, `req.ip` es la dirección del proxy, así que sin esto **todas las visitas sin cuenta serían el mismo visitante** y la primera dejaría afuera al resto.
+
+**Lo que este freno no es.** La cuenta vive en la memoria del proceso: con una sola instancia —lo que hay hoy— alcanza, con dos el límite efectivo sería el doble. Y Render duerme el servicio gratuito por inactividad: al despertar, el contador del día arranca de cero. Las dos fugas están escritas en el archivo y son el motivo de que los números por defecto sean conservadores. Se cambian sin tocar código, con `IA_LIMITE_VISITANTE`, `IA_VENTANA_MINUTOS` e `IA_LIMITE_DIARIO`.
+
+Verificado contra el backend levantado: trece pedidos seguidos al chat, los doce primeros pasan y el trece contesta 429 con el mensaje en español. Se hizo con el cuerpo vacío a propósito, para que la validación los rechace antes de Gemini y la prueba no gaste cuota.
+
+### 2. Una búsqueda vieja podía pisar a la nueva
+
+Dos búsquedas seguidas son dos pedidos, y nada garantiza que contesten en el orden en que salieron: la consulta amplia tarda más que la que se pidió después. La respuesta vieja llegaba última y **escribía los resultados igual**. Lo que quedaba en pantalla no era lo que decían los filtros de arriba, y no hay manera de que la persona se dé cuenta.
+
+Cada carga se lleva ahora un número (`generacion`, un `ref` y no estado) y al volver compara: si ya no es la última, se descarta entera —resultados, total, error y el cartel de "Cargando…"—. Lo mismo en `loadMore`, que además evitaría mezclar la mitad de arriba de una búsqueda con la mitad de abajo de otra.
+
+Se eligió el contador y no `AbortController` porque la respuesta que sobra ya se pagó: lo único que hay que evitar es que se escriba.
+
+Verificado en el navegador con el backend demorando a propósito la primera búsqueda cuatro segundos: se busca "renault", enseguida "toyota", y al llegar la respuesta lenta la pantalla sigue mostrando los doce Toyota. La demora se sacó al terminar.
+
+### 3. Dos pedidos simultáneos pagaban dos análisis del mismo aviso
+
+`startAnalysis` preguntaba si había uno corriendo y después escribía la fila. Son dos viajes con un hueco en el medio, y en ese hueco entra el segundo pedido: los dos leen "no hay nada", los dos escriben, los dos llaman a Gemini. La fila única evitaba el registro duplicado, no el gasto duplicado. Alcanza con tocar "Analizar" dos veces porque la primera pareció no hacer nada.
+
+Tomar el trabajo y anunciarlo pasan a ser **la misma operación, y la resuelve Postgres**: `claim_listing_analysis` (migración 016) escribe la fila en "corriendo" solo si nadie la tiene tomada, con un `insert … on conflict do update` cuyo `where` vuelve a evaluarse contra la versión ya actualizada por el primero. Quien gana se lleva un identificador de intento; quien pierde se lleva un `null` y acompaña el análisis en curso.
+
+El identificador de intento también arregla algo que no estaba reportado: un trabajo vencido que vuelve tarde ya no puede escribir encima del que está corriendo. `finish_listing_analysis` guarda solo si el intento sigue siendo el vigente, y el backend anota en la consola cuando descarta uno.
+
+**No se usó un candado en memoria del backend.** Hoy hay una sola instancia, pero un candado ahí adentro deja de servir el día que haya dos, y de eso no se entera nadie: se entera la factura.
+
+**La migración 016 quedó aplicada en la base real** el mismo 2026-08-27, desde el editor SQL del panel ("Success. No rows returned"), y se verificó desde afuera con la clave de servicio: la columna `attempt_id` existe; dos pedidos simultáneos sobre el mismo aviso devuelven un solo identificador y un `null`; con uno corriendo el siguiente no arranca otro; un intento vencido no pisa al vigente y el vigente sí guarda; terminado el análisis se puede pedir otro; y con la clave pública las dos funciones no se pueden ejecutar. La prueba corrió sobre una publicación que no tenía análisis guardado y borró al final la fila que ella misma creó — no se tocó ningún análisis existente.
+
+### 4. El chat podía quedarse esperando para siempre
+
+La lectura del stream no tenía ninguna salida propia: seguía hasta que el servidor cerrara la conexión. El camino normal la cierra, pero eso no es una garantía — alcanza con un intermediario que la sostenga abierta para que una respuesta **ya completa** se quede sin entregar, con el botón de enviar bloqueado y los puntitos girando.
+
+`apiStream` ahora termina de cuatro maneras y todas terminan: con el evento `done`, con el evento `error`, a los **45 segundos de silencio** o a los **tres minutos** en total. Los 45 salen de una medición, no del gusto: el peor caso registrado el 2026-08-24 tuvo un silencio de unos veinte segundos entre señales, así que el límite deja el doble de margen. El reloj del silencio se reinicia con cada pedazo que llega, así que una respuesta larga que viene bien no se corta nunca.
+
+Y el panel tiene **botón de cancelar**: mientras el asistente contesta, "Enviar" se convierte en "Cancelar" —nunca están los dos, misma regla que la barra de búsqueda—. Cancelar no le ahorra al servidor la llamada al modelo, que ya salió; devuelve el control de la pantalla, que es lo que se le estaba negando a la persona. La pregunta vuelve a la caja en los tres casos: error, espera vencida y cancelación. Y cancelar **no dibuja un cartel de error**: lo decidió la persona, ya sabe lo que pasó.
+
+Verificado con siete pruebas aisladas sobre el archivo real (camino normal, `done` sin cierre, silencio, silencio que se reinicia, techo total, cancelación y evento de error del servidor) y en el navegador, con el backend demorado a propósito: aparece "Cancelar", se cancela, vuelve la pregunta y no queda ningún cartel.
+
+### Lo que la revisión no probaba, y sigue sin probarse
+
+Norber fue explícito y conviene repetirlo acá: su punto 4 no demuestra que la demora que vio el cliente en el celular haya sido esta. La ruta normal del servidor cierra la conexión. Lo que se arregló es que la pantalla ya no depende de que el otro lado se porte bien.

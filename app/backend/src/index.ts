@@ -11,6 +11,16 @@ import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 
 const app = express();
 
+/**
+ * Detrás del proxy de Render, `req.ip` es la dirección del proxy y no la de la
+ * persona: sin esto, TODOS los visitantes sin cuenta serían el mismo para el
+ * límite de consumo de IA y el primero que preguntara mucho dejaría afuera a
+ * los demás. El `1` es la cantidad de proxies en el camino —el de Render— y no
+ * `true`: confiar en toda la cadena deja que cualquiera se invente su
+ * dirección mandando un encabezado.
+ */
+app.set('trust proxy', 1);
+
 app.use(cors({ origin: env.allowedOrigins }));
 app.use(express.json({ limit: '1mb' }));
 

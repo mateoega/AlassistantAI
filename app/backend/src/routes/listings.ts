@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { auth, optionalAuth, requireAuth, visitor } from '../middleware/auth.js';
+import { limitarIa } from '../middleware/rate-limit.js';
 import { HttpError } from '../lib/http-error.js';
 import { parseListingInput } from '../validation/listing-input.js';
 import {
@@ -141,7 +142,12 @@ listingsRouter.get('/:id/analysis', optionalAuth, async (req, res) => {
 
 // Pedir uno nuevo sí necesita cuenta: cada análisis es una llamada paga al
 // modelo. Leer el que ya existe no cuesta nada; generarlo, sí.
-listingsRouter.post('/:id/analysis', requireAuth, async (req, res) => {
+//
+// Y va con el mismo freno que el chat: el análisis de fotos gasta de la MISMA
+// cuota diaria de Gemini que el asistente, así que un límite que solo cubriera
+// el chat dejaría abierta la otra mitad de la canilla. Tener cuenta no es un
+// límite: crear una es gratis. Ver `middleware/rate-limit.ts`.
+listingsRouter.post('/:id/analysis', requireAuth, limitarIa, async (req, res) => {
   const { supabase } = auth(req);
   res.status(202).json({ analysis: await startAnalysis(supabase, requireId(req.params.id)) });
 });

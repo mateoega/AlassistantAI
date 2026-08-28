@@ -26,6 +26,14 @@ export class HttpError extends Error {
   }
 
   /**
+   * Demasiados pedidos. `details` es el lugar donde va cuánto hay que esperar:
+   * el mensaje dice qué pasó y el detalle dice hasta cuándo.
+   */
+  static tooManyRequests(message: string, details?: string[]): HttpError {
+    return new HttpError(429, message, details);
+  }
+
+  /**
    * Algo que el servidor ofrece pero que en esta instalación no está listo —
    * típicamente, una clave de API sin completar. No es culpa de quien hizo el
    * pedido, así que el mensaje explica qué falta configurar en vez de sonar a

@@ -48,6 +48,16 @@ function optional(name: string): string | null {
   return process.env[name]?.trim() || null;
 }
 
+/**
+ * Un número de configuración con valor por defecto. Un valor que no es número,
+ * o que es cero o negativo, se ignora: un límite mal escrito en el panel de
+ * Render no puede terminar apagando el límite sin que nadie se entere.
+ */
+function positiveNumber(name: string, fallback: number): number {
+  const value = Number(process.env[name]?.trim());
+  return Number.isFinite(value) && value > 0 ? value : fallback;
+}
+
 export const env = {
   port: Number(process.env.PORT?.trim() || 4000),
   supabaseUrl: normalizeSupabaseUrl(required('SUPABASE_URL')),
@@ -97,6 +107,28 @@ export const env = {
    * puede escribir. Ver `lib/supabase.ts` y la migración 008.
    */
   supabaseServiceKey: optional('SUPABASE_SERVICE_KEY'),
+
+  /**
+   * LOS TRES FRENOS DEL CONSUMO DE IA. Ver `middleware/rate-limit.ts`.
+   *
+   * Los valores por defecto están calculados sobre el peor caso conocido: una
+   * pregunta que hace buscar publicaciones cuesta entre 2 y 4 llamadas a
+   * Gemini, y el análisis de fotos gasta de la misma cuota.
+   *
+   *   12 pedidos cada 5 minutos por visitante — más que suficiente para una
+   *   conversación real, y muy poco para una insistencia.
+   *
+   *   120 pedidos por día en todo el servidor — con el peor caso de 4 llamadas
+   *   por pedido son unas 480 llamadas, bastante más de lo que da el tramo
+   *   gratuito. El número está para que el techo lo ponga ESTE archivo y no la
+   *   factura; cuando el proyecto de Google tenga facturación, se sube.
+   *
+   * Se pueden cambiar sin tocar código, que es lo que hace falta el día que
+   * haya que abrirlo para una demostración.
+   */
+  iaLimiteVisitante: positiveNumber('IA_LIMITE_VISITANTE', 12),
+  iaVentanaMinutos: positiveNumber('IA_VENTANA_MINUTOS', 5),
+  iaLimiteDiario: positiveNumber('IA_LIMITE_DIARIO', 120),
 
   /**
    * De dónde se aceptan pedidos. En desarrollo, el frontend de Next.js.

@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { optionalAuth, visitor } from '../middleware/auth.js';
+import { limitarIa } from '../middleware/rate-limit.js';
 import { chat } from '../services/assistant.js';
 import { HttpError } from '../lib/http-error.js';
 
@@ -30,12 +31,18 @@ export const assistantRouter = Router();
  * público: lo publicado y lo vendido. No hay forma de que le cuente a una
  * visita algo que la visita no podría abrir por su cuenta.
  *
- * LO QUE ESTO CUESTA, dicho en voz alta: cada respuesta es una llamada paga a
- * Gemini y sin sesión no hay a quién limitarle el uso. Hoy no hay límite por
- * dirección de IP. Si la factura del modelo aparece rara, este es el primer
- * lugar donde mirar.
+ * LO QUE ESTO CUESTA: cada respuesta es una llamada paga a Gemini, y sin sesión
+ * no hay usuario a quien contarle el uso. Por eso, y desde el 2026-08-27, el
+ * mismo router pone el freno: `limitarIa` cuenta por usuario cuando hay sesión
+ * y por dirección de IP cuando no la hay, y arriba de todo hay un techo diario
+ * para el servidor entero. Ver `middleware/rate-limit.ts`.
+ *
+ * EL ORDEN DE ESTAS DOS LÍNEAS ES EL PUNTO. Primero se sabe quién pregunta y
+ * después se le cuenta el pedido: al revés, todos los que miran sin cuenta —que
+ * son la mayoría del muro público— compartirían un solo cupo.
  */
 assistantRouter.use(optionalAuth);
+assistantRouter.use(limitarIa);
 
 /**
  * POST /api/assistant/chat

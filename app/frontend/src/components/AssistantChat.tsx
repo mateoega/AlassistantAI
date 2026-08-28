@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { apiStream, ApiError } from '@/lib/api';
+import { apiStream, ApiError, CancelledError } from '@/lib/api';
 import {
   useAssistant,
   type AssistantStep,
@@ -149,6 +149,22 @@ export function AssistantChat() {
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /**
+   * Con qué se corta la respuesta que está en curso, si la persona lo pide.
+   *
+   * POR QUÉ HACE FALTA UN BOTÓN PARA ESTO. Mientras el asistente contesta, el
+   * de enviar está bloqueado: si la respuesta no llega y no falla, la única
+   * salida era cerrar el panel y volver a abrirlo —que no cancela nada, solo
+   * deja de mirarlo—. Ahora `apiStream` corta sola a los 45 segundos de
+   * silencio, pero eso es el techo: cuarenta y cinco segundos mirando puntitos
+   * es mucho tiempo para alguien que ya se dio cuenta de que preguntó mal.
+   *
+   * LO QUE NO HACE: no le ahorra la llamada al modelo al servidor, que ya
+   * salió y se va a pagar igual. Devuelve el control de la pantalla, que es
+   * otra cosa y es la que se le estaba negando a la persona.
+   */
+  const corte = useRef<AbortController | null>(null);
+
   // El id del aviso abierto, si la persona está en una pantalla de vehículo.
   const listingId = pathname.startsWith('/vehiculo/') ? pathname.split('/')[2] : undefined;
 
@@ -187,6 +203,9 @@ export function AssistantChat() {
       // final es la respuesta entera: el hilo se arma con eso y no juntando los
       // pedacitos a mano, para que lo que queda guardado sea exactamente lo que
       // el servidor dio por respuesta.
+      const control = new AbortController();
+      corte.current = control;
+
       const reply = await apiStream<{ text: string; results: ListingSearchResult[] }>(
         '/api/assistant/chat/stream',
         {
@@ -197,6 +216,7 @@ export function AssistantChat() {
         // El servidor avisa cuándo sale a buscar publicaciones. Es la vuelta
         // que más tarda y la que no manda una sola letra mientras corre.
         (paso) => setStep(paso === 'buscando' ? 'buscando' : 'pensando'),
+        { signal: control.signal },
       );
 
       setMessages([
@@ -208,15 +228,23 @@ export function AssistantChat() {
         },
       ]);
     } catch (error) {
-      setProblem(
-        error instanceof ApiError
-          ? [error.message, ...error.details].join(' ')
-          : 'No se pudo hablar con el asistente.',
-      );
+      // Cancelar no es fallar: lo decidió la persona y ya sabe lo que pasó. Un
+      // cartel acá sería contarle un problema que ella misma provocó.
+      if (!(error instanceof CancelledError)) {
+        setProblem(
+          error instanceof ApiError
+            ? [error.message, ...error.details].join(' ')
+            : 'No se pudo hablar con el asistente.',
+        );
+      }
+
       // La pregunta se conserva en la caja para que no haya que reescribirla.
+      // Vale para las tres formas de no llegar a una respuesta: el error del
+      // servidor, la espera que se venció y la cancelación.
       setDraft(question);
       setMessages(messages);
     } finally {
+      corte.current = null;
       setThinking(false);
       setStreamingText('');
     }
@@ -382,13 +410,27 @@ export function AssistantChat() {
           aria-label="Tu pregunta"
           className={inputClass}
         />
-        <button
-          type="submit"
-          disabled={thinking || !draft.trim()}
-          className="rounded-lg bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Enviar
-        </button>
+        {/* MIENTRAS CONTESTA, EL BOTÓN ES DE CANCELAR. No conviven los dos: es
+            la misma regla que la barra de búsqueda —un solo botón de acción a
+            la vista— y evita el "Enviar" apagado que no explica nada mientras
+            la pantalla espera. Al cancelar, la pregunta vuelve a la caja. */}
+        {thinking ? (
+          <button
+            type="button"
+            onClick={() => corte.current?.abort()}
+            className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-body transition-colors hover:border-brand"
+          >
+            Cancelar
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={!draft.trim()}
+            className="rounded-lg bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Enviar
+          </button>
+        )}
       </form>
     </aside>
   );

@@ -59,6 +59,32 @@ export function Wall() {
    */
   const justSearched = useRef(false);
 
+  /**
+   * De qué búsqueda son los resultados que estamos esperando.
+   *
+   * EL PROBLEMA. Dos búsquedas seguidas son dos pedidos al servidor, y no hay
+   * ninguna garantía de que contesten en el orden en que salieron: una consulta
+   * amplia con muchos resultados tarda más que la que se pidió después. Sin
+   * esto, la respuesta de la búsqueda VIEJA llegaba última y pisaba a la nueva.
+   * Lo que quedaba en pantalla no era lo que decían los filtros de arriba — y
+   * la persona no tiene forma de saber que está mirando otra cosa.
+   *
+   * Se reproduce en celular sin hacer nada raro: escribir, buscar, corregir y
+   * volver a buscar, con una red lenta en el medio.
+   *
+   * LA SALIDA. Cada carga se lleva un número. Al volver, la respuesta compara
+   * su número con el vigente y, si ya no es la última, se descarta entera:
+   * resultados, total, error y el cartel de "Cargando…". Un contador y no una
+   * cancelación con `AbortController` porque acá alcanza y es más barato: la
+   * respuesta que sobra ya se pagó, lo único que hay que evitar es que se
+   * escriba.
+   *
+   * ES UN `ref` Y NO ESTADO. Cambiarlo no tiene que redibujar nada, y hace
+   * falta leer el valor de AHORA dentro de una función que arrancó hace rato —
+   * un estado le daría el valor congelado del render en el que salió.
+   */
+  const generacion = useRef(0);
+
   const values: SearchValues = useMemo(
     () => ({
       q: searchParams.get('q') ?? '',
@@ -85,21 +111,41 @@ export function Wall() {
   const query = useMemo(() => toQuery(values), [values]);
 
   const load = useCallback(async () => {
+    const mia = ++generacion.current;
+
     setLoading(true);
     setProblem(null);
 
     try {
       const data = await api<ListingsPage>(`/api/listings?scope=public&page=0${query}`);
+
+      // Mientras esto viajaba salió otra búsqueda: lo que llegó ya no es lo
+      // que dicen los filtros de arriba.
+      if (mia !== generacion.current) {
+        return;
+      }
+
       setListings(data.listings);
       setTotal(data.total);
       setPage(0);
       setHasMore(data.has_more);
     } catch (error) {
+      // El error de una búsqueda vieja tampoco se muestra: sería un cartel
+      // rojo sobre resultados que están bien.
+      if (mia !== generacion.current) {
+        return;
+      }
+
       setProblem(
         error instanceof ApiError ? error.message : 'No se pudieron cargar las publicaciones.',
       );
     } finally {
-      setLoading(false);
+      // El `finally` corre igual después de los `return` de arriba, así que la
+      // condición va también acá: apagar el "Cargando…" desde una búsqueda
+      // vieja destaparía una pantalla vacía mientras la nueva todavía viene.
+      if (mia === generacion.current) {
+        setLoading(false);
+      }
     }
   }, [query]);
 
@@ -109,21 +155,38 @@ export function Wall() {
    * existían para el que miraba.
    */
   async function loadMore() {
+    // La página siguiente lleva el mismo número que la búsqueda a la que
+    // pertenece. Si mientras venía alguien cambió los filtros, pegarla abajo
+    // mezclaría dos listados distintos en la misma pantalla — la mitad de
+    // arriba de una búsqueda y la de abajo de otra.
+    const mia = generacion.current;
+
     setLoadingMore(true);
     setProblem(null);
 
     try {
       const next = page + 1;
       const data = await api<ListingsPage>(`/api/listings?scope=public&page=${next}${query}`);
+
+      if (mia !== generacion.current) {
+        return;
+      }
+
       setListings((current) => [...current, ...data.listings]);
       setPage(next);
       setHasMore(data.has_more);
     } catch (error) {
+      if (mia !== generacion.current) {
+        return;
+      }
+
       setProblem(
         error instanceof ApiError ? error.message : 'No se pudieron cargar más publicaciones.',
       );
     } finally {
-      setLoadingMore(false);
+      if (mia === generacion.current) {
+        setLoadingMore(false);
+      }
     }
   }
 
