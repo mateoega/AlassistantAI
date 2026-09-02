@@ -33,7 +33,20 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-20 border-b border-line bg-surface">
+    /*
+     * LA BARRA ES DE VIDRIO ESMERILADO.
+     *
+     * Queda fija arriba mientras el listado pasa por debajo. Con fondo blanco
+     * opaco, ese "por debajo" no se ve: el contenido desaparece detrás de una
+     * franja blanca y la barra parece un pedazo de página cortado. Con el
+     * vidrio, las fotos que pasan se adivinan borrosas y se entiende que hay
+     * una sola pantalla que se mueve. Ver `.glass` en `globals.css`.
+     *
+     * La sombra es la más suave de las tres: la barra se apoya sobre la
+     * página, no flota encima de ella, y la línea de abajo sigue estando para
+     * los navegadores donde el desenfoque no corre.
+     */
+    <header className="glass sticky top-0 z-20 border-b border-line shadow-soft">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3">
         <Link href="/" className="text-lg font-bold tracking-tight text-ink">
           {/* "AI" separado del resto: en muchas tipografías la I mayúscula se
@@ -45,7 +58,7 @@ export function SiteHeader() {
         {!session && (
           <Link
             href="/login"
-            className="rounded-lg bg-brand-deep px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+            className="rounded-xl bg-brand-deep px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
           >
             Iniciar sesión
           </Link>
@@ -56,7 +69,7 @@ export function SiteHeader() {
             <nav className="hidden items-center gap-2 text-sm md:flex">
               <Link
                 href="/publicar"
-                className="rounded-lg bg-brand-deep px-4 py-2 font-semibold text-white transition-colors hover:bg-brand-deep/90"
+                className="rounded-xl bg-brand-deep px-4 py-2 font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
               >
                 + Publicar
               </Link>
@@ -81,7 +94,7 @@ export function SiteHeader() {
               aria-label="Mi perfil"
               aria-current={pathname === '/perfil' ? 'page' : undefined}
               className={[
-                'rounded-lg border p-2 transition-colors md:hidden',
+                'rounded-xl border p-2 transition-colors md:hidden',
                 pathname === '/perfil'
                   ? 'border-brand bg-brand-soft text-brand-deep'
                   : 'border-line text-body',
@@ -122,7 +135,7 @@ function TopLink({
     <Link
       href={href}
       className={[
-        'rounded-lg border px-4 py-2 transition-colors',
+        'rounded-xl border px-4 py-2 transition-colors',
         active
           ? 'border-brand bg-brand-soft font-semibold text-brand-deep'
           : 'border-line text-body hover:border-brand',

@@ -205,7 +205,7 @@ function Confirm({
   onConfirm: () => void;
 }) {
   return (
-    <div className="space-y-3 rounded-xl border border-line bg-surface p-4">
+    <div className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
       <div>
         <p className="font-semibold text-ink">{title}</p>
         <p className="mt-1 text-sm text-body">{detail}</p>
@@ -214,7 +214,7 @@ function Confirm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-line px-4 py-2 text-sm text-body transition-colors hover:border-brand"
+          className="rounded-xl border border-line px-4 py-2 text-sm text-body transition-colors hover:border-brand"
         >
           Cancelar
         </button>
@@ -222,7 +222,7 @@ function Confirm({
           type="button"
           disabled={working}
           onClick={onConfirm}
-          className="rounded-lg bg-brand-deep px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90 disabled:opacity-50"
+          className="rounded-xl bg-brand-deep px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
         >
           {working ? 'Un momento…' : confirmLabel}
         </button>
@@ -285,7 +285,7 @@ function ReportForm({
           onSend(reason, detail);
         }
       }}
-      className="space-y-3 rounded-xl border border-line bg-surface p-4"
+      className="space-y-3 rounded-2xl border border-line bg-surface p-4 shadow-card"
     >
       <div>
         <p className="font-semibold text-ink">Denunciar esta conversación</p>
@@ -330,7 +330,7 @@ function ReportForm({
           rows={3}
           maxLength={1000}
           className={
-            'w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink ' +
+            'w-full resize-none rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink ' +
             'placeholder:text-muted/70 outline-none transition-colors ' +
             'focus:border-brand focus:ring-2 focus:ring-brand/25'
           }
@@ -342,14 +342,14 @@ function ReportForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-lg border border-line px-4 py-2 text-sm text-body transition-colors hover:border-brand"
+          className="rounded-xl border border-line px-4 py-2 text-sm text-body transition-colors hover:border-brand"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={working || !reason}
-          className="rounded-lg bg-brand-deep px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90 disabled:opacity-50"
+          className="rounded-xl bg-brand-deep px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98] disabled:opacity-50 disabled:shadow-none"
         >
           {working ? 'Enviando…' : 'Enviar denuncia'}
         </button>

@@ -1002,3 +1002,74 @@ Verificado con siete pruebas aisladas sobre el archivo real (camino normal, `don
 ### Lo que la revisión no probaba, y sigue sin probarse
 
 Norber fue explícito y conviene repetirlo acá: su punto 4 no demuestra que la demora que vio el cliente en el celular haya sido esta. La ruta normal del servidor cierra la conexión. Lo que se arregló es que la pantalla ya no depende de que el otro lado se porte bien.
+
+## 2026-09-01 — El rediseño: se fue el gris, entraron las sombras y el vidrio
+
+El cliente pidió cuatro cosas concretas, mirando capturas de Marketplace en el celular: que las fotos ocupen **lo máximo posible** de la pantalla, que **se saque el gris** y sea blanco con azul, que haya **sombreado**, y que se sienta el **efecto vidrio del iPhone**. Es la primera vez que se toca el aspecto sin que el pedido sea arreglar un error: no se corrigió nada roto, se cambió cómo se ve.
+
+### El gris de fondo era el problema, y no era un problema de gusto
+
+El fondo era `#F0F2F5`, el plateado del logo, con tarjetas blancas encima. Eso funciona en un monitor y se lee mal en un celular: es la forma de una planilla —cajas blancas flotando sobre un gris— y no la de un clasificado.
+
+**Ahora la página y las piezas son el mismo blanco**, y lo que las separa es la sombra. Es un cambio más grande de lo que suena: si se saca el gris sin poner nada en su lugar, todo queda pegado a todo y la pantalla se vuelve ilegible. Por eso el rediseño es blanco **y** sombras, las dos cosas juntas.
+
+El plateado no desapareció del proyecto: sigue en el logo. Lo que salió es su uso como fondo.
+
+**El gris seguía haciendo falta adentro de las cosas** —el hueco de una foto que no cargó, la burbuja del que contesta en el chat, el resaltado de una fila al pasar por encima—. Esos diez lugares usaban `bg-canvas`, y al volverse blanco el fondo se habrían quedado sin pintar. El relleno pasó a tener su propio nombre, `mist`, y no es un gris: es `#F1F7FE`, blanco azulado. Era literalmente lo que pidió el cliente ("blanco con azul") y de paso resuelve el problema de nomenclatura.
+
+### Las sombras son azules, y eso no es un detalle
+
+Son tres, definidas en `globals.css`, y son la escala completa: `soft` para lo que apenas se despega, `card` para lo que es una pieza, `float` para lo que está por encima de la página. No se escriben sombras sueltas en las pantallas.
+
+**Ninguna es negra.** Cada una lleva dos capas: una de contacto casi imperceptible que apoya el borde, y una difusa teñida con el azul secundario de la marca. Una sombra gris sobre blanco ensucia; una azul sobre blanco se lee como profundidad. Es la manera de que la identidad esté presente en toda la pantalla sin pintar nada de azul.
+
+La línea de los bordes también se azuló y se aclaró (`#DDE1E7` a `#E4EBF4`). Sobre un fondo gris un borde tiene que ser oscuro para verse; sobre blanco, el mismo borde se lee como un recuadro dibujado con marcador.
+
+### Las fotos se salen del margen
+
+El `<main>` deja 16px de aire a cada lado. Para un texto está bien; para una grilla de fotos es plata tirada: con esos 16px y 12px de separación, en una pantalla de 375px cada foto medía **165px**.
+
+La grilla del muro y la foto principal de la ficha ahora **se salen de ese margen en celular** (`-mx-2` y `-mx-4`). La foto del muro pasó a medir **179px**, un 8% más grande, y la de la ficha ocupa el ancho entero de la pantalla.
+
+**Ocho píxeles y no cero en el muro.** Pegar la foto al filo se ve bien en la maqueta, pero el texto de abajo —el precio, el modelo— queda apoyado en el borde y se lee incómodo; y en los celulares con pantalla curva el filo se dobla. De tablet para arriba las dos vuelven al margen normal: ahí sobra ancho, y una grilla que toca los bordes de un monitor se ve descuidada, no amplia.
+
+### La foto principal ya no tiene una caja negra alrededor
+
+El fondo de la galería era `bg-ink`, casi negro, para que una foto vertical se recortara contra algo oscuro. Sobre una página blanca esa caja pasó a ser lo único oscuro de la pantalla y se llevaba toda la atención.
+
+Pero cambiarla por blanco dejaba a la vista el otro problema: la caja mide 4:3 y las fotos vienen con cualquier forma, así que una apaisada dejaba **dos franjas vacías de unos 90px** arriba y abajo — casi un cuarto de la pantalla del celular, justo en lo primero que se mira.
+
+Recortar la foto para llenar la caja no es opción: quien compra necesita ver el vehículo entero, y un `object-cover` le corta el techo o las ruedas.
+
+**Las franjas se llenan con la misma foto, ampliada y desenfocada**, como hacen las aplicaciones de música con la tapa del disco. El color de la foto sigue, la pantalla se ve llena y no se pierde nada de lo que importa. **No es una segunda descarga**: es la misma dirección, el navegador la sirve de su memoria. Va con `alt` vacío y `aria-hidden` porque es decoración: un lector de pantalla que la nombre estaría diciendo dos veces la misma foto.
+
+### El vidrio esmerilado
+
+Lo usan las tres cosas que quedan fijas mientras la página se mueve por debajo: la barra de arriba, la de abajo en celular y el corazón de guardar que se apoya sobre cada foto. Con fondo blanco opaco, ese "por debajo" no se ve —el contenido desaparece detrás de una franja blanca y la barra parece un pedazo de página cortado—. Con el vidrio, las fotos que pasan se adivinan borrosas y se entiende que hay una sola pantalla que se mueve.
+
+**La saturación al 180% no es decoración.** El desenfoque solo lava los colores de abajo y la barra queda de un gris sucio; subir la saturación devuelve el color de lo que está pasando por detrás, y es la mitad del efecto.
+
+**Es una clase de `globals.css` y no clases sueltas de Tailwind**, por la regla de reserva: en un navegador donde el desenfoque no corre, el fondo pasa a ser casi opaco (`@supports not`). Sin eso, el texto del listado se leería a través de la barra. Esa regla no se puede escribir en el atributo `class` de un componente, y olvidarla no se ve hasta que alguien abre la aplicación en ese navegador.
+
+### El botón se hunde al tocarlo
+
+Todos los botones de la aplicación se achican un dos por ciento mientras están apretados, y el corazón de guardar un diez.
+
+En celular no hay `hover`: el dedo tapa el botón justo en el momento en que habría que confirmarle a la persona que la pulsación llegó. El hundido es ese acuse de recibo. En el corazón es más marcado a propósito: guardar no cambia de pantalla ni muestra ningún cartel, así que el único aviso de que pasó algo es que el corazón se llene — y eso, debajo de un dedo, se pierde.
+
+### Un solo redondeo
+
+Convivían esquinas de 8px y de 12px en la misma pantalla. Ahora son 12px para lo chico (botones, campos, miniaturas) y 16px para lo grande (tarjetas, paneles, fotos). Es de las cosas que no se nombran al mirar una pantalla pero que hacen que se sienta armada de a pedazos.
+
+### Lo que NO cambió, a propósito
+
+- **El orden de la ficha del vehículo.** Precio, las dos acciones del comprador, análisis, precio de referencia, descripción, ficha técnica, vendedor. Es lo que salió de la prueba del 2026-08-27 y no se tocó: esto fue un cambio de aspecto, no de estructura.
+- **Cada dato de la tarjeta en su renglón.** También salió de esa prueba, por los textos cortados a la mitad. Las tarjetas ahora son 14px más anchas, así que el problema aprieta menos, pero la regla se mantiene.
+- **Los 13px del texto chico y el `#4C5768` del texto secundario.** Se volvió a medir el contraste contra el fondo nuevo: 7,3:1 sobre el blanco y 6,8:1 sobre el relleno azulado, las dos bien arriba del 4,5:1 de la norma.
+- **Nada de rojo ni naranja**, ni siquiera en errores. La regla de identidad sigue igual.
+
+### Qué se verificó y qué no
+
+Verificado en el navegador, a 375px y en escritorio: el muro, la ficha de un vehículo y el login. Se comprobó que los colores nuevos y las tres sombras se resuelven de verdad en el navegador —no quedaron como clases que Tailwind no generó— y que la barra de arriba tiene el desenfoque puesto. Sin errores en la consola.
+
+**No se verificaron con los ojos las pantallas que piden cuenta** —publicar, guardados, mis publicaciones, mensajes, perfil—: en esta máquina no hay contraseñas de prueba, y entrar con enlaces de un solo uso pide la clave de servicio. Usan las mismas piezas compartidas (`Card`, `Button`, `inputClass`, `Field`) que sí se miraron, y los diez lugares que dependían del gris de fondo se cambiaron uno por uno, pero conviene darles una pasada la próxima vez que haya una sesión abierta.

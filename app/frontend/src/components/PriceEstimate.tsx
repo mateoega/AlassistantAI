@@ -153,7 +153,7 @@ function Referencia({
   referencia: NonNullable<Extract<Estimate, { disponible: true }>['referencia_externa']>;
 }) {
   return (
-    <section className="space-y-1 rounded-lg bg-brand-soft p-3">
+    <section className="space-y-1 rounded-xl bg-brand-soft p-3">
       <h3 className="text-sm font-semibold text-ink">Según una fuente externa</h3>
       <p className="text-sm text-body">
         {formatPrice(referencia.valor, referencia.moneda)}

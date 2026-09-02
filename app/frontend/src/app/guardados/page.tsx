@@ -106,7 +106,10 @@ export default function GuardadosPage() {
       ) : visible.length === 0 ? (
         <EmptyState unavailable={unavailable} />
       ) : (
-        <ul className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        // La misma grilla del muro, con el mismo salto de margen en celular:
+        // son las mismas tarjetas y tienen que verse igual. Ver el comentario
+        // largo en `Wall`.
+        <ul className="-mx-2 grid grid-cols-2 gap-x-2 gap-y-5 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
           {visible.map((listing) => (
             <li key={listing.id}>
               <ListingCard listing={listing} />
@@ -140,7 +143,7 @@ function EmptyState({ unavailable }: { unavailable: number }) {
       </p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-lg bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+        className="mt-6 inline-block rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
       >
         Ver vehículos
       </Link>

@@ -27,7 +27,7 @@ export function Notice({
     <div
       role={isAlert ? 'alert' : 'status'}
       className={[
-        'rounded-lg border px-4 py-3 text-sm',
+        'rounded-2xl border px-4 py-3 text-sm shadow-soft',
         isAlert
           ? 'border-brand-deep/40 bg-brand-soft text-body'
           : 'border-line bg-surface text-muted',
@@ -61,9 +61,9 @@ export function Button({
   full?: boolean;
 }) {
   const styles: Record<string, string> = {
-    primary: 'bg-brand-deep text-white font-semibold hover:bg-brand-deep/90',
+    primary: 'bg-brand-deep text-white font-semibold shadow-soft hover:bg-brand-deep/90',
     secondary: 'bg-brand-soft text-brand-deep font-semibold hover:bg-brand-soft/70',
-    quiet: 'border border-line bg-surface text-body hover:border-brand',
+    quiet: 'border border-line bg-surface text-body shadow-soft hover:border-brand',
   };
 
   return (
@@ -72,8 +72,19 @@ export function Button({
       disabled={disabled}
       onClick={onClick}
       className={[
-        'rounded-lg px-5 py-2.5 text-sm transition-colors',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        'rounded-xl px-5 py-2.5 text-sm transition-all duration-150',
+        /*
+         * EL BOTÓN SE HUNDE AL TOCARLO.
+         *
+         * En celular no hay `hover`: el dedo tapa el botón justo en el momento
+         * en que habría que confirmarle a la persona que la pulsación llegó.
+         * Achicarlo un dos por ciento mientras está apretado es el acuse de
+         * recibo — es lo que hace que la pantalla se sienta una aplicación y no
+         * una página. `disabled:active` a cero para que un botón apagado no
+         * conteste nada.
+         */
+        'active:scale-[0.98] disabled:active:scale-100',
+        'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none',
         full ? 'w-full' : '',
         styles[variant],
       ].join(' ')}
@@ -117,7 +128,7 @@ export function Field({
 }
 
 export const inputClass =
-  'w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink ' +
+  'w-full rounded-xl border border-line bg-surface px-3.5 py-2.5 text-sm text-ink ' +
   'placeholder:text-muted/70 outline-none transition-colors ' +
   'focus:border-brand focus:ring-2 focus:ring-brand/25';
 
@@ -186,8 +197,8 @@ export function StatusBadge({ status }: { status: ListingStatus }) {
   }
 
   const styles: Record<Exclude<ListingStatus, 'published'>, string> = {
-    draft: 'border-line bg-canvas text-muted',
-    paused: 'border-line bg-canvas text-muted',
+    draft: 'border-line bg-mist text-muted',
+    paused: 'border-line bg-mist text-muted',
     sold: 'border-ink bg-ink text-white',
   };
 
@@ -222,7 +233,10 @@ export function Card({
   ref?: Ref<HTMLElement>;
 }) {
   return (
-    <section ref={ref} className={`rounded-xl border border-line bg-surface ${className}`}>
+    <section
+      ref={ref}
+      className={`rounded-2xl border border-line bg-surface shadow-card ${className}`}
+    >
       {children}
     </section>
   );

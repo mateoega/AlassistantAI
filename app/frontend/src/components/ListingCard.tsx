@@ -62,7 +62,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
    */
   return (
     <article className="group relative h-full">
-      <div className="relative aspect-square w-full overflow-hidden rounded-xl border border-line bg-surface">
+      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-mist shadow-card">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -96,8 +96,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
         {listing.status === 'sold' && <div className="absolute inset-0 bg-white/55" />}
       </div>
 
-      <div className="mt-2 space-y-0.5">
-        <p className="font-bold text-ink">{formatPrice(listing.price, listing.currency)}</p>
+      {/* El texto va pegado a la foto y con un pelo de aire al costado: en el
+          muro a pantalla completa la columna llega hasta el borde, y un precio
+          apoyado exactamente en el filo se lee apretado. */}
+      <div className="mt-2 space-y-0.5 px-0.5">
+        <p className="text-[15px] font-bold text-ink">
+          {formatPrice(listing.price, listing.currency)}
+        </p>
         <p className="line-clamp-2 text-sm font-medium text-ink group-hover:text-brand-deep">
           {/* El `after` vacío es lo que hace tocable la tarjeta entera: se
               estira sobre el `article`, que es el ancestro posicionado. */}

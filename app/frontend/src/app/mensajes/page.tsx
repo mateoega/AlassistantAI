@@ -84,7 +84,7 @@ export default function MensajesPage() {
       ) : conversations.length === 0 ? (
         <EmptyState />
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface">
+        <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
           {conversations.map((conversation) => (
             <li key={conversation.id}>
               <ConversationRow conversation={conversation} />
@@ -103,9 +103,9 @@ function ConversationRow({ conversation }: { conversation: Conversation }) {
   return (
     <Link
       href={`/mensajes/${conversation.id}`}
-      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-canvas"
+      className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-mist"
     >
-      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-line bg-canvas">
+      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
         {photo ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" className="h-full w-full object-cover" />
@@ -161,7 +161,7 @@ function EmptyState() {
       </p>
       <Link
         href="/"
-        className="mt-6 inline-block rounded-lg bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+        className="mt-6 inline-block rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
       >
         Ver vehículos
       </Link>

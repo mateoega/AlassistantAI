@@ -122,7 +122,7 @@ export default function MisPublicacionesPage() {
 
         <Link
           href="/publicar"
-          className="rounded-lg bg-brand-deep px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+          className="rounded-xl bg-brand-deep px-4 py-2 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
         >
           + Publicar vehículo
         </Link>
@@ -144,7 +144,7 @@ export default function MisPublicacionesPage() {
               <Card className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                 <Link
                   href={`/vehiculo/${listing.id}`}
-                  className="h-24 w-full shrink-0 overflow-hidden rounded-lg bg-canvas sm:w-32"
+                  className="h-24 w-full shrink-0 overflow-hidden rounded-xl bg-mist sm:w-32"
                 >
                   {listing.photos[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
@@ -185,7 +185,7 @@ export default function MisPublicacionesPage() {
                 <div className="flex shrink-0 flex-wrap items-center gap-2">
                   <Link
                     href={`/publicar/${listing.id}`}
-                    className="rounded-lg border border-line px-3 py-2 text-sm text-body transition-colors hover:border-brand"
+                    className="rounded-xl border border-line px-3 py-2 text-sm text-body transition-colors hover:border-brand"
                   >
                     Editar
                   </Link>
@@ -233,7 +233,7 @@ export default function MisPublicacionesPage() {
                     type="button"
                     disabled={working === listing.id}
                     onClick={() => void remove(listing)}
-                    className="rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:text-ink disabled:opacity-50"
+                    className="rounded-xl px-3 py-2 text-sm text-muted transition-colors hover:text-ink disabled:opacity-50"
                   >
                     Borrar
                   </button>
@@ -264,7 +264,7 @@ function ActionButton({
       disabled={disabled}
       onClick={onClick}
       className={[
-        'rounded-lg px-3 py-2 text-sm transition-colors disabled:opacity-50',
+        'rounded-xl px-3 py-2 text-sm transition-colors disabled:opacity-50',
         primary
           ? 'bg-brand-soft font-semibold text-brand-deep hover:bg-brand-soft/70'
           : 'border border-line text-body hover:border-brand',

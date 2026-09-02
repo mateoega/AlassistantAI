@@ -3,13 +3,18 @@
 /**
  * Paleta — ver diseño/paleta_colores.md
  *
- * Interfaz clara, pensada para que las fotos de los vehículos sean lo que más
- * pesa en la pantalla. Los colores siguen siendo los de la marca:
+ * Interfaz blanca con azul, pensada para que las fotos de los vehículos sean
+ * lo que más pesa en la pantalla. Los colores siguen siendo los de la marca:
  *
- *   #F0F2F5  el plateado claro del logo, ahora como fondo de página
+ *   #FFFFFF  el fondo de la página y de las piezas: blanco parejo
+ *   #F1F7FE  blanco azulado, para rellenos — reemplazó al plateado #F0F2F5
  *   #05070D  el azul casi negro del logo, ahora como color de los títulos
  *   #2E9EFF  azul principal: acentos, foco, bordes activos
  *   #1565C0  azul secundario: botones, enlaces y precios
+ *
+ * El plateado del logo salió de la interfaz como fondo: separar por sombra y
+ * no por un cambio de gris es lo que hace que la pantalla se lea moderna. El
+ * plateado sigue en el logo, que es de donde salió.
  *
  * POR QUÉ LOS BOTONES USAN #1565C0 Y NO #2E9EFF
  * El azul principal es demasiado claro para llevar texto blanco encima: no
@@ -25,9 +30,43 @@
  * fuente, y un color con ese nombre dejaría el texto sin pintar.
  */
 @theme {
-  --color-canvas: #f0f2f5;
+  /**
+   * EL FONDO DEJÓ DE SER GRIS.
+   *
+   * Era `#f0f2f5`, el plateado del logo, y funcionaba como fondo de una
+   * aplicación de escritorio: tarjetas blancas flotando sobre un gris. En
+   * celular eso se lee como una planilla, no como un clasificado — y el gris
+   * fue lo primero que el cliente pidió sacar.
+   *
+   * Ahora la página es blanca y lo que separa las cosas es la SOMBRA y el azul,
+   * no un cambio de gris. Es la misma decisión que toman las aplicaciones que
+   * el cliente usa de referencia: el fondo desaparece y lo único que pesa en la
+   * pantalla son las fotos.
+   */
+  --color-canvas: #ffffff;
   --color-surface: #ffffff;
-  --color-line: #dde1e7;
+
+  /**
+   * El blanco azulado que reemplaza al gris en los RELLENOS.
+   *
+   * No es fondo de página: es lo que se pinta adentro de algo —el hueco de una
+   * foto que todavía no cargó, la burbuja del que contesta en el chat, el
+   * resaltado al pasar por encima de una fila—. Antes esos lugares usaban
+   * `canvas`, y al volverse blanco el fondo se habrían quedado sin pintar: por
+   * eso el relleno pasa a tener su propio nombre y no es un tono de gris sino
+   * de azul, que es lo que pidió el cliente.
+   */
+  --color-mist: #f1f7fe;
+
+  /**
+   * La línea también se azuló y se aclaró (era `#dde1e7`).
+   *
+   * Sobre un fondo gris un borde tiene que ser oscuro para verse. Sobre blanco
+   * pasa lo contrario: el mismo borde se lee como un recuadro dibujado con
+   * marcador. Ahora es un pelo azulado, y el trabajo de separar lo hacen las
+   * sombras.
+   */
+  --color-line: #e4ebf4;
 
   --color-ink: #05070d;
   --color-body: #3a4353;
@@ -35,17 +74,40 @@
    * El gris de los textos secundarios se oscureció (era #5a6472).
    *
    * En el monitor pasaba; en un celular al sol, a 12 o 13px, el cliente lo
-   * reportó como "poco contraste". Medido: sobre el blanco de las tarjetas da
-   * 7,3:1 y sobre el plateado del fondo 6,5:1 — bien arriba del 4,5:1 que pide
-   * la norma para texto chico, con margen para una pantalla con brillo de más.
-   * Sigue siendo claramente secundario frente a `ink`, que es lo que tiene que
-   * hacer.
+   * reportó como "poco contraste". Medido de nuevo contra el fondo blanco de
+   * hoy: 7,3:1 sobre el blanco y 6,8:1 sobre el relleno azulado (`mist`) —
+   * bien arriba del 4,5:1 que pide la norma para texto chico, con margen para
+   * una pantalla con brillo de más. Sigue siendo claramente secundario frente
+   * a `ink`, que es lo que tiene que hacer.
    */
   --color-muted: #4c5768;
 
   --color-brand: #2e9eff;
   --color-brand-deep: #1565c0;
   --color-brand-soft: #e8f2fd;
+
+  /* ---------------------------------------------------------------------------
+   * LAS SOMBRAS: LO QUE REEMPLAZA AL GRIS DE FONDO
+   *
+   * Con la página blanca y las tarjetas blancas, si no hay sombra no hay
+   * separación: todo queda pegado a todo. Las tres sombras son la escala
+   * entera de la aplicación — no se escriben sombras sueltas en las pantallas,
+   * se elige una de estas tres.
+   *
+   * Ninguna es negra pura. Cada una lleva dos capas: una de contacto, gris
+   * casi imperceptible, que apoya el borde; y una difusa TEÑIDA DE AZUL, que
+   * es la que da el tono. Una sombra gris sobre blanco ensucia; una sombra
+   * azul sobre blanco se lee como profundidad y mantiene la identidad de la
+   * marca sin pintar nada de azul.
+   *
+   *   soft   lo que apenas se despega: campos, avisos, barras
+   *   card   lo que es una pieza: la tarjeta de un vehículo, un panel
+   *   float  lo que está POR ENCIMA de la página: el botón del asistente,
+   *          el panel del chat. Es la única con brillo azul fuerte.
+   * ------------------------------------------------------------------------- */
+  --shadow-soft: 0 1px 2px rgb(5 7 13 / 0.04), 0 4px 14px -6px rgb(21 101 192 / 0.14);
+  --shadow-card: 0 1px 3px rgb(5 7 13 / 0.05), 0 10px 26px -12px rgb(21 101 192 / 0.28);
+  --shadow-float: 0 2px 6px rgb(5 7 13 / 0.08), 0 16px 36px -12px rgb(21 101 192 / 0.45);
 
   /**
    * EL TEXTO CHICO MIDE 13px, NO 12.
@@ -99,6 +161,38 @@ h3 {
 ::selection {
   background-color: var(--color-brand-soft);
   color: var(--color-ink);
+}
+
+/* ---------------------------------------------------------------------------
+ * EL VIDRIO ESMERILADO ("liquid glass")
+ *
+ * Lo usan las tres cosas que quedan FIJAS mientras la página se mueve por
+ * debajo: la barra de arriba, la de abajo en celular y el corazón que se apoya
+ * sobre cada foto. En vez de taparlas con un blanco opaco, dejan pasar
+ * borroso lo que tienen atrás, que es lo que hace iOS y lo que pidió el
+ * cliente.
+ *
+ * `saturate(180%)` no es decorativo: el desenfoque solo lava los colores de
+ * abajo y la barra queda de un gris sucio. Subir la saturación devuelve el
+ * color de la foto que está pasando por detrás — es la mitad del efecto.
+ *
+ * ES UNA CLASE Y NO CLASES SUELTAS DE TAILWIND por el `@supports` de abajo:
+ * Firefox con el desenfoque desactivado —y cualquier navegador viejo— dejaría
+ * una barra semitransparente con el texto del listado leyéndose a través. Ahí
+ * el fondo pasa a ser casi opaco. La regla de reserva no se puede escribir en
+ * el atributo `class` de un componente, y olvidarla no se ve hasta que alguien
+ * abre la aplicación en ese navegador.
+ * ------------------------------------------------------------------------- */
+.glass {
+  background-color: rgb(255 255 255 / 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background-color: rgb(255 255 255 / 0.97);
+  }
 }
 
 /* Que el foco del teclado siempre se vea: hace falta para poder usar la app

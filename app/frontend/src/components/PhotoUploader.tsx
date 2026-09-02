@@ -188,7 +188,7 @@ export function PhotoUploader({
           {photos.map((photo, index) => (
             <li
               key={photo.path}
-              className="overflow-hidden rounded-lg border border-line bg-canvas"
+              className="overflow-hidden rounded-xl border border-line bg-mist"
             >
               <div className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}

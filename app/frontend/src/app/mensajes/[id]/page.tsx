@@ -187,7 +187,7 @@ export default function ConversacionPage() {
 
       {problem && <Notice tone="alert" title={problem} />}
 
-      <div className="space-y-1 rounded-xl border border-line bg-surface p-4">
+      <div className="space-y-1 rounded-2xl border border-line bg-surface p-4 shadow-card">
         {thread.messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted">
             Todavía no hay mensajes. Escribí el primero.
@@ -261,7 +261,7 @@ function Bubble({ message }: { message: ConversationMessage }) {
           'my-1 max-w-[85%] rounded-2xl px-4 py-2 text-sm sm:max-w-[70%]',
           message.mine
             ? 'rounded-br-sm bg-brand-deep text-white'
-            : 'rounded-bl-sm bg-canvas text-body',
+            : 'rounded-bl-sm bg-mist text-body',
         ].join(' ')}
       >
         <p className="whitespace-pre-line break-words">{message.body}</p>
@@ -284,8 +284,8 @@ function ThreadHeader({ thread }: { thread: ConversationThread }) {
   const listing = thread.listing;
 
   return (
-    <div className="flex items-center gap-3 rounded-xl border border-line bg-surface p-4">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-line bg-canvas">
+    <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
+      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
         {listing?.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={listing.photo_url} alt="" className="h-full w-full object-cover" />
@@ -370,7 +370,7 @@ function Composer({
         maxLength={2000}
         placeholder={`Escribile a ${counterpart ?? 'la otra persona'}…`}
         className={
-          'flex-1 resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink ' +
+          'flex-1 resize-none rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-ink ' +
           'placeholder:text-muted/70 outline-none transition-colors ' +
           'focus:border-brand focus:ring-2 focus:ring-brand/25'
         }
@@ -379,8 +379,9 @@ function Composer({
         type="submit"
         disabled={sending || value.trim() === ''}
         className={
-          'rounded-lg bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white transition-colors ' +
-          'hover:bg-brand-deep/90 disabled:cursor-not-allowed disabled:opacity-50'
+          'rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white shadow-soft ' +
+          'transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98] ' +
+          'disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none disabled:active:scale-100'
         }
       >
         {sending ? 'Enviando…' : 'Enviar'}

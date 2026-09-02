@@ -355,7 +355,7 @@ export function ListingForm({
             <button
               type="button"
               onClick={() => setDetailsOpen((open) => !open)}
-              className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-canvas"
+              className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-mist"
             >
               <span>
                 <span className="font-semibold text-ink">Más detalles</span>

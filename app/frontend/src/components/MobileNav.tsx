@@ -40,7 +40,11 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Navegación principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface md:hidden"
+      /* Vidrio esmerilado, igual que la barra de arriba: el listado se ve
+         pasar por debajo en vez de cortarse contra una franja blanca. La
+         sombra apunta HACIA ARRIBA (el `-` del desplazamiento vertical), que
+         es de donde viene el contenido. Ver `.glass` en `globals.css`. */
+      className="glass fixed inset-x-0 bottom-0 z-30 border-t border-line shadow-[0_-2px_16px_-6px_rgb(21_101_192_/_0.18)] md:hidden"
       // Respeta la franja de gestos de los celulares sin botón físico.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >

@@ -132,16 +132,62 @@ export default function VehiculoPage() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {/* ---- Galería ----------------------------------------------------- */}
         <div className="space-y-3">
-          <div className="aspect-4/3 overflow-hidden rounded-xl border border-line bg-ink">
+          {/* LA FOTO PRINCIPAL SE SALE DEL MARGEN EN CELULAR, igual que la
+              grilla del muro: es lo primero que mira quien entra y no tiene
+              por qué pagar 32px de aire. De tablet para arriba vuelve al
+              margen y se le redondean las esquinas.
+
+              EL FONDO DEJÓ DE SER NEGRO. Era `bg-ink` para que una foto
+              vertical se recortara contra algo oscuro; sobre una página blanca
+              esa caja negra es lo único oscuro de la pantalla y se lleva toda
+              la atención — justo lo contrario de lo que buscamos. Ahora es el
+              blanco azulado, y lo que separa la foto de la página es la
+              sombra. La foto sigue entrando entera (`object-contain`): un auto
+              recortado para llenar la caja es peor que un poco de aire al
+              costado. */}
+          <div className="relative -mx-4 aspect-4/3 overflow-hidden bg-mist shadow-card sm:mx-0 sm:rounded-2xl">
             {cover ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={cover.url}
-                alt={`${listing.brand} ${listing.model}`}
-                className="h-full w-full object-contain"
-              />
+              <>
+                {/* EL RELLENO DE LOS COSTADOS ES LA MISMA FOTO, DESENFOCADA.
+
+                    La caja mide 4:3 y las fotos vienen con cualquier forma: una
+                    apaisada deja dos franjas vacías arriba y abajo que en
+                    celular son unos 180px de nada — casi un cuarto de la
+                    pantalla, justo en lo primero que se mira.
+
+                    Recortar la foto para llenar la caja no es opción: el que
+                    compra necesita ver el vehículo entero, y un `object-cover`
+                    le corta el techo o las ruedas.
+
+                    Entonces las franjas se llenan con la misma foto ampliada y
+                    desenfocada. Es el mismo recurso de las aplicaciones de
+                    música con la tapa del disco: el color de la foto sigue,
+                    la pantalla se ve llena, y nada de lo que importa se pierde.
+
+                    NO ES UNA SEGUNDA DESCARGA: es la misma dirección, así que
+                    el navegador la sirve de su propia memoria.
+
+                    Va con `alt` vacío y `aria-hidden` porque es decoración pura
+                    — un lector de pantalla que la nombre estaría diciendo dos
+                    veces la misma foto. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={cover.url}
+                  alt=""
+                  aria-hidden
+                  /* `scale-125` para que el desenfoque no deje ver el borde de
+                     la propia imagen contra el borde de la caja. */
+                  className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={cover.url}
+                  alt={`${listing.brand} ${listing.model}`}
+                  className="relative h-full w-full object-contain"
+                />
+              </>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-white/60">
+              <div className="flex h-full items-center justify-center text-sm text-muted">
                 Esta publicación no tiene fotos
               </div>
             )}
@@ -155,7 +201,7 @@ export default function VehiculoPage() {
                     type="button"
                     onClick={() => setActivePhoto(index)}
                     className={[
-                      'aspect-square w-full overflow-hidden rounded-lg border-2 transition-colors',
+                      'aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors',
                       index === activePhoto ? 'border-brand' : 'border-line hover:border-brand/50',
                     ].join(' ')}
                   >
@@ -248,7 +294,7 @@ export default function VehiculoPage() {
 
               <Link
                 href={`/publicar/${listing.id}`}
-                className="rounded-lg border border-line bg-surface px-5 py-2.5 text-sm text-body transition-colors hover:border-brand"
+                className="rounded-xl border border-line bg-surface px-5 py-2.5 text-sm text-body shadow-soft transition-all duration-150 hover:border-brand active:scale-[0.98]"
               >
                 Editar
               </Link>
@@ -401,7 +447,7 @@ function ContactSeller({ listing }: { listing: Listing }) {
       <div className="space-y-2">
         <Link
           href="/login"
-          className="block w-full rounded-lg bg-brand-deep px-5 py-3 text-center font-semibold text-white transition-colors hover:bg-brand-deep/90"
+          className="block w-full rounded-xl bg-brand-deep px-5 py-3 text-center font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
         >
           Iniciá sesión para consultar
         </Link>

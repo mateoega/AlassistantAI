@@ -97,7 +97,7 @@ export function SuggestInput({
         />
 
         {showList && (
-          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-line bg-surface shadow-lg">
+          <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-line bg-surface shadow-lg">
             {matches.map((option, index) => (
               <li key={option}>
                 <button

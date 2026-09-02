@@ -274,7 +274,10 @@ export function AssistantChat() {
         } as CSSProperties}
         className={[
           'fixed right-4 z-40 flex items-center justify-center rounded-full bg-brand-deep',
-          'text-white shadow-lg transition-colors hover:bg-brand-deep/90',
+          // `shadow-float` es la única sombra con brillo azul fuerte de la
+          // aplicación, y este botón es lo único que flota de verdad por
+          // encima de la página: la sombra es lo que lo despega del listado.
+          'text-white shadow-float transition-colors hover:bg-brand-deep/90 active:scale-95',
           // CELULAR: un círculo de 56px, sin la palabra. El cartel con texto
           // medía 140px de ancho y se apoyaba sobre tres o cuatro renglones de
           // cualquier pantalla — campos, precios, tarjetas del listado. Un
@@ -308,11 +311,15 @@ export function AssistantChat() {
       aria-label="Asistente"
       className={[
         'fixed z-50 flex flex-col border-line bg-surface',
+        // Tablet para arriba el panel es un cajón al costado: se le da la
+        // sombra de lo que flota, para que se lea por encima de la pantalla y
+        // no como una columna más del contenido.
+        'sm:shadow-float',
         // Celular: ocupa la pantalla entera, tapando la barra inferior a
         // propósito — tiene su propio botón de cerrar.
         'inset-0',
         // Tablet para arriba: panel al costado, sin tapar el contenido.
-        'sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[26rem] sm:border-l sm:shadow-xl',
+        'sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[26rem] sm:border-l',
       ].join(' ')}
     >
       <header className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -328,7 +335,7 @@ export function AssistantChat() {
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg border border-line px-3 py-1.5 text-sm text-body transition-colors hover:border-brand"
+          className="rounded-xl border border-line px-3 py-1.5 text-sm text-body transition-colors hover:border-brand"
         >
           Cerrar
         </button>
@@ -385,7 +392,7 @@ export function AssistantChat() {
           ))}
 
         {problem && (
-          <p className="rounded-lg border border-brand-deep/40 bg-brand-soft px-3 py-2 text-sm text-body">
+          <p className="rounded-xl border border-brand-deep/40 bg-brand-soft px-3 py-2 text-sm text-body">
             {problem}
           </p>
         )}
@@ -418,7 +425,7 @@ export function AssistantChat() {
           <button
             type="button"
             onClick={() => corte.current?.abort()}
-            className="rounded-lg border border-line px-4 py-2.5 text-sm font-semibold text-body transition-colors hover:border-brand"
+            className="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-body transition-colors hover:border-brand"
           >
             Cancelar
           </button>
@@ -426,7 +433,7 @@ export function AssistantChat() {
           <button
             type="submit"
             disabled={!draft.trim()}
-            className="rounded-lg bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             Enviar
           </button>
@@ -498,7 +505,7 @@ function Bubble({ message }: { message: ChatMessage }) {
         <p
           className={[
             'whitespace-pre-line rounded-xl px-3 py-2 text-sm leading-relaxed',
-            isUser ? 'bg-brand-soft text-ink' : 'bg-canvas text-body',
+            isUser ? 'bg-brand-soft text-ink' : 'bg-mist text-body',
           ].join(' ')}
         >
           {message.text}
@@ -512,7 +519,7 @@ function Bubble({ message }: { message: ChatMessage }) {
               <li key={result.id}>
                 <Link
                   href={`/vehiculo/${result.id}`}
-                  className="block rounded-lg border border-line px-3 py-2 transition-colors hover:border-brand"
+                  className="block rounded-xl border border-line px-3 py-2 transition-colors hover:border-brand"
                 >
                   <p className="text-sm font-medium text-ink">{result.titulo}</p>
                   <p className="text-sm text-brand-deep">

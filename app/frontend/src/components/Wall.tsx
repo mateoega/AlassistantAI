@@ -296,7 +296,25 @@ export function Wall() {
             </div>
           )}
 
-          <ul className="grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
+          {/* LA GRILLA SE SALE DEL MARGEN EN CELULAR.
+
+              El `<main>` deja 16px de aire a cada lado, que es lo correcto
+              para un texto y es plata tirada para una grilla de fotos: con
+              esos 16px y 12px de separación, en una pantalla de 375px cada
+              foto medía 165px. El `-mx-2` devuelve 8px de cada lado y la
+              separación baja a 8px: la misma foto pasa a medir 179px, un 8%
+              más grande, y el listado se ve como el de una aplicación de
+              clasificados y no como un documento con márgenes.
+
+              Ocho píxeles y no cero: pegar la foto al filo del vidrio se ve
+              bien en la maqueta, pero el texto de abajo —el precio, el modelo—
+              queda apoyado en el borde y se lee incómodo, y en los celulares
+              con pantalla curva el filo directamente se dobla.
+
+              De tablet para arriba (`sm:mx-0`) vuelve al margen normal: ahí
+              sobra ancho y una grilla que toca los bordes de un monitor se ve
+              descuidada, no amplia. */}
+          <ul className="-mx-2 grid grid-cols-2 gap-x-2 gap-y-5 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
             {listings.map((listing) => (
               <li key={listing.id}>
                 <ListingCard listing={listing} />
@@ -347,7 +365,7 @@ function toQuery(values: SearchValues): string {
  */
 function NoResults({ onClear }: { onClear: () => void }) {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
+    <div className="rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-card sm:py-16">
       <p className="font-medium text-ink">Ningún vehículo coincide con esa búsqueda.</p>
       <p className="mt-1 text-sm text-muted">
         Probá con menos filtros, o escribiendo solo la marca.
@@ -363,14 +381,14 @@ function NoResults({ onClear }: { onClear: () => void }) {
 
 function EmptyState() {
   return (
-    <div className="rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center sm:py-16">
+    <div className="rounded-2xl border border-line bg-surface px-6 py-12 text-center shadow-card sm:py-16">
       <p className="font-medium text-ink">Todavía no hay publicaciones.</p>
       <p className="mt-1 text-sm text-muted">
         Elegí el tipo de vehículo y el formulario se arma solo.
       </p>
       <Link
         href="/publicar"
-        className="mt-6 inline-block rounded-lg bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+        className="mt-6 inline-block rounded-xl bg-brand-deep px-5 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
       >
         Publicar vehículo
       </Link>

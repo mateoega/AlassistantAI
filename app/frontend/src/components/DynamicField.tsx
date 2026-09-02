@@ -29,7 +29,7 @@ export function DynamicField({
 
   if (field.data_type === 'boolean') {
     return (
-      <label className="flex items-center gap-3 rounded-lg border border-line bg-surface px-3 py-3">
+      <label className="flex items-center gap-3 rounded-xl border border-line bg-surface px-3 py-3">
         <input
           type="checkbox"
           checked={value === true}

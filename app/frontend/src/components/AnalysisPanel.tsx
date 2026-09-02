@@ -185,7 +185,7 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
       {!running && !session && (
         <Link
           href="/login"
-          className="block w-full rounded-lg bg-brand-deep px-5 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-deep/90"
+          className="block w-full rounded-xl bg-brand-deep px-5 py-2.5 text-center text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
         >
           {result ? 'Iniciá sesión para analizarlo de nuevo' : 'Iniciá sesión para analizarlo'}
         </Link>

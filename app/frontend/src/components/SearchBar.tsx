@@ -154,7 +154,7 @@ export function SearchBar({
         setOpen(false);
         onSearch(draft);
       }}
-      className="space-y-3 rounded-xl border border-line bg-surface p-3 sm:space-y-4 sm:p-4"
+      className="space-y-3 rounded-2xl border border-line bg-surface p-3 shadow-card sm:space-y-4 sm:p-4"
     >
       <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
         <input
