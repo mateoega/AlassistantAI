@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
@@ -21,7 +21,6 @@ export default function VehiculoPage() {
   const [loading, setLoading] = useState(true);
   const [problem, setProblem] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
-  const [activePhoto, setActivePhoto] = useState(0);
 
   const listingId = params.id;
 
@@ -32,7 +31,6 @@ export default function VehiculoPage() {
     try {
       const data = await api<{ listing: Listing }>(`/api/listings/${listingId}`);
       setListing(data.listing);
-      setActivePhoto(0);
     } catch (error) {
       setProblem(error instanceof ApiError ? error.message : 'No se pudo cargar la publicación.');
     } finally {
@@ -119,7 +117,6 @@ export default function VehiculoPage() {
   // `userId` es null sin sesión, y un aviso nunca tiene `seller_id` null: una
   // visita anónima nunca es dueña de nada, que es lo correcto.
   const isOwner = userId === listing.seller_id;
-  const cover = listing.photos[activePhoto];
 
   return (
     <div className="space-y-5">
@@ -131,91 +128,11 @@ export default function VehiculoPage() {
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {/* ---- Galería ----------------------------------------------------- */}
-        <div className="space-y-3">
-          {/* LA FOTO PRINCIPAL SE SALE DEL MARGEN EN CELULAR, igual que la
-              grilla del muro: es lo primero que mira quien entra y no tiene
-              por qué pagar 32px de aire. De tablet para arriba vuelve al
-              margen y se le redondean las esquinas.
-
-              EL FONDO DEJÓ DE SER NEGRO. Era `bg-ink` para que una foto
-              vertical se recortara contra algo oscuro; sobre una página blanca
-              esa caja negra es lo único oscuro de la pantalla y se lleva toda
-              la atención — justo lo contrario de lo que buscamos. Ahora es el
-              blanco azulado, y lo que separa la foto de la página es la
-              sombra. La foto sigue entrando entera (`object-contain`): un auto
-              recortado para llenar la caja es peor que un poco de aire al
-              costado. */}
-          <div className="relative -mx-4 aspect-4/3 overflow-hidden bg-mist shadow-card sm:mx-0 sm:rounded-2xl">
-            {cover ? (
-              <>
-                {/* EL RELLENO DE LOS COSTADOS ES LA MISMA FOTO, DESENFOCADA.
-
-                    La caja mide 4:3 y las fotos vienen con cualquier forma: una
-                    apaisada deja dos franjas vacías arriba y abajo que en
-                    celular son unos 180px de nada — casi un cuarto de la
-                    pantalla, justo en lo primero que se mira.
-
-                    Recortar la foto para llenar la caja no es opción: el que
-                    compra necesita ver el vehículo entero, y un `object-cover`
-                    le corta el techo o las ruedas.
-
-                    Entonces las franjas se llenan con la misma foto ampliada y
-                    desenfocada. Es el mismo recurso de las aplicaciones de
-                    música con la tapa del disco: el color de la foto sigue,
-                    la pantalla se ve llena, y nada de lo que importa se pierde.
-
-                    NO ES UNA SEGUNDA DESCARGA: es la misma dirección, así que
-                    el navegador la sirve de su propia memoria.
-
-                    Va con `alt` vacío y `aria-hidden` porque es decoración pura
-                    — un lector de pantalla que la nombre estaría diciendo dos
-                    veces la misma foto. */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={cover.url}
-                  alt=""
-                  aria-hidden
-                  /* `scale-125` para que el desenfoque no deje ver el borde de
-                     la propia imagen contra el borde de la caja. */
-                  className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl"
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={cover.url}
-                  alt={`${listing.brand} ${listing.model}`}
-                  className="relative h-full w-full object-contain"
-                />
-              </>
-            ) : (
-              <div className="flex h-full items-center justify-center text-sm text-muted">
-                Esta publicación no tiene fotos
-              </div>
-            )}
-          </div>
-
-          {listing.photos.length > 1 && (
-            <ul className="grid grid-cols-6 gap-2">
-              {listing.photos.map((photo, index) => (
-                <li key={photo.id}>
-                  <button
-                    type="button"
-                    onClick={() => setActivePhoto(index)}
-                    className={[
-                      'aspect-square w-full overflow-hidden rounded-xl border-2 transition-colors',
-                      index === activePhoto ? 'border-brand' : 'border-line hover:border-brand/50',
-                    ].join(' ')}
-                  >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={photo.url}
-                      alt={`Foto ${index + 1}`}
-                      className="h-full w-full object-cover"
-                    />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+        <div>
+          <PhotoCarousel
+            photos={listing.photos}
+            alt={`${listing.brand} ${listing.model}`}
+          />
         </div>
 
         {/* ---- Datos ------------------------------------------------------- */}
@@ -476,9 +393,6 @@ function ContactSeller({ listing, aside }: { listing: Listing; aside: ReactNode 
           </Link>
           {aside}
         </div>
-        <p className="text-center text-xs text-muted">
-          La conversación queda dentro de AIassistant, junto a este aviso.
-        </p>
       </div>
     );
   }
@@ -514,9 +428,6 @@ function ContactSeller({ listing, aside }: { listing: Listing; aside: ReactNode 
         </span>
         {aside}
       </div>
-      <p className="text-center text-xs text-muted">
-        La conversación queda dentro de AIassistant, junto a este aviso.
-      </p>
       {problem && <Notice tone="alert" title={problem} />}
     </div>
   );
@@ -580,5 +491,201 @@ function ChevronIcon({ abierta }: { abierta: boolean }) {
     >
       <path d="m6 9 6 6 6-6" />
     </svg>
+  );
+}
+
+/**
+ * Las fotos del vehículo: una sola caja y se pasa deslizando al costado.
+ *
+ * SE FUE LA TIRA DE MINIATURAS (2026-09-04). Debajo de la foto principal había
+ * seis cuadraditos para elegir cuál mirar: 60px de alto más su separación, en
+ * el lugar más caro de la pantalla —entre la foto y el precio—, para hacer lo
+ * mismo que hace el dedo. Ahora se desliza, como en cualquier aplicación de
+ * fotos, y el precio quedó pegado abajo de la imagen.
+ *
+ * CÓMO FUNCIONA, SIN LIBRERÍA NI JAVASCRIPT DE ARRASTRE: es una fila que
+ * desborda a lo ancho y se corta en seco en cada foto (`snap-x snap-mandatory`
+ * con `snap-center`). El desplazamiento lo hace el navegador, así que tiene la
+ * inercia y el rebote de siempre, y anda igual con el dedo, con el trackpad y
+ * con la rueda del mouse en diagonal. El único JavaScript es el que mira dónde
+ * quedó la fila para prender el puntito que corresponde.
+ *
+ * LOS PUNTITOS VAN ENCIMA DE LA FOTO, no debajo: abajo volverían a costar el
+ * alto que se acaba de ganar. Y son puntos y no números porque lo único que
+ * hay que contestar es "¿hay más?" y "¿por dónde voy?".
+ *
+ * LAS FLECHAS APARECEN DE TABLET PARA ARRIBA. En un celular sobran —el dedo ya
+ * sabe— y taparían la foto; con mouse, en cambio, no hay forma evidente de
+ * pasar de foto, porque la barra de desplazamiento está escondida a propósito.
+ */
+function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string }) {
+  const [actual, setActual] = useState(0);
+  const fila = useRef<HTMLDivElement>(null);
+
+  if (photos.length === 0) {
+    return (
+      <div className="-mx-4 flex aspect-4/3 items-center justify-center bg-mist text-sm text-muted shadow-card sm:mx-0 sm:rounded-2xl">
+        Esta publicación no tiene fotos
+      </div>
+    );
+  }
+
+  /** A qué foto quedó más cerca la fila después de soltarla. */
+  function alDesplazar() {
+    const caja = fila.current;
+    if (!caja) {
+      return;
+    }
+
+    const indice = Math.round(caja.scrollLeft / caja.clientWidth);
+    setActual(Math.min(Math.max(indice, 0), photos.length - 1));
+  }
+
+  function ir(indice: number) {
+    const caja = fila.current;
+    if (!caja) {
+      return;
+    }
+
+    caja.scrollTo({ left: indice * caja.clientWidth, behavior: 'smooth' });
+  }
+
+  return (
+    <div className="relative -mx-4 sm:mx-0">
+      {/*
+       * `tabIndex` para que se pueda recorrer con las flechas del teclado: una
+       * caja que se desplaza sola no recibe foco, y sin eso las fotos quedan
+       * inalcanzables para quien no usa el dedo ni el mouse.
+       */}
+      <div
+        ref={fila}
+        onScroll={alDesplazar}
+        tabIndex={0}
+        role="group"
+        aria-label={`Fotos del vehículo (${photos.length})`}
+        className="sin-barra flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain sm:rounded-2xl sm:shadow-card"
+      >
+        {photos.map((photo, indice) => (
+          <div
+            key={photo.id}
+            className="relative aspect-4/3 w-full shrink-0 snap-center overflow-hidden bg-mist"
+          >
+            {/* EL RELLENO DE LOS COSTADOS ES LA MISMA FOTO, DESENFOCADA.
+
+                La caja mide 4:3 y las fotos vienen con cualquier forma: una
+                apaisada deja dos franjas vacías arriba y abajo que en celular
+                son unos 180px de nada — casi un cuarto de la pantalla, justo
+                en lo primero que se mira.
+
+                Recortar la foto para llenar la caja no es opción: el que
+                compra necesita ver el vehículo entero, y un `object-cover` le
+                corta el techo o las ruedas.
+
+                Entonces las franjas se llenan con la misma foto ampliada y
+                desenfocada. Es el mismo recurso de las aplicaciones de música
+                con la tapa del disco: el color de la foto sigue, la pantalla
+                se ve llena, y nada de lo que importa se pierde.
+
+                NO ES UNA SEGUNDA DESCARGA: es la misma dirección, así que el
+                navegador la sirve de su propia memoria.
+
+                Va con `alt` vacío y `aria-hidden` porque es decoración pura —
+                un lector de pantalla que la nombre estaría diciendo dos veces
+                la misma foto. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.url}
+              alt=""
+              aria-hidden
+              /* `scale-125` para que el desenfoque no deje ver el borde de la
+                 propia imagen contra el borde de la caja. */
+              className="absolute inset-0 h-full w-full scale-125 object-cover opacity-60 blur-2xl"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photo.url}
+              alt={photos.length > 1 ? `${alt} — foto ${indice + 1} de ${photos.length}` : alt}
+              className="relative h-full w-full object-contain"
+            />
+          </div>
+        ))}
+      </div>
+
+      {photos.length > 1 && (
+        <>
+          <div className="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
+            {photos.map((photo, indice) => (
+              <span
+                key={photo.id}
+                aria-hidden
+                className={[
+                  'h-1.5 rounded-full transition-all duration-200',
+                  // El puntito de la foto que se está mirando es una barrita:
+                  // se distingue del resto aunque la foto de atrás sea clara.
+                  indice === actual ? 'w-4 bg-white' : 'w-1.5 bg-white/60',
+                  'shadow-[0_1px_3px_rgb(5_7_13_/_0.45)]',
+                ].join(' ')}
+              />
+            ))}
+          </div>
+
+          <Flecha
+            hacia="anterior"
+            visible={actual > 0}
+            onClick={() => ir(actual - 1)}
+          />
+          <Flecha
+            hacia="siguiente"
+            visible={actual < photos.length - 1}
+            onClick={() => ir(actual + 1)}
+          />
+        </>
+      )}
+    </div>
+  );
+}
+
+/** Las flechas del carrusel, de vidrio esmerilado y solo de tablet para arriba. */
+function Flecha({
+  hacia,
+  visible,
+  onClick,
+}: {
+  hacia: 'anterior' | 'siguiente';
+  visible: boolean;
+  onClick: () => void;
+}) {
+  const anterior = hacia === 'anterior';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={anterior ? 'Foto anterior' : 'Foto siguiente'}
+      // En la primera foto no hay anterior y en la última no hay siguiente: la
+      // flecha se apaga en vez de desaparecer, para que la otra no se corra de
+      // lugar.
+      disabled={!visible}
+      className={[
+        'glass absolute top-1/2 hidden h-10 w-10 -translate-y-1/2 items-center justify-center',
+        'rounded-full text-ink shadow-soft transition-opacity sm:flex',
+        anterior ? 'left-3' : 'right-3',
+        visible ? 'opacity-100' : 'pointer-events-none opacity-0',
+      ].join(' ')}
+    >
+      <svg
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d={anterior ? 'm15 6-6 6 6 6' : 'm9 6 6 6-6 6'} />
+      </svg>
+    </button>
   );
 }

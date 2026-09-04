@@ -1247,3 +1247,15 @@ Debajo de esas dos acciones hay ahora un botón violeta de ancho completo, con e
 **Y el panel del análisis ahora avisa mientras carga.** Antes no dibujaba nada mientras le preguntaba al servidor, y estaba bien: se montaba solo al abrir la ficha, y un "Cargando…" que aparece sin que nadie pida nada es ruido. Ahora se monta cuando alguien aprieta un botón, y un botón que se aprieta y no muestra nada durante un segundo se lee como que no anduvo.
 
 El orden de adentro no cambió: el análisis primero y el precio de referencia después, como salió de la prueba del 2026-08-27.
+
+### Tercer ajuste de la ficha: las fotos se deslizan y se va un cartel
+
+**La tira de miniaturas se fue.** Debajo de la foto principal había hasta seis cuadraditos para elegir cuál mirar: unos 60px de alto más su separación, en el lugar más caro de la pantalla —entre la foto y el precio—, para hacer lo mismo que hace el dedo. Ahora las fotos se pasan deslizando al costado y **el precio quedó pegado abajo de la imagen**, sin nada en el medio.
+
+**Cómo funciona, sin librería y sin JavaScript de arrastre:** es una fila que desborda a lo ancho y se corta en seco en cada foto (`snap-x snap-mandatory` con `snap-center`). El desplazamiento lo hace el navegador, así que tiene la inercia y el rebote de siempre y anda igual con el dedo, con el trackpad y con la rueda del mouse. El único JavaScript es el que mira dónde quedó la fila para prender el puntito que corresponde.
+
+**Los puntitos van encima de la foto**, no debajo: abajo volverían a costar el alto que se acaba de ganar. Son puntos y no números porque lo único que hay que contestar es "¿hay más?" y "¿por dónde voy?". **Las flechas aparecen de tablet para arriba**: en un celular sobran y taparían la foto, pero con mouse no hay forma evidente de pasar de foto, porque la barra de desplazamiento está escondida a propósito (`.sin-barra` en `globals.css`, dos reglas de navegadores distintos que no se pueden escribir en un atributo `class`).
+
+**Se fue también el cartel "La conversación queda dentro de AIassistant, junto a este aviso."**, que estaba entre el botón de consultar y el de analizar. Lo pidió el cliente y tiene razón: explicaba algo que se entiende al tocar el botón —la conversación se abre adentro de la aplicación— y ocupaba dos renglones justo entre las dos acciones más importantes de la pantalla.
+
+Medido en el mismo aviso: la ficha cerrada pasó de 1.493px a **1.382px**, y en una pantalla de 812px ahora entran la foto, el precio, el modelo, los datos, las dos acciones, el botón violeta y el principio de la descripción.

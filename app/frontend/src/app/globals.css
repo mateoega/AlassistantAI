@@ -234,6 +234,28 @@ h3 {
   }
 }
 
+/* ---------------------------------------------------------------------------
+ * UNA FILA QUE SE DESLIZA SIN BARRA A LA VISTA
+ *
+ * La usa el carrusel de fotos de la ficha del vehículo. La barra de
+ * desplazamiento horizontal no aporta nada ahí —los puntitos ya dicen por
+ * dónde va y cuántas fotos hay— y en Windows se dibuja gruesa y gris justo
+ * encima de la foto.
+ *
+ * Va acá y no como clases sueltas de Tailwind por lo mismo que `.glass`: son
+ * dos reglas de navegadores distintos y una de ellas es un pseudo-elemento,
+ * que no se puede escribir en un atributo `class`. Esconder la barra NO saca
+ * el desplazamiento: sigue andando con el dedo, con el trackpad, con la rueda
+ * y con las flechas del teclado.
+ * ------------------------------------------------------------------------- */
+.sin-barra {
+  scrollbar-width: none;
+}
+
+.sin-barra::-webkit-scrollbar {
+  display: none;
+}
+
 /* Que el foco del teclado siempre se vea: hace falta para poder usar la app
    sin mouse, y es lo primero que se pierde al rediseñar. */
 :focus-visible {
