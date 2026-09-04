@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { Button, Field, NumberInput, inputClass } from '@/components/ui';
-import { digitsOnly } from '@/lib/format';
+import { digitsOnly, groupThousands } from '@/lib/format';
 import { SpecFilters } from './SpecFilters';
-import type { Province, VehicleType } from '@/lib/types';
+import type { Province, VehicleType, VehicleTypeField } from '@/lib/types';
 
 /**
  * La barra de búsqueda del muro.
@@ -22,26 +22,43 @@ import type { Province, VehicleType } from '@/lib/types';
  * resto de la aplicación: si mañana se carga un tipo nuevo, aparece acá solo.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- * TRES REGLAS QUE SALIERON DE LA PRUEBA EN CELULAR DEL 2026-08-27
+ * LA BARRA YA NO ESTÁ ADENTRO DE UNA TARJETA (2026-09-04)
  *
- * 1. HAY UN SOLO BOTÓN DE ENVIAR A LA VISTA, SIEMPRE. Antes convivían
- *    "Buscar" arriba y "Aplicar filtros" abajo, los dos hacían exactamente lo
- *    mismo, y con el panel abierto no se entendía cuál correspondía. Ahora
- *    "Buscar" existe solo con el panel cerrado, y con el panel abierto el
- *    único envío es "Aplicar filtros".
+ * Antes todo esto —campo, botón y panel— vivía en un rectángulo blanco con
+ * borde y sombra, apoyado sobre una página que también es blanca. Esa caja no
+ * separaba nada: dibujaba un marco alrededor de algo que no lo necesita y
+ * empujaba las fotos hacia abajo. Ahora son tres piezas sueltas sobre la
+ * página, en este orden:
  *
- * 2. EL BOTÓN QUE ABRE EL PANEL DICE QUÉ VA A HACER. "Filtros" no decía si
- *    abría, cerraba o buscaba. Dice "Filtros" cuando va a abrir y "Ocultar
- *    filtros" cuando va a cerrar, y el número de filtros puestos sigue a la
- *    vista para no buscar a ciegas.
+ *   1. EL CAMPO Y LA LUPA. Una píldora y, al lado, un botón azul redondo. La
+ *      lupa reemplaza al "Buscar" grande, que gastaba un renglón entero de
+ *      celular para decir lo que un ícono dice en 48 píxeles.
+ *   2. LOS FILTROS PUESTOS, en fichas. Cada una nombra un filtro activo y se
+ *      saca tocándola. Antes eso solo se sabía abriendo el panel, o dándole
+ *      sentido al número que iba al lado de la palabra "Filtros".
+ *   3. EL PANEL, cerrado por omisión, y con forma de tarjeta cuando se abre:
+ *      es lo único de acá que sí es una pieza aparte, porque se despliega por
+ *      encima del listado y necesita decir dónde termina.
  *
- * 3. "APLICAR FILTROS" NO SE PERSIGUE SCROLLEANDO. En celular había que
- *    recorrer casi dos pantallas para llegar. El panel tiene su propia altura
- *    máxima y hace scroll adentro: el botón queda siempre abajo, en pantalla.
- *    De tablet para arriba el límite se suelta, que ahí entra todo junto.
+ * LA PÍLDORA ES LA ÚNICA DE LA APLICACIÓN, y es a propósito: los campos de los
+ * formularios siguen siendo rectángulos de 12px. Este no es un campo de
+ * formulario sino un buscador, la misma forma que ya tienen las fichas de
+ * abajo, el corazón de guardar y el botón del asistente.
  *
- * Y al enviar, el panel se cierra: lo que se pidió ya está en la dirección y
- * lo que sigue son los resultados, no el formulario que los pidió.
+ * LA LUPA NO SE ESCONDE CON EL PANEL ABIERTO, y eso corrige la regla anterior
+ * ("un solo botón de enviar a la vista"). Esa regla salió de dos botones
+ * grandes con texto —"Buscar" y "Aplicar filtros"— que se leían como dos
+ * acciones distintas. Un ícono pegado al campo no compite con eso: se lee como
+ * parte del campo, y hacerlo aparecer y desaparecer movería la barra justo
+ * cuando la persona está tocando otra cosa.
+ *
+ * Lo que sigue en pie de la prueba en celular del 2026-08-27:
+ *
+ *   - El panel tiene su propia altura máxima y hace scroll adentro, así que
+ *     "Aplicar filtros" queda siempre abajo y en pantalla. En celular había
+ *     que recorrer casi dos pantallas para llegar.
+ *   - Al enviar, el panel se cierra: lo que se pidió ya está en la dirección y
+ *     lo que sigue son los resultados, no el formulario que los pidió.
  * ─────────────────────────────────────────────────────────────────────────── */
 
 export interface SearchValues {
@@ -100,12 +117,19 @@ export function SearchBar({
   // Lo que está escrito en los campos, que puede diferir de lo que se está
   // mostrando: se busca al enviar, no a cada tecla.
   const [draft, setDraft] = useState<SearchValues>(values);
-  const [open, setOpen] = useState(countFineFilters(values) > 0);
+
+  /**
+   * El panel arranca cerrado SIEMPRE, incluso llegando a una dirección con
+   * filtros puestos. Antes se abría solo en ese caso, para que se viera qué
+   * había filtrado; eso ahora lo dicen las fichas, que ocupan un renglón en
+   * vez de media pantalla.
+   */
+  const [open, setOpen] = useState(false);
   const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
 
-  // Si la búsqueda cambia desde afuera —el botón "atrás" del navegador, o el
-  // botón de limpiar— los campos tienen que reflejarlo.
+  // Si la búsqueda cambia desde afuera —el botón "atrás" del navegador, una
+  // ficha que se saca, el botón de limpiar— los campos tienen que reflejarlo.
   useEffect(() => {
     setDraft(values);
   }, [values]);
@@ -145,6 +169,17 @@ export function SearchBar({
 
   const fineCount = countFineFilters(draft);
 
+  /**
+   * Las fichas describen LO QUE SE ESTÁ MOSTRANDO (`values`), no lo que hay
+   * tipeado en el panel (`draft`). Una ficha es una afirmación sobre los
+   * resultados que están en pantalla; si saliera del borrador anunciaría un
+   * filtro que todavía no se aplicó.
+   */
+  const applied = useMemo(
+    () => describeFilters(values, vehicleTypes, provinces),
+    [values, vehicleTypes, provinces],
+  );
+
   return (
     <form
       onSubmit={(event) => {
@@ -154,151 +189,192 @@ export function SearchBar({
         setOpen(false);
         onSearch(draft);
       }}
-      className="space-y-3 rounded-2xl border border-line bg-surface p-3 shadow-card sm:space-y-4 sm:p-4"
+      className="space-y-3"
     >
-      <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+      <div className="flex items-center gap-2">
         <input
           type="search"
           value={draft.q}
           onChange={(event) => set('q', event.target.value)}
           placeholder="Buscar por marca o modelo"
           aria-label="Buscar por marca o modelo"
-          className={inputClass}
+          className="h-12 w-full min-w-0 rounded-full border border-line bg-surface px-5 text-sm text-ink shadow-soft outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/25"
         />
-        <div className="flex gap-2">
-          {/* Con el panel abierto no aparece: abajo está "Aplicar filtros",
-              que hace exactamente lo mismo. Dos botones iguales a la vista era
-              la confusión que reportó el cliente. */}
-          {!open && (
-            <span className="flex-1">
-              <Button type="submit" full>
-                Buscar
-              </Button>
-            </span>
-          )}
-          <Button variant="quiet" onClick={() => setOpen((current) => !current)}>
-            {/* El número deja ver que hay filtros puestos aunque el panel esté
-                cerrado: si no, se busca algo que no aparece y no se entiende
-                por qué. */}
-            {open ? 'Ocultar filtros' : 'Filtros'}
-            {fineCount > 0 ? ` (${fineCount})` : ''}
-          </Button>
-        </div>
+
+        {/* El único botón de buscar. Lleva `shadow-float` —la sombra azul
+            fuerte, la misma del botón del asistente— porque es lo que lo
+            despega: un círculo azul sobre una página blanca, sin sombra, queda
+            pegado al papel. */}
+        <button
+          type="submit"
+          aria-label="Buscar"
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-deep text-white shadow-float transition-all duration-150 hover:bg-brand-deep/90 active:scale-95"
+        >
+          <SearchIcon />
+        </button>
+      </div>
+
+      {/* LA LÍNEA DE FICHAS. Nunca queda vacía: aunque no haya ningún filtro
+          puesto, está la que abre el panel, y así el espacio debajo de la barra
+          significa siempre lo mismo y el listado no salta de lugar. */}
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((current) => !current)}
+          aria-expanded={open}
+          className={chipClass(false)}
+        >
+          <SlidersIcon />
+          {/* SIN EL NÚMERO DE FILTROS PUESTOS que llevaba antes. Existía para
+              que no se buscara a ciegas con el panel cerrado; ahora cada filtro
+              tiene su ficha al lado, que dice bastante más que un número. Y
+              nunca coincidían: un precio "desde y hasta" son dos filtros y una
+              sola ficha, así que decía (6) al lado de cinco fichas. */}
+          {open ? 'Ocultar filtros' : 'Filtros'}
+        </button>
+
+        {applied.map((filter) => (
+          <button
+            key={filter.id}
+            type="button"
+            onClick={() => onSearch(filter.next)}
+            // Qué hace no lo dice la cruz sola: es chica, y quien navega con
+            // lector de pantalla no la ve.
+            aria-label={`Quitar el filtro ${filter.label}`}
+            className={chipClass(true)}
+          >
+            {filter.label}
+            <CloseIcon />
+          </button>
+        ))}
+
+        {(applied.length > 0 || values.q !== '') && (
+          <button
+            type="button"
+            onClick={() => onSearch(EMPTY_SEARCH)}
+            className="px-1 text-xs font-medium text-brand-deep underline underline-offset-2"
+          >
+            Limpiar
+          </button>
+        )}
       </div>
 
       {open && (
-        <div className="space-y-3 border-t border-line pt-3 sm:pt-4">
-        <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:max-h-none sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-3">
-          <Field label="Tipo de vehículo">
-            <select
-              value={draft.tipo}
-              onChange={(event) => setTipo(event.target.value)}
-              className={inputClass}
-            >
-              <option value="">Todos</option>
-              {vehicleTypes.map((type) => (
-                <option key={type.id} value={type.slug}>
-                  {type.name_plural}
-                </option>
-              ))}
-            </select>
-          </Field>
+        /* El panel SÍ es una tarjeta: se despliega por encima del listado y
+           necesita un borde que diga dónde termina el formulario y dónde
+           vuelven a empezar los vehículos. */
+        <div className="space-y-3 rounded-2xl border border-line bg-surface p-3 shadow-card sm:p-4">
+          <div className="grid max-h-[55vh] grid-cols-2 gap-3 overflow-y-auto pr-1 sm:max-h-none sm:gap-4 sm:overflow-visible sm:pr-0 lg:grid-cols-3">
+            <Field label="Tipo de vehículo">
+              <select
+                value={draft.tipo}
+                onChange={(event) => setTipo(event.target.value)}
+                className={inputClass}
+              >
+                <option value="">Todos</option>
+                {vehicleTypes.map((type) => (
+                  <option key={type.id} value={type.slug}>
+                    {type.name_plural}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
-          <Field label="Provincia">
-            <select
-              value={draft.provincia}
-              onChange={(event) => set('provincia', event.target.value)}
-              className={inputClass}
-            >
-              <option value="">Todas</option>
-              {provinces.map((province) => (
-                <option key={province.id} value={province.slug}>
-                  {province.name}
-                </option>
-              ))}
-            </select>
-          </Field>
+            <Field label="Provincia">
+              <select
+                value={draft.provincia}
+                onChange={(event) => set('provincia', event.target.value)}
+                className={inputClass}
+              >
+                <option value="">Todas</option>
+                {provinces.map((province) => (
+                  <option key={province.id} value={province.slug}>
+                    {province.name}
+                  </option>
+                ))}
+              </select>
+            </Field>
 
-          <Field label="Marca">
-            <input
-              type="text"
-              value={draft.marca}
-              onChange={(event) => set('marca', event.target.value)}
-              placeholder="Cualquiera"
-              className={inputClass}
-            />
-          </Field>
-
-          <Field label="Moneda" hint="Pesos y dólares no se mezclan.">
-            <select
-              value={draft.moneda}
-              onChange={(event) => set('moneda', event.target.value)}
-              className={inputClass}
-            >
-              <option value="">Las dos</option>
-              <option value="ARS">Pesos</option>
-              <option value="USD">Dólares</option>
-            </select>
-          </Field>
-
-          {/* DESDE Y HASTA VAN EN UN SOLO CAMPO, uno al lado del otro. Como dos
-              campos separados eran cuatro renglones —precio y año— en una
-              pantalla donde cada renglón se paga en scroll, y además se leían
-              como cuatro filtros sueltos en vez de dos rangos. Es la misma
-              forma que ya usan los filtros de la ficha en `SpecFilters`. */}
-          <Field label="Precio" wide>
-            <div className="flex items-center gap-2">
-              <NumberInput
-                value={draft.precio_min}
-                onChange={(digits) => set('precio_min', digits)}
-                placeholder="Desde"
-              />
-              <NumberInput
-                value={draft.precio_max}
-                onChange={(digits) => set('precio_max', digits)}
-                placeholder="Hasta"
-              />
-            </div>
-          </Field>
-
-          <Field label="Año" wide>
-            <div className="flex items-center gap-2">
+            <Field label="Marca">
               <input
                 type="text"
-                inputMode="numeric"
-                value={draft.anio_min}
-                onChange={(event) => set('anio_min', digitsOnly(event.target.value).slice(0, 4))}
-                placeholder="Desde"
-                aria-label="Año desde"
+                value={draft.marca}
+                onChange={(event) => set('marca', event.target.value)}
+                placeholder="Cualquiera"
                 className={inputClass}
               />
-              <input
-                type="text"
-                inputMode="numeric"
-                value={draft.anio_max}
-                onChange={(event) => set('anio_max', digitsOnly(event.target.value).slice(0, 4))}
-                placeholder="Hasta"
-                aria-label="Año hasta"
+            </Field>
+
+            <Field label="Moneda" hint="Pesos y dólares no se mezclan.">
+              <select
+                value={draft.moneda}
+                onChange={(event) => set('moneda', event.target.value)}
                 className={inputClass}
+              >
+                <option value="">Las dos</option>
+                <option value="ARS">Pesos</option>
+                <option value="USD">Dólares</option>
+              </select>
+            </Field>
+
+            {/* DESDE Y HASTA VAN EN UN SOLO CAMPO, uno al lado del otro. Como
+                dos campos separados eran cuatro renglones —precio y año— en una
+                pantalla donde cada renglón se paga en scroll, y además se leían
+                como cuatro filtros sueltos en vez de dos rangos. Es la misma
+                forma que ya usan los filtros de la ficha en `SpecFilters`. */}
+            <Field label="Precio" wide>
+              <div className="flex items-center gap-2">
+                <NumberInput
+                  value={draft.precio_min}
+                  onChange={(digits) => set('precio_min', digits)}
+                  placeholder="Desde"
+                />
+                <NumberInput
+                  value={draft.precio_max}
+                  onChange={(digits) => set('precio_max', digits)}
+                  placeholder="Hasta"
+                />
+              </div>
+            </Field>
+
+            <Field label="Año" wide>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={draft.anio_min}
+                  onChange={(event) => set('anio_min', digitsOnly(event.target.value).slice(0, 4))}
+                  placeholder="Desde"
+                  aria-label="Año desde"
+                  className={inputClass}
+                />
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={draft.anio_max}
+                  onChange={(event) => set('anio_max', digitsOnly(event.target.value).slice(0, 4))}
+                  placeholder="Hasta"
+                  aria-label="Año hasta"
+                  className={inputClass}
+                />
+              </div>
+            </Field>
+
+            <Field label="Kilómetros hasta">
+              <NumberInput
+                value={draft.km_max}
+                onChange={(digits) => set('km_max', digits)}
+                suffix="km"
+                placeholder="Cualquiera"
               />
-            </div>
-          </Field>
+            </Field>
 
-          <Field label="Kilómetros hasta">
-            <NumberInput
-              value={draft.km_max}
-              onChange={(digits) => set('km_max', digits)}
-              suffix="km"
-              placeholder="Cualquiera"
-            />
-          </Field>
-
-          {/* Los filtros propios del tipo, dibujados desde el catálogo. Sin
-              tipo elegido no aparecen: no se sabría de qué campos hablar. */}
-          {tipoElegido && (
-            <SpecFilters type={tipoElegido} values={draft.spec} onChange={setSpec} />
-          )}
-        </div>
+            {/* Los filtros propios del tipo, dibujados desde el catálogo. Sin
+                tipo elegido no aparecen: no se sabría de qué campos hablar. */}
+            {tipoElegido && (
+              <SpecFilters type={tipoElegido} values={draft.spec} onChange={setSpec} />
+            )}
+          </div>
 
           {/* El envío, siempre abajo y siempre en pantalla: lo de arriba hace
               scroll adentro de su propia caja y esto no se mueve. */}
@@ -317,5 +393,243 @@ export function SearchBar({
         </div>
       )}
     </form>
+  );
+}
+
+/**
+ * La forma de las fichas, escrita una sola vez.
+ *
+ * `activa` es la que representa un filtro puesto: se pinta con el azul suave
+ * de la marca, para que se lea como algo aplicado y no como algo por elegir.
+ * La apagada —borde y sombra— es la que abre el panel. Es la misma píldora que
+ * usan las sugerencias del asistente.
+ */
+function chipClass(activa: boolean): string {
+  return [
+    'inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium',
+    'transition-all duration-150 active:scale-[0.97]',
+    activa
+      ? 'border border-transparent bg-brand-soft text-brand-deep hover:bg-brand-soft/70'
+      : 'border border-line bg-surface text-body shadow-soft hover:border-brand',
+  ].join(' ');
+}
+
+/** Un filtro puesto, listo para mostrarse como ficha. */
+interface AppliedFilter {
+  id: string;
+  /** Cómo se nombra: "Motos", "Córdoba", "Precio 2.000.000–5.000.000". */
+  label: string;
+  /** La búsqueda que queda al sacarlo. */
+  next: SearchValues;
+}
+
+/**
+ * Traduce la búsqueda a fichas legibles.
+ *
+ * Lee el catálogo para poder decir "Motos" y no `moto`, "Córdoba" y no
+ * `cordoba`, "Enduro" y no `enduro`. Si el catálogo todavía no llegó, cae en el
+ * valor crudo: una ficha con un slug adentro es fea, pero es mucho mejor que un
+ * listado filtrado sin nada que lo diga.
+ */
+function describeFilters(
+  values: SearchValues,
+  vehicleTypes: VehicleType[],
+  provinces: Province[],
+): AppliedFilter[] {
+  const chips: AppliedFilter[] = [];
+  const sin = (patch: Partial<SearchValues>): SearchValues => ({ ...values, ...patch });
+
+  if (values.tipo !== '') {
+    const type = vehicleTypes.find((item) => item.slug === values.tipo);
+    chips.push({
+      id: 'tipo',
+      label: type?.name_plural ?? values.tipo,
+      // Sacar el tipo se lleva los filtros de su ficha, por lo mismo que
+      // cambiarlo: no significan nada fuera de ese tipo.
+      next: { ...values, tipo: '', spec: {} },
+    });
+  }
+
+  if (values.marca !== '') {
+    chips.push({ id: 'marca', label: values.marca, next: sin({ marca: '' }) });
+  }
+
+  if (values.provincia !== '') {
+    const province = provinces.find((item) => item.slug === values.provincia);
+    chips.push({
+      id: 'provincia',
+      label: province?.name ?? values.provincia,
+      next: sin({ provincia: '' }),
+    });
+  }
+
+  if (values.moneda !== '') {
+    chips.push({
+      id: 'moneda',
+      label: values.moneda === 'USD' ? 'Dólares' : 'Pesos',
+      next: sin({ moneda: '' }),
+    });
+  }
+
+  const precio = rangeLabel(
+    'Precio',
+    groupThousands(values.precio_min),
+    groupThousands(values.precio_max),
+  );
+  if (precio) {
+    chips.push({ id: 'precio', label: precio, next: sin({ precio_min: '', precio_max: '' }) });
+  }
+
+  const anio = rangeLabel('Año', values.anio_min, values.anio_max);
+  if (anio) {
+    chips.push({ id: 'anio', label: anio, next: sin({ anio_min: '', anio_max: '' }) });
+  }
+
+  if (values.km_max !== '') {
+    chips.push({
+      id: 'km',
+      label: `Hasta ${groupThousands(values.km_max)} km`,
+      next: sin({ km_max: '' }),
+    });
+  }
+
+  chips.push(...describeSpec(values, vehicleTypes));
+
+  return chips;
+}
+
+/**
+ * Las fichas de los filtros propios del tipo de vehículo.
+ *
+ * El desde y el hasta de un mismo campo son UNA ficha —"Cilindrada 250–600
+ * cc"—, igual que el precio y el año: son un rango, y partirlo en dos fichas
+ * que se sacan por separado deja media búsqueda puesta sin que se note.
+ *
+ * Como en todo el resto de la aplicación, acá no hay ninguna lista de campos
+ * escrita a mano: los nombres, las unidades y las opciones salen del catálogo.
+ */
+function describeSpec(values: SearchValues, vehicleTypes: VehicleType[]): AppliedFilter[] {
+  const fields = vehicleTypes.find((item) => item.slug === values.tipo)?.fields ?? [];
+  const chips: AppliedFilter[] = [];
+  const ya = new Set<string>();
+
+  const sinSpec = (...params: string[]): SearchValues => ({
+    ...values,
+    spec: Object.fromEntries(Object.entries(values.spec).filter(([key]) => !params.includes(key))),
+  });
+
+  for (const [param, value] of Object.entries(values.spec)) {
+    if (value === '' || ya.has(param)) {
+      continue;
+    }
+
+    const field = fields.find(
+      (item) =>
+        param === `f_${item.key}` ||
+        param === `f_${item.key}_min` ||
+        param === `f_${item.key}_max`,
+    );
+
+    // Sin catálogo no hay etiqueta posible: se muestra el valor tal cual.
+    if (!field) {
+      ya.add(param);
+      chips.push({ id: param, label: value, next: sinSpec(param) });
+      continue;
+    }
+
+    const min = values.spec[`f_${field.key}_min`] ?? '';
+    const max = values.spec[`f_${field.key}_max`] ?? '';
+
+    if (min !== '' || max !== '') {
+      ya.add(`f_${field.key}_min`);
+      ya.add(`f_${field.key}_max`);
+
+      const unidad = field.unit ? ` ${field.unit}` : '';
+      const label = rangeLabel(
+        field.label,
+        min === '' ? '' : `${min}${unidad}`,
+        max === '' ? '' : `${max}${unidad}`,
+      );
+
+      if (label) {
+        chips.push({
+          id: field.key,
+          label,
+          next: sinSpec(`f_${field.key}_min`, `f_${field.key}_max`),
+        });
+      }
+      continue;
+    }
+
+    ya.add(param);
+    chips.push({
+      id: field.key,
+      label: `${field.label}: ${specValueLabel(field, value)}`,
+      next: sinSpec(param),
+    });
+  }
+
+  return chips;
+}
+
+/** "Sí"/"No" para los de casillero, y la etiqueta del catálogo para las listas. */
+function specValueLabel(field: VehicleTypeField, value: string): string {
+  if (field.data_type === 'boolean') {
+    return value === 'true' ? 'Sí' : 'No';
+  }
+
+  return field.options?.find((option) => option.value === value)?.label ?? value;
+}
+
+/** "Precio 2.000.000–5.000.000", "Año desde 2015", "Año hasta 2020". */
+function rangeLabel(name: string, min: string, max: string): string | null {
+  if (min !== '' && max !== '') {
+    return `${name} ${min}–${max}`;
+  }
+  if (min !== '') {
+    return `${name} desde ${min}`;
+  }
+  if (max !== '') {
+    return `${name} hasta ${max}`;
+  }
+  return null;
+}
+
+const iconProps = {
+  width: 16,
+  height: 16,
+  viewBox: '0 0 24 24',
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.8,
+  strokeLinecap: 'round' as const,
+  strokeLinejoin: 'round' as const,
+  'aria-hidden': true,
+};
+
+function SearchIcon() {
+  return (
+    <svg {...iconProps} width={20} height={20} strokeWidth={2}>
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function SlidersIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+      <circle cx="16" cy="7" r="2" />
+      <circle cx="10" cy="17" r="2" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg {...iconProps} width={14} height={14}>
+      <path d="m6 6 12 12M18 6 6 18" />
+    </svg>
   );
 }

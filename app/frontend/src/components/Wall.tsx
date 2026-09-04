@@ -248,18 +248,19 @@ export function Wall() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div>
-        <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
-          Vehículos publicados
-        </h1>
-        {/* La bajada no aparece en celular. Es marca, no información: quien
-            abrió la aplicación ya sabe qué está mirando, y en una pantalla
-            donde cada renglón se paga en scroll, ese renglón empuja la
-            búsqueda y los avisos hacia abajo sin darle nada a nadie. */}
-        <p className="mt-1 hidden text-sm text-muted sm:block">
-          Todo el rubro automotor en un mismo lugar.
-        </p>
-      </div>
+      {/* EL MURO EMPIEZA CON EL BUSCADOR, sin título arriba (2026-09-04).
+          Decía "Vehículos publicados" y debajo "Todo el rubro automotor en un
+          mismo lugar": dos renglones para nombrar lo que se ve solo. Quien
+          abrió la aplicación ya sabe qué está mirando, y en celular cada
+          renglón de arriba empuja las fotos fuera de la pantalla. El nombre de
+          la aplicación sigue donde corresponde, en la barra de arriba.
+
+          El título SIGUE EXISTIENDO, pero solo para quien no ve la pantalla:
+          `sr-only` lo saca del dibujo y lo deja en el documento. Una página sin
+          `h1` deja a un lector de pantalla sin punto de partida —y a un
+          buscador sin saber de qué habla—, y eso no es lo que se quiso sacar:
+          se quiso sacar un renglón que le repetía a la vista algo obvio. */}
+      <h1 className="sr-only">Vehículos publicados</h1>
 
       <SearchBar values={values} onSearch={search} />
 
@@ -281,19 +282,15 @@ export function Wall() {
         )
       ) : (
         <>
+          {/* Cuántos dio la búsqueda, y nada más. El "Ver todos" que estaba
+              acá al lado se sacó el 2026-09-04: ahora la barra de arriba tiene
+              su propio "Limpiar", a dos renglones de distancia, y dos botones
+              que hacen exactamente lo mismo a la vista es el problema que el
+              cliente ya reportó una vez. */}
           {filtered && (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-              <span className="font-medium text-ink">
-                {total === 1 ? '1 vehículo encontrado' : `${total} vehículos encontrados`}
-              </span>
-              <button
-                type="button"
-                onClick={() => search(EMPTY_SEARCH)}
-                className="text-brand-deep underline underline-offset-2"
-              >
-                Ver todos
-              </button>
-            </div>
+            <p className="text-sm font-medium text-ink">
+              {total === 1 ? '1 vehículo encontrado' : `${total} vehículos encontrados`}
+            </p>
           )}
 
           {/* LA GRILLA SE SALE DEL MARGEN EN CELULAR.

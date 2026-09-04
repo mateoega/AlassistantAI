@@ -1073,3 +1073,31 @@ Convivían esquinas de 8px y de 12px en la misma pantalla. Ahora son 12px para l
 Verificado en el navegador, a 375px y en escritorio: el muro, la ficha de un vehículo y el login. Se comprobó que los colores nuevos y las tres sombras se resuelven de verdad en el navegador —no quedaron como clases que Tailwind no generó— y que la barra de arriba tiene el desenfoque puesto. Sin errores en la consola.
 
 **No se verificaron con los ojos las pantallas que piden cuenta** —publicar, guardados, mis publicaciones, mensajes, perfil—: en esta máquina no hay contraseñas de prueba, y entrar con enlaces de un solo uso pide la clave de servicio. Usan las mismas piezas compartidas (`Card`, `Button`, `inputClass`, `Field`) que sí se miraron, y los diez lugares que dependían del gris de fondo se cambiaron uno por uno, pero conviene darles una pasada la próxima vez que haya una sesión abierta.
+
+## 2026-09-04 — El encabezado del muro: sin título, sin tarjeta y con los filtros a la vista
+
+El muro dejó de empezar con un título y una tarjeta de búsqueda. Ahora arranca con el buscador solo: una píldora con el campo, un botón azul redondo con la lupa al lado, y debajo una línea de fichas que nombra los filtros puestos.
+
+**Por qué:** lo pidió el cliente, y lo que había arriba del listado eran cuatro renglones que no mostraban ni un vehículo — el título "Vehículos publicados", su bajada, el campo dentro de un rectángulo con borde y sombra, y un botón "Buscar" del ancho de la pantalla. En un celular de 812px de alto, eso es casi un tercio de la primera pantalla gastado en decir lo que se ve solo.
+
+Lo que se sacó, uno por uno:
+
+- **El título y la bajada.** Quien abrió la aplicación ya sabe qué está mirando. El título sigue en el documento con `sr-only`: una página sin `h1` deja sin punto de partida a un lector de pantalla y sin tema a un buscador, y eso no era lo que había que sacar.
+- **La tarjeta.** Desde el rediseño del 2026-09-01 la página es blanca, así que un rectángulo blanco con borde apoyado sobre blanco no separaba nada: dibujaba un marco alrededor de algo que no lo necesita.
+- **El botón "Buscar" de ancho completo.** Lo reemplaza un círculo azul de 48px con la lupa, pegado al campo. Gasta 48 píxeles de ancho en vez de un renglón entero de alto, y no hace falta leerlo.
+
+**Los filtros puestos ahora se ven sin abrir nada.** Antes, con el panel cerrado, lo único que decía que había una búsqueda filtrada era un número al lado de la palabra "Filtros" — "(6)" no dice cuáles ni deja sacar ninguno. Ahora hay una ficha por filtro, con el nombre que le da el catálogo ("Autos", "Córdoba", "Combustible: Nafta"), y se saca tocándola.
+
+**El desde y el hasta de un mismo dato son una sola ficha** ("Precio 2.000.000–9.000.000", "Cantidad de puertas 4–5"). Partirlo en dos fichas que se sacan por separado deja medio rango puesto sin que se note. De paso, eso explica por qué se fue el número: un precio con desde y hasta son dos filtros y una sola ficha, así que el contador decía "(6)" al lado de cinco fichas.
+
+**Las fichas describen lo que se está mostrando, no lo que hay tipeado en el panel.** Una ficha es una afirmación sobre los resultados que están en pantalla; si saliera del borrador anunciaría un filtro que todavía no se aplicó.
+
+**Los nombres salen del catálogo, como todo lo demás.** No hay ninguna lista de campos, unidades ni opciones escrita en el componente: un tipo de vehículo nuevo trae sus fichas solo. Si el catálogo todavía no llegó, la ficha muestra el valor crudo — feo, pero infinitamente mejor que un listado filtrado sin nada que lo diga.
+
+**Se corrige una regla del 2026-08-27: la lupa no se esconde con el panel abierto.** Aquella regla —"un solo botón de enviar a la vista"— salió de dos botones grandes con texto, "Buscar" y "Aplicar filtros", que se leían como dos acciones distintas. Un ícono pegado al campo no compite con eso: se lee como parte del campo, y hacerlo aparecer y desaparecer movería la barra justo cuando la persona está tocando otra cosa. Lo que sí se mantiene es que no haya dos botones **con texto** haciendo lo mismo: por eso se sacó también el "Ver todos" que estaba al lado del contador de resultados, que ahora es el "Limpiar" de la línea de fichas, dos renglones más arriba.
+
+**El panel arranca siempre cerrado**, incluso al entrar a una dirección con filtros. Antes se abría solo en ese caso, para que se viera qué había filtrado; eso ahora lo dicen las fichas en un renglón en vez de media pantalla.
+
+**La píldora es la única de la aplicación y es a propósito.** Los campos de los formularios siguen siendo rectángulos de 12px: este no es un campo de formulario sino un buscador, y comparte forma con las fichas de abajo, el corazón de guardar y el botón del asistente. El redondeo completo ya se usaba para esas piezas, así que no es un tercer radio en la escala de las cajas.
+
+**Qué se verificó.** En el navegador, a 375px y en escritorio, con el backend y el catálogo reales: el campo mide 287×48 y el botón 48×48 dentro de los 375 sin desborde horizontal; el texto del campo mide 16px, así que Safari de iPhone no agranda la pantalla al tocarlo; las fichas salen con los nombres del catálogo, tanto las de los filtros comunes como las de la ficha del tipo; sacar una ficha reescribe la dirección y deja las demás; sacar la del tipo de vehículo se lleva también los filtros de su ficha; con el panel abierto, "Aplicar filtros" queda a 754px del borde de arriba, adentro de la pantalla. Sin errores en la consola.
