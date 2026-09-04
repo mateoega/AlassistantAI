@@ -1361,3 +1361,47 @@ El cliente reportó que en la ficha no se podía agrandar una foto. Se podía �
 **El tope del movimiento se calcula con el tamaño real de la foto dibujada, no con el de la caja.** Una foto apaisada en una pantalla de 375x812 ocupa 375x281 y el resto es negro: midiendo con la caja, la foto se podría arrastrar hasta dejar a la vista una franja vacía, y eso se lee como que la aplicación se rompió.
 
 **Qué se verificó.** A 375px, con el backend real y fotos reales: peso 500 medido en pantalla en el muro y en la ficha; pellizco de 100 a 240px dando 2,4x y el de vuelta volviendo a la foto entera; doble toque a la izquierda del centro dando 2,5x anclado (+101,25px, el número exacto que corresponde); arrastre topeado justo en el borde de la foto (281,25px) sin dejar ver negro; `visualViewport.scale` **en 1 durante todo el zoom** —la página no se agrandó ni una vez—; pellizco sobre el carrusel abriendo el visor y cancelando el gesto del navegador; deslizar de la foto 2 a la 3 y el carrusel quedando parado en la 3 al cerrar; Escape, la cruz y el arrastre hacia abajo cerrando. Sin errores en la consola. `npm run build` pasa.
+
+
+## 2026-09-04 — Buscar "Toyota Hilux" no devolvía nada
+
+El cliente lo encontró probando desde el celular: "Toyota" traía los Toyota,
+"Hilux" traía las Hilux, y las dos palabras juntas no traían nada.
+
+**La causa.** La búsqueda libre metía el texto ENTERO adentro de una sola
+columna: `brand ilike '%toyota hilux%' or model ilike '%toyota hilux%'`. La
+marca es "Toyota" y el modelo "Hilux"; ninguna de las dos columnas contiene la
+frase completa, así que la respuesta correcta de esa consulta era cero. No era
+un problema de datos ni de índices: era la consulta.
+
+**El arreglo.** La búsqueda se parte en palabras y **cada palabra tiene que
+aparecer en la marca o en el modelo**. Adentro de una palabra la condición es O
+—puede estar en cualquiera de las dos columnas— y entre palabras es Y. De ahí
+salen dos propiedades que importan: el orden no cambia nada ("hilux toyota" da
+lo mismo) y agregar una palabra siempre achica la lista, que es lo que espera
+quien sigue escribiendo. Sigue siendo "contiene", así que lo que ya andaba no
+se tocó: "volks" encuentra "Volkswagen", y "ilux" y "hilu" encuentran "Hilux".
+
+**De paso, los valores viajan entre comillas.** En un `or(...)` de PostgREST
+las condiciones se separan con comas, así que buscar "chevrolet,cruze" partía
+la condición al medio y la consulta volvía con un error. Ahora devuelve cero
+resultados, que es lo que corresponde. El orden del escapado importa y es el
+contrario al que parece: primero para el `like` y después para el transporte,
+porque PostgREST desarma las comillas antes de que el patrón llegue al `like`.
+
+**Lo que sigue sin andar, y no es olvido.** Un error de tipeo de verdad
+("hilix"), una letra de más, y los acentos: quien escribe "citroen" no
+encuentra "Citroën". Nada de eso se arregla con `ilike`, que compara letra por
+letra. Hace falta Postgres: la extensión `unaccent` para que los acentos dejen
+de contar, y `pg_trgm` con un índice GIN para medir parecido. El diseño pensado
+es **buscar por parecido solo cuando la búsqueda exacta devolvió cero**, para
+que una búsqueda normal siga siendo exacta y rápida y el parecido sea la red y
+no la regla. Es una migración y va aparte.
+
+**Qué se verificó.** Contra la API real, con los 67 avisos de prueba:
+"chevrolet" 4, "cruze" 2, "chevrolet cruze" 2, "cruze chevrolet" 2 —el mismo
+resultado al revés—, "chevrolet cruze premier" 1, "ruze" 2, "hilux 4x4" 3,
+"cruze 1.4" 2 —los puntos y las equis de adentro de un modelo no se pierden—,
+"toyota hilux" 6, con espacios de más al principio, al final y en el medio 6, y
+"chevrolet,cruze" 0 sin error. En el muro, "toyota hilux" muestra "6 vehículos
+encontrados".

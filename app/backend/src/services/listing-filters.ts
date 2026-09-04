@@ -106,9 +106,40 @@ export async function applyListingFilters<Q extends FilterableQuery>(
     result = result.ilike('brand', `%${escapeLike(filters.brand)}%`);
   }
 
+  /* -------------------------------------------------------------------------
+   * LA BÚSQUEDA LIBRE SE PARTE EN PALABRAS, Y CADA UNA TIENE QUE ESTAR.
+   *
+   * Antes se buscaba el texto ENTERO adentro de una sola columna, y por eso
+   * "Toyota Hilux" no devolvía nada: "Toyota" vive en `brand`, "Hilux" en
+   * `model`, y ninguna de las dos contiene la frase completa. Buscando cada
+   * palabra por separado, a "Toyota" la encuentra la marca y a "Hilux" el
+   * modelo. Lo reportó el cliente el 2026-09-04: cada palabra suelta
+   * funcionaba, las dos juntas no devolvían nada.
+   *
+   * CADA PALABRA TIENE QUE APARECER —se acumulan con Y— pero cada una puede
+   * aparecer en cualquiera de las dos columnas —adentro de una palabra es O—.
+   * Eso es lo que hace que el orden no importe ("hilux toyota" da lo mismo) y
+   * que agregar una palabra siempre achique la lista en vez de agrandarla, que
+   * es lo que espera cualquiera que sigue escribiendo.
+   *
+   * SIGUE SIENDO "CONTIENE", así que lo que ya andaba no se toca: "volks"
+   * encuentra "Volkswagen", y "ilux" y "hilu" encuentran "Hilux".
+   *
+   * LO QUE ESTO NO ARREGLA, y conviene saberlo antes de prometerlo: un error
+   * de tipeo de verdad ("hilix"), una letra de más, o los acentos —quien
+   * escribe "citroen" no encuentra "Citroën"—. Para eso hace falta Postgres:
+   * `unaccent` y `pg_trgm` con su índice, buscando por parecido cuando la
+   * búsqueda exacta no devolvió nada. Es una migración y va aparte.
+   *
+   * Se cortan en `MAX_PALABRAS` porque cada palabra es una condición más en la
+   * dirección de la consulta, y una búsqueda de treinta palabras no es una
+   * búsqueda.
+   * ---------------------------------------------------------------------- */
   if (filters.text) {
-    const term = `%${escapeLike(filters.text)}%`;
-    result = result.or(`brand.ilike.${term},model.ilike.${term}`);
+    for (const palabra of searchWords(filters.text)) {
+      const term = quoteForOr(`%${escapeLike(palabra)}%`);
+      result = result.or(`brand.ilike.${term},model.ilike.${term}`);
+    }
   }
 
   if (filters.currency) {
@@ -290,4 +321,37 @@ async function idOf(
  */
 function escapeLike(text: string): string {
   return text.trim().replace(/[%_\\]/g, (match) => `\\${match}`);
+}
+
+/** Cuántas palabras de la búsqueda se miran. Ver el comentario de `filters.text`. */
+const MAX_PALABRAS = 6;
+
+/**
+ * Parte lo que escribió la persona en palabras buscables.
+ *
+ * Separa por cualquier espacio y descarta los pedazos vacíos, que es lo que
+ * dejan un espacio de más al final o dos seguidos en el medio —los dos son
+ * moneda corriente escribiendo en un celular—. No saca los puntos ni las
+ * equis de adentro de una palabra: "1.4" y "4x4" son modelos, no basura.
+ */
+function searchWords(text: string): string[] {
+  return text.trim().split(/\s+/).filter(Boolean).slice(0, MAX_PALABRAS);
+}
+
+/**
+ * Deja un valor listo para meterlo adentro de un `or(...)` de PostgREST.
+ *
+ * Ahí las condiciones se separan con comas, así que una coma adentro de lo que
+ * escribió la persona parte la condición al medio y la consulta vuelve con un
+ * error. Entre comillas eso no pasa; adentro de las comillas hay que escapar
+ * la comilla y la barra invertida.
+ *
+ * EL ORDEN IMPORTA, y es el contrario al que parece: primero se escapa para el
+ * `like` (`escapeLike`) y recién después para el transporte. PostgREST desarma
+ * las comillas antes de que el patrón llegue al `like`, así que la barra que
+ * protege a un `%` buscado como texto tiene que viajar duplicada para llegar
+ * entera. Al revés, el escape del `like` se perdería en el camino.
+ */
+function quoteForOr(value: string): string {
+  return `"${value.replace(/["\\]/g, (match) => `\\${match}`)}"`;
 }
