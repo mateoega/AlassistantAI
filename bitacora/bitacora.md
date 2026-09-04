@@ -1115,3 +1115,25 @@ La grilla del muro (y la de guardados, que es la misma) pasó a llegar hasta el 
 **No se tocó el recorte.** La miniatura del muro es cuadrada y recortada (`object-cover`) desde siempre, y así queda: en una grilla de dos columnas, respetar la forma original de cada foto daría filas de alturas distintas. La regla de no recortar sigue valiendo donde importa, que es la foto grande de la ficha del vehículo: ahí el comprador tiene que ver el vehículo entero, y las franjas que sobran se llenan con la misma foto ampliada y desenfocada.
 
 **Qué se verificó.** En el navegador a 375px, con el backend real: las fotos miden 187×187, la primera columna arranca en x=0, la segunda termina en el borde, la separación es de 2px y el precio queda a 8px del filo; sin desborde horizontal. A 1024px la grilla vuelve a cuatro columnas con margen, esquinas de 16px y la sombra `card` puesta.
+
+## 2026-09-04 — La tarjeta del muro, en un renglón
+
+Debajo de cada foto del muro quedó **un solo renglón: el precio en negrita, un punto medio, y la marca y el modelo**, cortado con puntos suspensivos si no entra ("US$ 21.000 · Chevrolet Cru…"). El año, el kilometraje y la ubicación salieron de la tarjeta.
+
+**Por qué:** lo pidió el cliente, con Marketplace otra vez como referencia y con el objetivo dicho en una frase — que entren la mayor cantidad de vehículos en la pantalla sin tener que scrollear. Medido en el mismo teléfono de 375×812, con las dos versiones desplegadas:
+
+| | Antes | Ahora |
+|---|---|---|
+| Alto de la tarjeta | 299px | 213px |
+| Alto de una fila (con la separación) | 315px | 229px |
+| Tarjetas que se alcanzan a ver | 4 | 6 |
+
+Son **un 37% más de vehículos por pantallazo de scroll**.
+
+**Esto da vuelta una regla que salió de la prueba en celular del 2026-08-27** —"cada dato en su renglón y ninguno cortado a la mitad"— y la da vuelta el mismo que la pidió, sabiendo que el modelo se va a cortar ("por más de que no se diga del todo"). No es que aquella regla estuviera mal: resolvía un problema real, que "Chevrolet Cruze Premie…" cortado no se entendía. **Lo que cambió es qué se está optimizando.** Antes, entender cada tarjeta; ahora, cuántas se ven de un vistazo. En un clasificado se recorre primero y se lee después, y los dos datos que hacen frenar el pulgar —la foto y el precio— son justamente los que no se cortan nunca.
+
+**Lo que se corta es el dibujo, no el contenido.** El renglón entero está en el documento, así que un lector de pantalla sigue leyendo "US$ 21.000 · Chevrolet Cruze Premier 1.4 Turbo" completo, y el enlace sigue teniendo el nombre entero del vehículo como texto.
+
+**Dónde quedaron los tres datos que se fueron.** El año, el kilometraje y la ubicación están enteros en la ficha del vehículo, a un toque de distancia, y los tres se pueden **filtrar** desde la barra del muro: quien busca por año o por kilómetros no necesita leerlos en cada tarjeta, necesita que el listado ya venga recortado. Se dejó anotado en `app/CLAUDE.md` que volver a agregarle un dato a la tarjeta es deshacer este cambio.
+
+**Un efecto lateral que conviene saber:** con un precio largo en pesos, del modelo queda muy poco ("$ 12.500.000 · Renault …"). Es el mismo comportamiento que tiene Marketplace y se aceptó así; si molesta, la salida no es agregar un renglón sino achicar un punto el precio.

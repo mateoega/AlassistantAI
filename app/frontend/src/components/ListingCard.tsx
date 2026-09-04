@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { FavoriteButton } from './FavoriteButton';
 import { StatusBadge } from './ui';
 import { useSession } from './SessionProvider';
-import { formatKilometers, formatLocation, formatPrice } from '@/lib/format';
+import { formatPrice } from '@/lib/format';
 import type { Listing } from '@/lib/types';
 
 /**
@@ -30,22 +30,27 @@ import type { Listing } from '@/lib/types';
  * Si algún día se agrega otro control adentro de la tarjeta, va con `z-20` por
  * el mismo motivo.
  *
- * CADA DATO EN SU RENGLÓN, Y NINGUNO CORTADO A LA MITAD. En la prueba en
- * celular del 2026-08-27 se veían "Chevrolet Cruze Premie…" y "Cañuelas,
- * Buen…": en dos columnas de 375px cada tarjeta mide unos 165px, y ahí no
- * entran ni el modelo con el año pegado atrás ni el kilometraje y la ubicación
- * compartiendo renglón. Ahora:
+ * DEBAJO DE LA FOTO VA UN SOLO RENGLÓN: PRECIO · MARCA Y MODELO (2026-09-04).
  *
- *   precio                  lo que decide si se sigue mirando
- *   marca y modelo          hasta dos renglones — un modelo largo se dobla,
- *                           no se corta
- *   año · kilómetros        los dos números cortos, juntos, entran holgados
- *   ubicación               sola, con el ancho entero, y en dos renglones si
- *                           hace falta — "General José de San Martín, Chaco"
- *                           no entra en uno y cortarla es peor que doblarla
+ * Antes eran cuatro datos en cuatro a seis renglones —precio, marca y modelo
+ * hasta en dos, año · kilómetros, y la ubicación hasta en dos—, unos 90px de
+ * texto debajo de cada foto. En una pantalla de 812px eso dejaba ver dos filas
+ * y media de vehículos; con un renglón entran tres y media, que son siete
+ * vehículos en vez de cinco sin mover un dedo.
  *
- * El año salió del renglón del modelo justamente para devolverle ese lugar:
- * "Chevrolet Cruze Premier" entero vale más que "Chevrolet Cruze Premie… 2018".
+ * ESTO DA VUELTA UNA REGLA QUE SALIÓ DE LA PRUEBA DEL 2026-08-27 —"cada dato
+ * en su renglón y ninguno cortado a la mitad"— y la da vuelta el mismo que la
+ * pidió, con Marketplace al lado como referencia y sabiendo que el modelo se
+ * va a cortar. Aquella regla resolvía un problema de lectura: "Chevrolet Cruze
+ * Premie…" cortado no se entendía. Lo que cambió es qué se está optimizando:
+ * antes, entender cada tarjeta; ahora, cuántos vehículos se ven de un vistazo.
+ * En un clasificado se recorre primero y se lee después — y lo que hace parar
+ * el pulgar es la foto y el precio, que son justamente los dos que no se
+ * cortan nunca.
+ *
+ * QUÉ SE FUE, Y DÓNDE SIGUE ESTANDO. El año, el kilometraje y la ubicación
+ * salieron de la tarjeta; están enteros en la ficha del vehículo, a un toque, y
+ * los tres se pueden filtrar desde la barra de búsqueda del muro.
  */
 export function ListingCard({ listing }: { listing: Listing }) {
   const { session } = useSession();
@@ -113,24 +118,31 @@ export function ListingCard({ listing }: { listing: Listing }) {
           los celulares con pantalla curva el filo se dobla. Ocho píxeles en
           celular, donde la columna toca el borde; de tablet para arriba
           alcanzan dos, que ahí el margen lo pone la grilla. */}
-      <div className="mt-2 space-y-0.5 px-2 sm:px-0.5">
-        <p className="text-[15px] font-bold text-ink">
-          {formatPrice(listing.price, listing.currency)}
-        </p>
-        <p className="line-clamp-2 text-sm font-medium text-ink group-hover:text-brand-deep">
+      <div className="mt-1.5 px-2 sm:px-0.5">
+        {/* PRECIO Y MODELO EN UN RENGLÓN, Y SE CORTA SI NO ENTRA (`truncate`).
+
+            El renglón entero es el enlace, y el texto completo sigue estando en
+            el documento: lo que se corta es el dibujo, no el contenido, así que
+            un lector de pantalla lee "US$ 21.000 · Chevrolet Cruze Premier 1.4
+            Turbo" aunque en pantalla se vea "US$ 21.000 · Chevrolet Cru…".
+
+            El punto medio (`·`) es el separador y no un guión ni una coma: es
+            lo que usa Marketplace, y es lo que hace que se lean como dos datos
+            distintos y no como una frase cortada. */}
+        <p className="truncate text-sm">
+          <span className="font-bold text-ink">
+            {formatPrice(listing.price, listing.currency)}
+          </span>
+          <span className="text-muted"> · </span>
           {/* El `after` vacío es lo que hace tocable la tarjeta entera: se
               estira sobre el `article`, que es el ancestro posicionado. */}
           <Link
             href={`/vehiculo/${listing.id}`}
-            className="after:absolute after:inset-0 after:z-10 after:content-['']"
+            className="text-body after:absolute after:inset-0 after:z-10 after:content-[''] group-hover:text-brand-deep"
           >
             {listing.brand} {listing.model}
           </Link>
         </p>
-        <p className="text-xs text-muted">
-          {listing.year} · {formatKilometers(listing.kilometers)}
-        </p>
-        <p className="line-clamp-2 text-xs text-muted">{formatLocation(listing)}</p>
       </div>
     </article>
   );
