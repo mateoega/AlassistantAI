@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { api, ApiError } from '@/lib/api';
@@ -8,7 +8,7 @@ import { useSession } from '@/components/SessionProvider';
 import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { FavoriteButton } from '@/components/FavoriteButton';
 import { PriceEstimatePanel } from '@/components/PriceEstimate';
-import { Badge, Button, Card, Notice, Spinner, StatusBadge } from '@/components/ui';
+import { Badge, Button, Card, Notice, RocketIcon, Spinner, StatusBadge } from '@/components/ui';
 import { formatDate, formatKilometers, formatLocation, formatPrice } from '@/lib/format';
 import type { Listing, ListingStatus } from '@/lib/types';
 
@@ -321,41 +321,63 @@ export default function VehiculoPage() {
               {/* Escribirle a alguien por un vehículo ya vendido es hacerle
                   perder el tiempo a los dos. La explicación va donde estaría el
                   botón, no perdida al final de la pantalla. */}
-              {listing.status === 'published' && <ContactSeller listing={listing} />}
+              {listing.status === 'published' ? (
+                /* EL CORAZÓN COMPARTE RENGLÓN CON "CONSULTAR AL VENDEDOR"
+                   (2026-09-04). Antes el botón de consultar ocupaba el ancho
+                   entero y guardar quedaba en el renglón de abajo, gastando 40
+                   píxeles de alto para repetir lo que un corazón dice solo. Van
+                   los dos juntos: consultar se queda con casi todo el ancho,
+                   porque es la salida del embudo, y el corazón con lo justo. */
+                <ContactSeller
+                  listing={listing}
+                  aside={<FavoriteButton listingId={listing.id} variant="boxed" />}
+                />
+              ) : (
+                <>
+                  {listing.status === 'sold' && (
+                    <p className="text-sm text-muted">
+                      Este vehículo ya se vendió, así que no se puede contactar al vendedor por
+                      esta publicación.
+                    </p>
+                  )}
 
-              {listing.status === 'sold' && (
-                <p className="text-sm text-muted">
-                  Este vehículo ya se vendió, así que no se puede contactar al vendedor por esta
-                  publicación.
-                </p>
+                  {/* Sin botón de consultar al lado, el corazón vuelve a
+                      llevar su palabra: solo en un renglón vacío no se
+                      entiende qué está esperando. */}
+                  <div className="flex flex-wrap gap-3">
+                    <FavoriteButton listingId={listing.id} variant="labeled" />
+                  </div>
+                </>
               )}
-
-              <div className="flex flex-wrap gap-3">
-                <FavoriteButton listingId={listing.id} variant="labeled" />
-              </div>
             </div>
           )}
 
-          {/* EL ANÁLISIS DE FOTOS VA PRIMERO, Y ESTO DA VUELTA UNA DECISIÓN
-              ANTERIOR.
+          {/* TODO LO QUE HACE LA IA VIVE ADENTRO DE UN BOTÓN (2026-09-04).
 
-              Hasta hoy el precio de referencia iba adelante, con este
-              argumento: es lo primero que se quiere saber y aparece sin que
-              nadie apriete nada. La segunda mitad de esa frase es justamente lo
-              que lo manda atrás. El precio se dibuja solo, así que se ve igual
-              un lugar más abajo; el análisis NO EXISTE hasta que alguien toca
-              el botón, y un botón que está a dos pantallas de distancia no se
-              toca. Estar abajo no cuesta lo mismo en los dos casos.
+              El análisis de fotos y el precio de referencia son dos tarjetas
+              largas —el análisis solo puede pasar los 1.500px— y estaban las
+              dos abiertas apenas se bajaba un poco. La ficha se leía como un
+              choclo de texto antes de llegar a la descripción y a los datos.
 
-              Y es la pieza que diferencia esta plataforma de cualquier otro
-              clasificado: en la prueba del cliente fue lo que más les
-              interesó. Enterrarla es esconder el producto.
+              Ahora no se dibuja nada hasta que alguien toca "Analizar con IA".
+              Vale para los dos casos, y eso es a propósito: aunque el análisis
+              YA esté hecho, sigue guardado adentro del botón. Que aparezca solo
+              porque otro lo pidió antes es la misma pared de texto, y quien
+              entra a mirar un vehículo no pidió leerla.
 
-              Sin fotos no tiene nada que mirar, así que ahí no se ofrece —
-              pasa solo en borradores a medio hacer. */}
-          {listing.photos.length > 0 && <AnalysisPanel listingId={listing.id} />}
+              VA PEGADO A LAS DOS ACCIONES DEL COMPRADOR y antes que la
+              descripción: es lo que diferencia a esta plataforma de cualquier
+              otro clasificado, y en violeta, que es el color de la IA en toda
+              la aplicación.
 
-          <PriceEstimatePanel listingId={listing.id} />
+              El orden de adentro —análisis primero, precio después— es el que
+              salió de la prueba del 2026-08-27 y no cambió. */}
+          <AiSection>
+            {/* Sin fotos no hay nada que mirar, así que ahí no se ofrece —
+                pasa solo en borradores a medio hacer. */}
+            {listing.photos.length > 0 && <AnalysisPanel listingId={listing.id} />}
+            <PriceEstimatePanel listingId={listing.id} />
+          </AiSection>
 
           {listing.description && (
             <Card className="space-y-2 p-4 sm:p-5">
@@ -426,7 +448,7 @@ export default function VehiculoPage() {
  * ya existía— y ahí se escribe. Consultar dos veces el mismo aviso sigue la
  * charla anterior en vez de empezar otra.
  */
-function ContactSeller({ listing }: { listing: Listing }) {
+function ContactSeller({ listing, aside }: { listing: Listing; aside: ReactNode }) {
   const router = useRouter();
   const { session } = useSession();
   const [opening, setOpening] = useState(false);
@@ -445,12 +467,15 @@ function ContactSeller({ listing }: { listing: Listing }) {
   if (!session) {
     return (
       <div className="space-y-2">
-        <Link
-          href="/login"
-          className="block w-full rounded-xl bg-brand-deep px-5 py-3 text-center font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
-        >
-          Iniciá sesión para consultar
-        </Link>
+        <div className="flex items-stretch gap-3">
+          <Link
+            href="/login"
+            className="flex flex-1 items-center justify-center rounded-xl bg-brand-deep px-5 py-3 text-center font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
+          >
+            Iniciá sesión para consultar
+          </Link>
+          {aside}
+        </div>
         <p className="text-center text-xs text-muted">
           La conversación queda dentro de AIassistant, junto a este aviso.
         </p>
@@ -478,13 +503,82 @@ function ContactSeller({ listing }: { listing: Listing }) {
 
   return (
     <div className="space-y-2">
-      <Button full disabled={opening} onClick={() => void open()}>
-        {opening ? 'Abriendo…' : 'Consultar al vendedor'}
-      </Button>
+      {/* `items-stretch` es lo que hace que el corazón mida exactamente lo
+          mismo de alto que el botón de al lado sin escribir la altura en
+          ningún lado: crece con él si algún día cambia. */}
+      <div className="flex items-stretch gap-3">
+        <span className="flex-1">
+          <Button full disabled={opening} onClick={() => void open()}>
+            {opening ? 'Abriendo…' : 'Consultar al vendedor'}
+          </Button>
+        </span>
+        {aside}
+      </div>
       <p className="text-center text-xs text-muted">
         La conversación queda dentro de AIassistant, junto a este aviso.
       </p>
       {problem && <Notice tone="alert" title={problem} />}
     </div>
+  );
+}
+
+/**
+ * La caja donde vive todo lo que hace la IA: el análisis de las fotos y el
+ * precio de referencia.
+ *
+ * CERRADA POR OMISIÓN, SIEMPRE. También cuando el análisis ya está hecho y
+ * guardado. Es la parte que importa del pedido: las dos tarjetas juntas pasan
+ * los 1.500px en un celular, y una ficha que arranca con esa pared de texto no
+ * deja llegar a la descripción ni a los datos. Que aparezca sola porque otro
+ * la pidió antes es exactamente el mismo problema.
+ *
+ * QUÉ HACE EL BOTÓN Y QUÉ NO. Abre la caja: no gasta un análisis. Adentro, si
+ * no hay ninguno hecho, está el botón que sí lo pide —también violeta—; si ya
+ * hay uno, se lee el guardado. Un solo toque que empiece a gastar plata sin
+ * avisar es lo que este proyecto viene evitando desde la prueba en celular:
+ * nada se manda sin que la persona lo pida.
+ *
+ * EL CONTENIDO NO SE MONTA HASTA QUE SE ABRE, así que cerrada no le pide nada
+ * al servidor. Al cerrarla se desmonta, y al volver a abrirla cada panel se
+ * pone al día solo: el estado del análisis vive en la base, no acá.
+ */
+function AiSection({ children }: { children: ReactNode }) {
+  const [abierta, setAbierta] = useState(false);
+
+  return (
+    <div className="space-y-4">
+      <button
+        type="button"
+        onClick={() => setAbierta((actual) => !actual)}
+        aria-expanded={abierta}
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-ai px-5 py-3 text-sm font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98]"
+      >
+        <RocketIcon />
+        {abierta ? 'Ocultar el análisis' : 'Analizar con IA'}
+        <ChevronIcon abierta={abierta} />
+      </button>
+
+      {abierta && <div className="space-y-4">{children}</div>}
+    </div>
+  );
+}
+
+/** La flecha del botón de arriba: apunta abajo cerrada y arriba abierta. */
+function ChevronIcon({ abierta }: { abierta: boolean }) {
+  return (
+    <svg
+      width={16}
+      height={16}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={`transition-transform duration-200 ${abierta ? 'rotate-180' : ''}`}
+      aria-hidden
+    >
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }

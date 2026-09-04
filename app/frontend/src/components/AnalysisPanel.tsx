@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { api, ApiError } from '@/lib/api';
-import { Button, Card, Notice } from '@/components/ui';
+import { Button, Card, Notice, Spinner } from '@/components/ui';
 import { useSession } from '@/components/SessionProvider';
 import type { AnalysisRecord, Confidence, VehicleAnalysis } from '@/lib/types';
 
@@ -135,8 +135,17 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
     panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [analysis?.status]);
 
+  /*
+   * MIENTRAS SE PREGUNTA POR EL ANÁLISIS SE AVISA (2026-09-04).
+   *
+   * Antes acá no se dibujaba nada, y estaba bien: el panel se montaba solo al
+   * abrir la ficha, y un cartel de "Cargando…" que aparece sin que nadie pida
+   * nada es ruido. Ahora este panel vive adentro del botón "Analizar con IA" y
+   * se monta cuando alguien lo toca: un botón que se aprieta y no muestra nada
+   * durante un segundo se lee como que no anduvo.
+   */
   if (loading) {
-    return null;
+    return <Spinner label="Buscando el análisis…" />;
   }
 
   const running = analysis?.status === 'running';

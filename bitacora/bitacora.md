@@ -1219,3 +1219,31 @@ Quedó así, después de que el cliente lo probara en el teléfono:
 **El aviso de "hay algo nuevo" es un punto y es azul.** Un punto y no un número porque el botón mide 38px y desde afuera la única pregunta que hay que contestar es "¿hay algo para mirar?". Azul y no rojo —el cliente lo pidió "rojo o algo"— por la regla de identidad del proyecto, que no usa rojo ni naranja en ningún estado: el rojo de las notificaciones de otras aplicaciones dice "algo anda mal", y acá casi siempre es alguien contestando un mensaje. Lleva un anillo blanco para que no se apoye sobre el borde del botón y se lea como una mancha. Cambiarlo a rojo es una línea, si el cliente lo prefiere igual.
 
 **Al violeta se le redondearon las esquinas** (`rounded-xl`, los mismos 12px de todo lo chico de la aplicación, con cuatro píxeles de aire alrededor). Un rectángulo de esquinas vivas adentro de una barra de vidrio se veía puntiagudo; el cliente lo marcó y tenía razón. Medido: 73 × 53px, centrado en 188 de una pantalla de 375.
+
+## 2026-09-04 — La ficha del vehículo: dos acciones en un renglón y la IA adentro de un botón
+
+Dos cambios en la ficha, los dos pedidos por el cliente después de mirarla en el teléfono.
+
+### Consultar y guardar comparten renglón
+
+"Consultar al vendedor" ocupaba el ancho entero y el corazón quedaba en el renglón de abajo. Ahora van juntos: consultar se queda con 279px de los 375 —es la salida del embudo— y el corazón con 52, **sin la palabra "Guardar"**: el corazón ya dice qué hace, y ahí la palabra solo le come ancho al botón que importa.
+
+**Los dos miden exactamente lo mismo de alto porque el renglón los estira** (`items-stretch`), no porque tengan una altura escrita. Un `h-full` en el corazón, que fue lo primero que se probó, hace justo lo contrario: `height: 100%` contra un padre de alto automático se resuelve como "el alto de mi contenido", y quedó de 20px al lado de un botón de 48. Se vio midiendo, no mirando.
+
+Cuando el aviso no está publicado —vendido, pausado— no hay botón de consultar, así que el corazón vuelve a llevar su palabra: solo en un renglón vacío no se entiende qué está esperando.
+
+### Todo lo que hace la IA vive adentro de un botón
+
+Debajo de esas dos acciones hay ahora un botón violeta de ancho completo, con el cohete: **"Analizar con IA"**. Adentro están el análisis de las fotos y el precio de referencia, y **no se dibuja nada hasta que alguien lo toca**.
+
+**Por qué:** las dos tarjetas juntas pasan los 1.500px en un celular. Estaban abiertas apenas se bajaba un poco, así que entrar a un aviso era comerse una pared de texto antes de llegar a la descripción y a los datos. Medido en un aviso con análisis hecho: la ficha pasó de **3.145px a 1.493px**, menos de la mitad.
+
+**Cerrado también cuando el análisis ya está hecho**, y eso fue explícito en el pedido. Que aparezca solo porque otro lo pidió antes es exactamente la misma pared de texto, y quien entra a mirar un vehículo no pidió leerla.
+
+**El botón abre la caja; no gasta un análisis.** Adentro, si no hay ninguno hecho, está el botón que sí lo pide —también violeta—; si ya hay uno, se lee el guardado. Un solo toque que empiece a gastar plata sin avisar es lo que el proyecto viene evitando desde la prueba en celular: nada se manda sin que la persona lo pida.
+
+**El contenido no se monta hasta que se abre**, así que cerrado no le pide nada al servidor: son dos consultas menos por cada ficha que alguien abre y no analiza. Al cerrarla se desmonta y al volver a abrirla cada panel se pone al día solo, porque el estado del análisis vive en la base y no en la pantalla.
+
+**Y el panel del análisis ahora avisa mientras carga.** Antes no dibujaba nada mientras le preguntaba al servidor, y estaba bien: se montaba solo al abrir la ficha, y un "Cargando…" que aparece sin que nadie pida nada es ruido. Ahora se monta cuando alguien aprieta un botón, y un botón que se aprieta y no muestra nada durante un segundo se lee como que no anduvo.
+
+El orden de adentro no cambió: el análisis primero y el precio de referencia después, como salió de la prueba del 2026-08-27.

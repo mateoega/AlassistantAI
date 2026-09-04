@@ -20,7 +20,7 @@ export function FavoriteButton({
   variant = 'icon',
 }: {
   listingId: string;
-  variant?: 'icon' | 'labeled';
+  variant?: 'icon' | 'labeled' | 'boxed';
 }) {
   const { ids, isFavorite, toggle } = useFavorites();
   const { session } = useSession();
@@ -43,7 +43,11 @@ export function FavoriteButton({
         className={
           variant === 'icon'
             ? 'glass flex h-9 w-9 items-center justify-center rounded-full text-muted shadow-soft transition-transform hover:text-brand-deep active:scale-90'
-            : 'flex items-center gap-2 rounded-xl border border-line bg-surface px-5 py-2.5 text-sm text-body shadow-soft transition-colors hover:border-brand'
+            : [
+                'flex items-center justify-center gap-2 rounded-xl border border-line bg-surface',
+                'text-sm text-body shadow-soft transition-colors hover:border-brand',
+                variant === 'boxed' ? 'px-4' : 'px-5 py-2.5',
+              ].join(' ')
         }
       >
         <HeartIcon filled={false} />
@@ -55,7 +59,13 @@ export function FavoriteButton({
   // Todavía no se sabe qué está guardado. Se deja el lugar ocupado en vez de
   // dibujar un corazón vacío que un segundo después salte a lleno.
   if (ids === null) {
-    return variant === 'icon' ? <span className="block h-9 w-9" /> : null;
+    if (variant === 'icon') {
+      return <span className="block h-9 w-9" />;
+    }
+    // En la ficha el corazón comparte renglón con "Consultar al vendedor": si
+    // no ocupara el lugar, el botón de al lado se estiraría solo y se
+    // encogería un segundo después, cuando llega la respuesta.
+    return variant === 'boxed' ? <span className="block w-[52px]" /> : null;
   }
 
   const saved = isFavorite(listingId);
@@ -99,20 +109,36 @@ export function FavoriteButton({
     );
   }
 
+  /*
+   * `boxed` es el corazón SIN LA PALABRA, para cuando comparte renglón con
+   * otro botón —hoy, "Consultar al vendedor" en la ficha del vehículo—. El
+   * corazón ya dice qué hace; la palabra ahí solo le come el ancho al botón
+   * que importa.
+   *
+   * NO LLEVA ALTURA PROPIA, y eso es lo que hace que mida exactamente lo mismo
+   * que el botón de al lado: el renglón estira a los dos con `items-stretch`.
+   * Un `h-full` acá lo rompe —`height: 100%` contra un padre de alto
+   * automático se resuelve como el alto del contenido—, y el corazón queda de
+   * 20px al lado de un botón de 48.
+   */
   return (
     <button
       type="button"
       onClick={handleClick}
       aria-pressed={saved}
+      aria-label={variant === 'boxed' ? label : undefined}
+      title={variant === 'boxed' ? label : undefined}
       className={[
-        'flex items-center gap-2 rounded-xl border px-5 py-2.5 text-sm shadow-soft transition-all duration-150 active:scale-[0.98]',
+        'flex items-center justify-center gap-2 rounded-xl border text-sm shadow-soft',
+        'transition-all duration-150 active:scale-[0.98]',
+        variant === 'boxed' ? 'px-4' : 'px-5 py-2.5',
         saved
           ? 'border-brand bg-brand-soft font-semibold text-brand-deep'
           : 'border-line bg-surface text-body hover:border-brand',
       ].join(' ')}
     >
       <HeartIcon filled={saved} />
-      {saved ? 'Guardado' : 'Guardar'}
+      {variant === 'labeled' && (saved ? 'Guardado' : 'Guardar')}
     </button>
   );
 }
