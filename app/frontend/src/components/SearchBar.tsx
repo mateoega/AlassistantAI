@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { api } from '@/lib/api';
 import { Button, Field, NumberInput, inputClass } from '@/components/ui';
 import { digitsOnly, groupThousands } from '@/lib/format';
@@ -39,6 +39,13 @@ import type { Province, VehicleType, VehicleTypeField } from '@/lib/types';
  *   3. EL PANEL, cerrado por omisión, y con forma de tarjeta cuando se abre:
  *      es lo único de acá que sí es una pieza aparte, porque se despliega por
  *      encima del listado y necesita decir dónde termina.
+ *
+ * LA BARRA SE DESPEGA AL BAJAR (2026-09-04). Cuando el listado empieza a
+ * taparla, la píldora se suelta y queda flotando debajo de la barra de arriba,
+ * de vidrio esmerilado, con las fotos pasando por detrás. Lo que se despega es
+ * SOLO la píldora: ni el fondo de la página, ni las fichas, ni el botón azul de
+ * afuera —la lupa se le mete adentro—, así que sobre el listado queda una sola
+ * forma y no un bloque. Ver `useFlotando` para el cómo y el porqué.
  *
  * LA PÍLDORA ES LA ÚNICA DE LA APLICACIÓN, y es a propósito: los campos de los
  * formularios siguen siendo rectángulos de 12px. Este no es un campo de
@@ -180,6 +187,11 @@ export function SearchBar({
     [values, vehicleTypes, provinces],
   );
 
+  const marcaRef = useRef<HTMLDivElement>(null);
+  const altoBarraSuperior = useAltoBarraSuperior();
+  const paradaEn = altoBarraSuperior + AIRE_AL_DESPEGARSE;
+  const flotando = useFlotando(marcaRef, paradaEn);
+
   return (
     <form
       onSubmit={(event) => {
@@ -191,27 +203,74 @@ export function SearchBar({
       }}
       className="space-y-3"
     >
-      <div className="flex items-center gap-2">
-        <input
-          type="search"
-          value={draft.q}
-          onChange={(event) => set('q', event.target.value)}
-          placeholder="Buscar por marca o modelo"
-          aria-label="Buscar por marca o modelo"
-          className="h-12 w-full min-w-0 rounded-full border border-line bg-surface px-5 text-sm text-ink shadow-soft outline-none transition-colors placeholder:text-muted/70 focus:border-brand focus:ring-2 focus:ring-brand/25"
-        />
+      {/* LA CAJA QUE GUARDA EL LUGAR.
 
-        {/* El único botón de buscar. Lleva `shadow-float` —la sombra azul
-            fuerte, la misma del botón del asistente— porque es lo que lo
-            despega: un círculo azul sobre una página blanca, sin sombra, queda
-            pegado al papel. */}
-        <button
-          type="submit"
-          aria-label="Buscar"
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-deep text-white shadow-float transition-all duration-150 hover:bg-brand-deep/90 active:scale-95"
+          Mide exactamente lo que mide la barra (48px, `h-12`) y no se mueve
+          nunca. Cuando la barra se despega y pasa a `fixed`, sale del flujo:
+          sin esta caja, todo lo de abajo saltaría 48px hacia arriba justo en el
+          momento del cambio. También es la que mira el observador para saber
+          cuándo despegarla. */}
+      <div ref={marcaRef} className="h-12">
+        <div
+          className={flotando ? 'fixed inset-x-0 z-30' : ''}
+          style={flotando ? { top: paradaEn } : undefined}
         >
-          <SearchIcon />
-        </button>
+          {/* Repite la caja del `<main>` —`mx-auto max-w-7xl px-4`— para que la
+              barra flotante quede exactamente donde estaba y no se corra un
+              píxel al despegarse. */}
+          <div className={flotando ? 'mx-auto max-w-7xl px-4' : ''}>
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <input
+                  type="search"
+                  value={draft.q}
+                  onChange={(event) => set('q', event.target.value)}
+                  placeholder="Buscar por marca o modelo"
+                  aria-label="Buscar por marca o modelo"
+                  className={[
+                    'h-12 w-full min-w-0 rounded-full border border-line px-5 text-sm text-ink',
+                    'outline-none transition-all duration-200 placeholder:text-muted/70',
+                    'focus:border-brand focus:ring-2 focus:ring-brand/25',
+                    // Despegada es vidrio esmerilado y flota; apoyada es una
+                    // pieza más de la página.
+                    flotando ? 'glass pr-14 shadow-float' : 'bg-surface shadow-soft',
+                  ].join(' ')}
+                />
+
+                {/* Despegada, la lupa se mete ADENTRO de la píldora y pierde el
+                    círculo azul. El botón de afuera es una segunda pieza
+                    flotando sobre las fotos; adentro, lo que queda sobre el
+                    listado es una sola forma —la píldora— que es justo lo que
+                    se pidió. Sin ícono no se puede: en un teclado de celular la
+                    tecla de buscar no siempre está a la vista. */}
+                {flotando && (
+                  <button
+                    type="submit"
+                    aria-label="Buscar"
+                    className="absolute right-1.5 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-full text-brand-deep transition-transform duration-150 active:scale-90"
+                  >
+                    <SearchIcon />
+                  </button>
+                )}
+              </div>
+
+              {/* Apoyada, el botón de buscar va afuera y es el círculo azul.
+                  Lleva `shadow-float` —la sombra azul fuerte, la misma del
+                  botón del asistente— porque es lo que lo despega: un círculo
+                  azul sobre una página blanca, sin sombra, queda pegado al
+                  papel. */}
+              {!flotando && (
+                <button
+                  type="submit"
+                  aria-label="Buscar"
+                  className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-brand-deep text-white shadow-float transition-all duration-150 hover:bg-brand-deep/90 active:scale-95"
+                >
+                  <SearchIcon />
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* LA LÍNEA DE FICHAS. Nunca queda vacía: aunque no haya ningún filtro
@@ -394,6 +453,92 @@ export function SearchBar({
       )}
     </form>
   );
+}
+
+/**
+ * Los ocho píxeles que quedan entre la barra de arriba y la barra de búsqueda
+ * despegada.
+ *
+ * No es margen decorativo: pegadas una a la otra son dos franjas de vidrio
+ * apiladas y se leen como una sola barra doble. Con el aire en el medio se ven
+ * pasar las fotos por atrás, y ahí se entiende que la píldora está flotando
+ * sobre el listado. Es el mismo número que dice DÓNDE se despega, para que
+ * aparezca exactamente donde estaba y el cambio no se vea.
+ */
+const AIRE_AL_DESPEGARSE = 8;
+
+/**
+ * Cuánto mide la barra de arriba, que es donde se para la barra de búsqueda
+ * cuando se despega.
+ *
+ * Se mide y no se escribe el número: la barra de arriba mide 61px sin sesión y
+ * cambia de alto con sesión y de tablet para arriba, donde le entran los
+ * botones de navegación. Un `top-[61px]` escrito a mano dejaría la barra
+ * flotante montada sobre la de arriba, o con un hueco por donde se ven pasar
+ * las fotos, según quién esté mirando.
+ *
+ * El 61 del arranque es solo para el primer dibujo, antes de poder medir.
+ */
+function useAltoBarraSuperior(): number {
+  const [alto, setAlto] = useState(61);
+
+  useEffect(() => {
+    const medir = () => {
+      const barra = document.querySelector('header');
+      if (barra) {
+        setAlto(Math.round(barra.getBoundingClientRect().height));
+      }
+    };
+
+    medir();
+    window.addEventListener('resize', medir);
+    return () => window.removeEventListener('resize', medir);
+  }, []);
+
+  return alto;
+}
+
+/**
+ * Si la barra de búsqueda ya se fue de su lugar y tiene que quedar flotando.
+ *
+ * NO ES UN `scroll` A MANO ni un `position: sticky`.
+ *
+ * Un manejador de `scroll` corre decenas de veces por segundo y compara
+ * posiciones; acá lo hace el navegador y avisa solo cuando cambia el estado.
+ *
+ * Y `sticky` no servía: una pieza pegajosa se despega apenas termina la caja de
+ * su padre, y el padre de la barra es el formulario, que mide lo que miden la
+ * barra y las fichas. La barra se habría vuelto a ir de la pantalla a los 100px
+ * de scroll. Con `fixed` no hay padre que la limite, y esta caja —la que le
+ * guarda el lugar— es la que dice cuándo empezar.
+ *
+ * `rootMargin` corre el borde de arriba de la pantalla hasta abajo de la barra
+ * superior: lo que importa no es si la caja se ve, sino si se ve POR DEBAJO de
+ * esa barra, que es fija y tapa lo que pasa atrás.
+ *
+ * Se mira `intersectionRatio < 1` y no `isIntersecting`: la barra se despega
+ * cuando se empieza a esconder, no cuando terminó de esconderse. Así aparece
+ * flotando exactamente donde estaba y el cambio no se ve.
+ */
+function useFlotando(marca: RefObject<HTMLDivElement | null>, paradaEn: number): boolean {
+  const [flotando, setFlotando] = useState(false);
+
+  useEffect(() => {
+    const caja = marca.current;
+    if (!caja || typeof IntersectionObserver === 'undefined') {
+      return;
+    }
+
+    const observador = new IntersectionObserver(
+      ([entrada]) => setFlotando(entrada !== undefined && entrada.intersectionRatio < 1),
+      { rootMargin: `-${paradaEn}px 0px 0px 0px`, threshold: [0, 1] },
+    );
+
+    observador.observe(caja);
+    return () => observador.disconnect();
+  }, [marca, paradaEn]);
+
+  return flotando;
 }
 
 /**

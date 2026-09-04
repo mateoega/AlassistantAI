@@ -1137,3 +1137,28 @@ Son **un 37% más de vehículos por pantallazo de scroll**.
 **Dónde quedaron los tres datos que se fueron.** El año, el kilometraje y la ubicación están enteros en la ficha del vehículo, a un toque de distancia, y los tres se pueden **filtrar** desde la barra del muro: quien busca por año o por kilómetros no necesita leerlos en cada tarjeta, necesita que el listado ya venga recortado. Se dejó anotado en `app/CLAUDE.md` que volver a agregarle un dato a la tarjeta es deshacer este cambio.
 
 **Un efecto lateral que conviene saber:** con un precio largo en pesos, del modelo queda muy poco ("$ 12.500.000 · Renault …"). Es el mismo comportamiento que tiene Marketplace y se aceptó así; si molesta, la salida no es agregar un renglón sino achicar un punto el precio.
+
+## 2026-09-04 — La barra de búsqueda se despega y flota sobre el listado
+
+Al bajar por el muro, la píldora de búsqueda se suelta de su lugar y queda flotando ocho píxeles debajo de la barra de arriba, de vidrio esmerilado, con las fotos pasando por detrás. Buscar deja de exigir volver al principio de la página.
+
+**Por qué:** lo pidió el cliente, y con un motivo dicho: que la aplicación se vea moderna y se diferencie. Es la misma idea que ya venía funcionando en las dos barras de navegación, aplicada a lo que más se usa del muro.
+
+**Se despega SOLO la píldora.** No el fondo blanco de la página, no las fichas de filtros, y no el botón azul de afuera: la lupa se le mete adentro de la píldora y pierde el círculo. Eso fue explícito en el pedido y tiene sentido visual — dos piezas flotando sobre el listado se leen como una barra de herramientas pegada arriba; una sola forma se lee como algo que flota. Lo que queda sobre las fotos es un rectángulo de bordes redondos y nada más.
+
+**La lupa no desaparece del todo, se muda.** Un campo de búsqueda sin nada que tocar es un callejón sin salida en un celular, porque la tecla de buscar del teclado no siempre está a la vista. Adentro de la píldora, sin círculo azul, no rompe la forma.
+
+**Es `fixed` y no `sticky`, y el motivo es concreto.** Una pieza pegajosa se despega apenas termina la caja de su padre, y el padre acá es el formulario de búsqueda, que mide lo que miden la píldora y las fichas: la barra se habría vuelto a ir de la pantalla a los 100px de scroll. Con `fixed` no hay padre que la limite.
+
+**El lugar se lo guarda una caja vacía de 48px** (`h-12`). Al pasar a `fixed`, la píldora sale del flujo; sin esa caja, todo el listado saltaría 48px hacia arriba justo en el momento del cambio.
+
+**Quién dispara el cambio es un `IntersectionObserver`, no un manejador de `scroll`.** Un `scroll` corre decenas de veces por segundo comparando posiciones; acá el trabajo lo hace el navegador y avisa solo cuando el estado cambia. Dos detalles que importan:
+
+- El `rootMargin` corre el borde de arriba de la pantalla hasta abajo de la barra superior. Lo que importa no es si la caja se ve, sino si se ve **por debajo** de esa barra, que es fija y tapa lo que pasa atrás.
+- Se mira `intersectionRatio < 1` y no `isIntersecting`: la barra se despega cuando **empieza** a esconderse, no cuando terminó. Así aparece flotando exactamente donde estaba y el cambio no se ve. Es el mismo número —el alto de la barra de arriba más los ocho píxeles de aire— el que decide dónde se para y cuándo se despega, justamente para que las dos posiciones coincidan.
+
+**Los ocho píxeles de aire tampoco son decorativos.** Pegadas una a la otra, la barra de arriba y la de búsqueda son dos franjas de vidrio apiladas y se leen como una sola barra doble. Con el aire en el medio se ven pasar las fotos por atrás, y ahí se entiende que la píldora está flotando.
+
+**El alto de la barra de arriba se mide, no se escribe.** Son 61px sin sesión, y cambia con sesión y de tablet para arriba, donde le entran los botones de navegación. Un número escrito a mano dejaría la píldora montada sobre la barra, o con un hueco, según quién esté mirando.
+
+**Qué se verificó.** En el navegador a 375px y a 1024px: la píldora se despega a los pocos píxeles de scroll y queda en y=69 —61 de la barra más 8—, alineada con el margen de la página (x=16) en los dos anchos; el desenfoque se resuelve de verdad (`saturate(1.8) blur(20px)`); escribir y tocar la lupa con la barra despegada busca y trae los resultados; al volver arriba, la píldora vuelve a su lugar con el botón azul afuera. Sin errores en la consola.
