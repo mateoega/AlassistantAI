@@ -54,16 +54,19 @@ import type { ListingSearchResult } from '@/lib/types';
  * vacío, así que este texto no viaja en el historial ni gasta una llamada. Lo
  * que el asistente contesta sale de su prompt, que está en el backend.
  */
+/**
+ * Cuánto "escribe" el asistente antes de soltar el saludo.
+ *
+ * Cinco segundos los pidió el cliente, y son bastante: es el tiempo que tarda
+ * una persona en escribir un párrafo, que es exactamente la sensación buscada.
+ * Corre una sola vez por visita.
+ */
+const DEMORA_DEL_SALUDO_MS = 5000;
+
 const WELCOME =
   'Hola. Estoy para ayudarte a hacer una compra inteligente: puedo mirar un vehículo con ' +
   'ojo crítico, contarte de dónde sale su precio de referencia y buscarte otras opciones. ' +
   'Preguntame lo que quieras sobre un aviso.';
-
-const SUGGESTIONS = [
-  '¿Qué le preguntarías al vendedor?',
-  '¿El kilometraje es mucho para el año?',
-  'Mostrame otras opciones parecidas',
-];
 
 /**
  * Si el botón flotante tiene que estar a la vista en este momento.
@@ -140,6 +143,32 @@ export function AssistantChat() {
     step,
     setStep,
   } = useAssistant();
+
+  /**
+   * EL SALUDO SE ESCRIBE SOLO LA PRIMERA VEZ DE CADA VISITA.
+   *
+   * `saludando` es el rato de los tres puntitos; `yaSaludo` recuerda que el
+   * saludo ya llegó, para que cerrar y volver a abrir el panel no obligue a
+   * esperar de nuevo los cinco segundos. Los dos viven acá y no en el proveedor
+   * porque son presentación: el saludo NO ES UN MENSAJE DEL HILO —si lo fuera,
+   * viajaría al modelo como parte de la conversación en cada pregunta.
+   */
+  const [saludando, setSaludando] = useState(false);
+  const [yaSaludo, setYaSaludo] = useState(false);
+
+  useEffect(() => {
+    if (!open || messages.length > 0 || yaSaludo) {
+      return;
+    }
+
+    setSaludando(true);
+    const reloj = setTimeout(() => {
+      setSaludando(false);
+      setYaSaludo(true);
+    }, DEMORA_DEL_SALUDO_MS);
+
+    return () => clearTimeout(reloj);
+  }, [open, messages.length, yaSaludo]);
 
   const navVisible = useMobileNavVisible();
   const buttonVisible = useVisibleWhileReading();
@@ -255,7 +284,7 @@ export function AssistantChat() {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Abrir el asistente"
+        aria-label="Abrir el chat con IA"
         style={{
           // A un dedo del borde de abajo, respetando la franja de gestos de los
           // celulares sin botón físico.
@@ -280,7 +309,7 @@ export function AssistantChat() {
           // `shadow-float` es la única sombra con brillo azul fuerte de la
           // aplicación, y este botón es lo único que flota de verdad por
           // encima de la página: la sombra es lo que lo despega del listado.
-          'text-white shadow-ai transition-colors hover:bg-ai/90 active:scale-95',
+          'text-ai-gold shadow-ai transition-colors hover:bg-ai/90 active:scale-95',
           // CELULAR: un círculo de 56px, sin la palabra. El cartel con texto
           // medía 140px de ancho y se apoyaba sobre tres o cuatro renglones de
           // cualquier pantalla — campos, precios, tarjetas del listado. Un
@@ -304,14 +333,14 @@ export function AssistantChat() {
         ].join(' ')}
       >
         <RocketIcon className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
-        <span className="hidden sm:inline">Asistente</span>
+        <span className="hidden sm:inline">Chat con IA</span>
       </button>
     );
   }
 
   return (
     <aside
-      aria-label="Asistente"
+      aria-label="Chat con IA"
       className={[
         'fixed z-50 flex flex-col border-line bg-surface',
         // Tablet para arriba el panel es un cajón al costado: se le da la
@@ -325,60 +354,47 @@ export function AssistantChat() {
         'sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[26rem] sm:border-l',
       ].join(' ')}
     >
-      <header className="flex items-center justify-between border-b border-line px-4 py-3">
-        <div>
-          <h2 className="font-semibold text-ink">
-            Asistente <span className="text-brand-deep">AI</span>
-          </h2>
-          <p className="text-xs text-muted">
-            {/* Igual que el saludo: nombra lo que hace, no "lo que quieras". */}
-            {listingId ? 'Sabe qué vehículo estás mirando' : 'Buscá vehículos o preguntá por un aviso'}
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="rounded-xl border border-line px-3 py-1.5 text-sm text-body transition-colors hover:border-brand"
-        >
-          Cerrar
-        </button>
-      </header>
+      {/* LA CONVERSACIÓN Y EL ENCABEZADO COMPARTEN LA MISMA CAJA QUE SE
+          DESPLAZA, y el encabezado va pegado arriba (`sticky`). Es lo que hace
+          que el vidrio signifique algo: los mensajes pasan por debajo y se
+          adivinan borrosos. Con el encabezado afuera de la caja no habría nada
+          detrás que dejar ver, y el vidrio sería un color más. */}
+      <div className="flex-1 overflow-y-auto">
+        <header className="glass-ai sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3">
+          {/* DICE "CHAT CON IA", EN DORADO SOBRE EL VIOLETA. Antes decía
+              "Asistente AI" con una bajada que explicaba qué sabía hacer; el
+              cliente pidió sacarla. El nombre alcanza: lo que el asistente
+              sabe se ve en lo que contesta, no en un renglón de letra chica. */}
+          <h2 className="font-semibold text-ai-gold">Chat con IA</h2>
 
-      <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-        {messages.length === 0 && (
-          <div className="space-y-3">
-            {/* El saludo se dibuja como un mensaje del asistente y no como un
-                texto de pantalla vacía: quien abre el chat por primera vez tiene
-                que ver que del otro lado hay alguien que ya le habló, no un
-                cartel explicando para qué sirve la caja. Es el primer globito
-                del hilo y usa el mismo componente que los demás. */}
+          {/* Sobre el violeta, el botón de cerrar se dibuja en blanco
+              translúcido: el borde gris y el texto oscuro de antes quedaban
+              ilegibles. Sigue siendo el mismo botón, en el mismo lugar. */}
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="rounded-xl border border-white/40 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-white/15"
+          >
+            Cerrar
+          </button>
+        </header>
+
+        <div className="space-y-4 px-4 py-4">
+        {messages.length === 0 &&
+          (saludando ? (
+            /* EL SALUDO SE ESCRIBE, NO ESTÁ PUESTO (2026-09-04).
+
+               Antes, al abrir el chat, el saludo ya estaba ahí como un cartel.
+               Ahora aparecen los tres puntitos y a los cinco segundos llega el
+               mensaje, como cuando alguien te contesta. Es la primera vez de
+               cada visita: reabrir el panel no vuelve a hacer esperar. */
+            <Escribiendo />
+          ) : (
+            /* El saludo es un globito más del hilo y no un texto de pantalla
+               vacía: quien abre el chat tiene que ver que del otro lado hay
+               alguien que ya le habló. */
             <Bubble message={{ role: 'model', text: WELCOME }} />
-            {/* TOCAR UNA SUGERENCIA NO LA ENVÍA: la escribe en la caja y
-                deja el cursor ahí. Antes enviaba en el acto, y como se veían
-                como tres renglones de texto para leer —del ancho del panel, sin
-                forma de botón— alcanzaba con apoyar el dedo para mandar una
-                pregunta sin querer. Le pasó al cliente en la prueba del
-                2026-08-27. Ahora son etiquetas chicas con forma de botón, la
-                pregunta queda a la vista antes de salir, y se puede editar o
-                borrar. Cuesta un toque más y ninguna pregunta se va sola. */}
-            <ul className="flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion) => (
-                <li key={suggestion}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDraft(suggestion);
-                      inputRef.current?.focus();
-                    }}
-                    className="rounded-full border border-line px-3 py-1.5 text-left text-sm text-body transition-colors hover:border-brand hover:bg-brand-soft"
-                  >
-                    {suggestion}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+          ))}
 
         {messages.map((message, index) => (
           <Bubble key={`${index}-${message.text.slice(0, 24)}`} message={message} />
@@ -401,6 +417,7 @@ export function AssistantChat() {
         )}
 
         <div ref={endRef} />
+        </div>
       </div>
 
       <form
@@ -436,7 +453,7 @@ export function AssistantChat() {
           <button
             type="submit"
             disabled={!draft.trim()}
-            className="rounded-xl bg-brand-deep px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            className="rounded-xl bg-ai px-4 py-2.5 text-sm font-semibold text-ai-gold shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             Enviar
           </button>
@@ -474,11 +491,7 @@ function Working({ step }: { step: AssistantStep }) {
   return (
     <div className="space-y-1" role="status" aria-live="polite">
       <p className="flex items-center gap-2 text-sm text-body">
-        <span className="flex gap-1" aria-hidden>
-          <Dot />
-          <Dot delay="150ms" />
-          <Dot delay="300ms" />
-        </span>
+        <Puntitos />
         {step === 'buscando' ? 'Buscando publicaciones…' : 'Pensando…'}
       </p>
       {slow && (
@@ -490,12 +503,43 @@ function Working({ step }: { step: AssistantStep }) {
   );
 }
 
+/**
+ * Los tres puntitos de "está escribiendo", violetas y rebotando. La animación
+ * vive en `globals.css` (`.puntito`), que es donde puede apagarse sola para
+ * quien pidió menos movimiento en su sistema.
+ */
+function Puntitos() {
+  return (
+    <span className="flex gap-1" aria-hidden>
+      <Dot />
+      <Dot delay="180ms" />
+      <Dot delay="360ms" />
+    </span>
+  );
+}
+
 function Dot({ delay }: { delay?: string }) {
   return (
     <span
-      className="h-1.5 w-1.5 animate-pulse rounded-full bg-brand-deep"
+      className="puntito h-1.5 w-1.5 rounded-full bg-ai"
       style={delay ? { animationDelay: delay } : undefined}
     />
+  );
+}
+
+/**
+ * El asistente escribiendo el saludo, apenas se abre el chat.
+ *
+ * Es a propósito más callado que `Working`: no dice "Pensando…" ni se hace
+ * cargo de ninguna demora, porque acá no hay nada esperando del otro lado —es
+ * puesta en escena, y la respuesta ya está escrita.
+ */
+function Escribiendo() {
+  return (
+    <div className="flex items-center gap-2 px-3 py-2" role="status" aria-live="polite">
+      <Puntitos />
+      <span className="text-sm text-muted">Escribiendo…</span>
+    </div>
   );
 }
 
@@ -508,7 +552,11 @@ function Bubble({ message }: { message: ChatMessage }) {
         <p
           className={[
             'whitespace-pre-line rounded-xl px-3 py-2 text-sm leading-relaxed',
-            isUser ? 'bg-brand-soft text-ink' : 'bg-mist text-body',
+            // El de la persona sigue en azul suave y el del asistente pasó del
+            // gris al violeta suave: es el color de la IA en toda la
+            // aplicación, y de paso los dos lados de la conversación se
+            // distinguen por color y no solo por de qué lado están.
+            isUser ? 'bg-brand-soft text-ink' : 'bg-ai-soft text-body',
           ].join(' ')}
         >
           {message.text}

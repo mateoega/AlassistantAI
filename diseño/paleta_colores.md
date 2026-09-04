@@ -83,6 +83,8 @@ Hay **un color fuera de la paleta de la marca, y es uno solo**: el violeta `#6D2
 
 **Contraste medido:** 7,1:1 con texto blanco encima, y 6,4:1 como texto sobre su relleno suave. Los dos bien arriba del 4,5:1 de la norma.
 
+**Las letras que van encima del violeta son doradas** (`#FCD34D`), no blancas *(sumado el 2026-09-04)*. El dorado se usa SOLO sobre el violeta: sobre blanco da 1,5:1 de contraste y es prácticamente invisible; sobre el violeta da 4,9:1, arriba del 4,5:1 de la norma. Es un amarillo dorado y no un naranja, y eso no es una sutileza: la regla de identidad de más arriba —nada de rojo ni naranja— sigue valiendo, porque esto no es un estado ni una alarma sino la tipografía de una pieza de la marca.
+
 **Su símbolo es un cohete**, y es uno solo para toda la aplicación (`RocketIcon` en `ui.tsx`). Lo eligió el cliente. Las dos puertas al asistente nunca se ven a la vez —una es de celular y la otra de escritorio—, y con dos dibujos distintos se leerían como dos cosas.
 
 **Su sombra es propia:** `--shadow-ai`, que es la sombra de lo que flota pero teñida de violeta. Un botón violeta con halo azul se ve como un botón violeta apoyado sobre otra cosa.

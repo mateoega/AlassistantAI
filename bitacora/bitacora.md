@@ -1278,3 +1278,27 @@ Medido en el mismo aviso: la ficha cerrada pasó de 1.493px a **1.382px**, y en 
 **Las etiquetas de la barra de abajo pasaron de 11 a 12px.** No estaban en el pedido, pero eran el texto más chico que quedaba en pantalla y la barra es lo que más se toca. A 12px "Guardados" y "Mis avisos" siguen entrando enteros en su espacio, medido a 375px.
 
 **Qué se verificó.** A 375px, con sesión: el muro, la ficha con el análisis abierto, notificaciones, mis publicaciones y el login. El precio quedó en 30px, el modelo en 18, el título de cada tarjeta de la ficha en 16 y el cuerpo en 15; el renglón del muro sigue en 14. Sin desborde horizontal en ninguna de las cinco pantallas.
+
+## 2026-09-04 — El chat de IA: violeta y dorado, y un saludo que se escribe
+
+El cliente lo miró y dijo que era "muy poco estético". Lo que salió de ahí:
+
+**El encabezado es de vidrio violeta y dice "Chat con IA" en dorado.** Antes decía "Asistente AI" con una bajada que explicaba qué sabía hacer ("Sabe qué vehículo estás mirando"); la bajada se fue. Lo que el asistente sabe se ve en lo que contesta, no en un renglón de letra chica.
+
+Para que el vidrio signifique algo, **el encabezado se mudó adentro de la caja que se desplaza** y quedó pegado arriba (`sticky`): los mensajes pasan por debajo y se adivinan borrosos. Con el encabezado afuera no habría nada detrás que dejar ver, y el vidrio sería un color más. El botón de cerrar sigue donde estaba, pero pasó a blanco translúcido: sobre el violeta, el borde gris y el texto oscuro de antes quedaban ilegibles.
+
+**Nace el dorado, y es la tipografía del violeta.** `#FCD34D` para las letras y los íconos de todo lo que está pintado de violeta: el botón "Chat IA" de la barra, "Analizar con IA", "Analizar esta publicación", el flotante de escritorio, el botón de enviar del chat —que además pasó de azul a violeta— y el título del panel. **Solo sobre el violeta**: sobre blanco da 1,5:1 de contraste y es prácticamente invisible; sobre el violeta, 4,9:1.
+
+Es un **amarillo dorado y no un naranja**, y la diferencia no es un capricho: la regla de identidad del proyecto sigue siendo que no hay rojo ni naranja en ningún estado. Esto no es un estado ni una alarma, es la tipografía de una pieza.
+
+**El saludo se escribe en vez de estar puesto.** Al abrir el chat aparecen tres puntitos y a los cinco segundos llega el mensaje, como cuando alguien contesta del otro lado. Corre una sola vez por visita: cerrar y volver a abrir no obliga a esperar de nuevo.
+
+**El saludo sigue sin ser un mensaje del hilo**, y eso es lo que hay que cuidar si alguien lo toca: si fuera un mensaje de verdad, viajaría al modelo como parte de la conversación en cada pregunta.
+
+**Se fueron las tres sugerencias** ("¿Qué le preguntarías al vendedor?" y las otras dos). Las pidió sacar el cliente. Quedan anotadas en la bitácora del 2026-08-27 por el problema que dieron —enviaban al tocarlas— y la regla que salió de ahí sigue viva aunque las etiquetas ya no estén: nada de la aplicación envía sin que la persona lo pida.
+
+**Los puntitos ahora rebotan en vez de titilar.** Usaban `animate-pulse`, que sube y baja la opacidad de los tres a destiempo y se lee como algo que parpadea, no como alguien escribiendo. Ahora saltan tres píxeles con el retraso de siempre, y son los mismos tres puntos para las dos esperas: el saludo y cada respuesta. Se apagan solos con `prefers-reduced-motion`, porque hay gente a la que el movimiento le marea.
+
+**Los globitos cambiaron de color.** El del asistente pasó del gris al violeta suave y el de la persona sigue en azul suave: los dos lados de la conversación se distinguen por color y no solo por de qué lado están.
+
+**Qué se verificó.** A 375px, con el backend real: el encabezado de vidrio violeta con el título en dorado (`rgb(252, 211, 77)` medido en pantalla), los puntitos y "Escribiendo…" al abrir, el saludo llegando a los cinco segundos en un globito violeta, una pregunta de verdad al modelo —con sus puntitos de "Pensando…" y la respuesta— y el botón de enviar en violeta con las letras doradas. Sin errores en la consola.

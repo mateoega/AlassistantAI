@@ -116,6 +116,25 @@
   --color-ai: #6d28d9;
   --color-ai-soft: #f1ecfe;
 
+  /**
+   * EL DORADO QUE VA ENCIMA DEL VIOLETA (2026-09-04).
+   *
+   * Es el color de las letras y los íconos de todo lo que está pintado de
+   * violeta: los botones de IA, el título del panel del chat. No se usa en
+   * ningún otro lado, y sobre todo NO SE USA SOBRE BLANCO — ahí no se lee: da
+   * 1,5:1 de contraste, que es prácticamente invisible.
+   *
+   * Es un amarillo dorado y no un naranja, y la diferencia importa: la regla
+   * de identidad del proyecto sigue siendo que no hay rojo ni naranja en
+   * ningún estado. Esto no es un estado ni una alarma, es la tipografía de una
+   * sola pieza de la marca.
+   *
+   * Contraste medido sobre el violeta: 4,9:1, arriba del 4,5:1 de la norma.
+   * Un dorado más oscuro daría más contraste pero se leería marrón; uno más
+   * claro se acerca al blanco y deja de ser dorado.
+   */
+  --color-ai-gold: #fcd34d;
+
   /* ---------------------------------------------------------------------------
    * LAS SOMBRAS: LO QUE REEMPLAZA AL GRIS DE FONDO
    *
@@ -266,6 +285,71 @@ h3 {
 
 .sin-barra::-webkit-scrollbar {
   display: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * EL VIDRIO VIOLETA
+ *
+ * Es el mismo vidrio esmerilado de las barras, pero teñido con el violeta de
+ * la IA. Lo usa el encabezado del panel del chat, que queda fijo arriba
+ * mientras la conversación pasa por debajo: con un violeta opaco esa
+ * conversación desaparecería detrás de una franja, y lo que se quiere es que
+ * se adivine.
+ *
+ * Va acá y no como clases sueltas por lo mismo que `.glass`: la regla de
+ * reserva para los navegadores sin desenfoque no se puede escribir en un
+ * atributo `class`, y sin ella el texto de los mensajes se leería a través del
+ * encabezado.
+ * ------------------------------------------------------------------------- */
+.glass-ai {
+  background-color: rgb(109 40 217 / 0.82);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-ai {
+    background-color: rgb(109 40 217 / 0.97);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * LOS TRES PUNTITOS DE "ESTÁ ESCRIBIENDO"
+ *
+ * Se usan mientras el asistente todavía no mandó una letra: al abrir el chat,
+ * antes del saludo, y cada vez que se le pregunta algo.
+ *
+ * Rebotan, no parpadean. Antes usaban `animate-pulse` de Tailwind, que sube y
+ * baja la opacidad de los tres a destiempo: se lee como algo que titila, no
+ * como alguien escribiendo. El salto de tres píxeles con el retraso de cada
+ * punto es el gesto que todo el mundo ya conoce de las aplicaciones de
+ * mensajes.
+ *
+ * `prefers-reduced-motion` lo apaga: hay gente a la que el movimiento le
+ * marea, y los puntos siguen diciendo lo mismo quietos.
+ * ------------------------------------------------------------------------- */
+@keyframes puntito {
+  0%,
+  70%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  35% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+.puntito {
+  animation: puntito 1.3s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .puntito {
+    animation: none;
+    opacity: 0.6;
+  }
 }
 
 /* Que el foco del teclado siempre se vea: hace falta para poder usar la app

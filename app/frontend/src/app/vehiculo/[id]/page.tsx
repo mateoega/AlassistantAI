@@ -462,7 +462,7 @@ function AiSection({ children }: { children: ReactNode }) {
         type="button"
         onClick={() => setAbierta((actual) => !actual)}
         aria-expanded={abierta}
-        className="flex w-full items-center justify-center gap-2 rounded-xl bg-ai px-5 py-3 text-sm font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98]"
+        className="flex w-full items-center justify-center gap-2 rounded-xl bg-ai px-5 py-3 text-sm font-semibold text-ai-gold shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98]"
       >
         <RocketIcon />
         {abierta ? 'Ocultar el análisis' : 'Analizar con IA'}
