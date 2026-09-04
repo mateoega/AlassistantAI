@@ -62,7 +62,18 @@ export function ListingCard({ listing }: { listing: Listing }) {
    */
   return (
     <article className="group relative h-full">
-      <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-mist shadow-card">
+      {/* LA FOTO NO TIENE ESQUINAS NI SOMBRA EN CELULAR (2026-09-04).
+
+          Ahí la grilla llega al borde de la pantalla, así que la foto ya no es
+          una tarjeta apoyada sobre la página: es la página. Una esquina
+          redondeada contra el filo del vidrio deja un triangulito blanco que se
+          lee como un error de dibujo, y una sombra no tiene dónde caer. Es lo
+          que hace Marketplace y es la referencia que pidió el cliente.
+
+          De tablet para arriba vuelven las dos: ahí la grilla tiene margen, las
+          fotos vuelven a ser piezas separadas sobre blanco, y sin sombra
+          quedarían pegadas al papel. */}
+      <div className="relative aspect-square w-full overflow-hidden bg-mist sm:rounded-2xl sm:shadow-card">
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -96,10 +107,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
         {listing.status === 'sold' && <div className="absolute inset-0 bg-white/55" />}
       </div>
 
-      {/* El texto va pegado a la foto y con un pelo de aire al costado: en el
-          muro a pantalla completa la columna llega hasta el borde, y un precio
-          apoyado exactamente en el filo se lee apretado. */}
-      <div className="mt-2 space-y-0.5 px-0.5">
+      {/* EL TEXTO SÍ TIENE MARGEN, AUNQUE LA FOTO NO. Es la mitad que hace
+          posible lo otro: la foto llega al filo de la pantalla y el precio no,
+          porque un precio apoyado exactamente en el borde se lee apretado y en
+          los celulares con pantalla curva el filo se dobla. Ocho píxeles en
+          celular, donde la columna toca el borde; de tablet para arriba
+          alcanzan dos, que ahí el margen lo pone la grilla. */}
+      <div className="mt-2 space-y-0.5 px-2 sm:px-0.5">
         <p className="text-[15px] font-bold text-ink">
           {formatPrice(listing.price, listing.currency)}
         </p>

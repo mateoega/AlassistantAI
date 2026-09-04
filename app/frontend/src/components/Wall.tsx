@@ -293,25 +293,26 @@ export function Wall() {
             </p>
           )}
 
-          {/* LA GRILLA SE SALE DEL MARGEN EN CELULAR.
+          {/* EN CELULAR LA GRILLA LLEGA HASTA EL BORDE DE LA PANTALLA.
 
-              El `<main>` deja 16px de aire a cada lado, que es lo correcto
-              para un texto y es plata tirada para una grilla de fotos: con
-              esos 16px y 12px de separación, en una pantalla de 375px cada
-              foto medía 165px. El `-mx-2` devuelve 8px de cada lado y la
-              separación baja a 8px: la misma foto pasa a medir 179px, un 8%
-              más grande, y el listado se ve como el de una aplicación de
-              clasificados y no como un documento con márgenes.
+              El `<main>` deja 16px de aire a cada lado, que es lo correcto para
+              un texto y es plata tirada para una grilla de fotos. El `-mx-4`
+              devuelve esos 16px enteros y la separación entre columnas baja a
+              2px: en una pantalla de 375px cada foto pasa de 179 a 186px de
+              lado, y como son cuadradas, eso son 186px más de superficie por
+              foto. Es lo que hace Marketplace, y es la referencia que pidió el
+              cliente el 2026-09-04.
 
-              Ocho píxeles y no cero: pegar la foto al filo del vidrio se ve
-              bien en la maqueta, pero el texto de abajo —el precio, el modelo—
-              queda apoyado en el borde y se lee incómodo, y en los celulares
-              con pantalla curva el filo directamente se dobla.
+              ANTES ERA `-mx-2` CON 8PX DE SEPARACIÓN, y el motivo de no llegar
+              al filo era que el texto de abajo —el precio, el modelo— quedaba
+              apoyado en el borde. Eso se resolvió donde correspondía: la foto
+              llega al filo y **el texto tiene su propio aire** (`px-2` en la
+              tarjeta), que es exactamente lo que hace Marketplace.
 
-              De tablet para arriba (`sm:mx-0`) vuelve al margen normal: ahí
-              sobra ancho y una grilla que toca los bordes de un monitor se ve
-              descuidada, no amplia. */}
-          <ul className="-mx-2 grid grid-cols-2 gap-x-2 gap-y-5 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
+              De tablet para arriba (`sm:mx-0`) vuelve al margen normal y a la
+              separación de 16px: ahí sobra ancho, y una grilla que toca los
+              bordes de un monitor se ve descuidada, no amplia. */}
+          <ul className="-mx-4 grid grid-cols-2 gap-x-0.5 gap-y-4 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 lg:grid-cols-4 xl:grid-cols-5">
             {listings.map((listing) => (
               <li key={listing.id}>
                 <ListingCard listing={listing} />

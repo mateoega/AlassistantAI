@@ -109,7 +109,7 @@ export default function GuardadosPage() {
         // La misma grilla del muro, con el mismo salto de margen en celular:
         // son las mismas tarjetas y tienen que verse igual. Ver el comentario
         // largo en `Wall`.
-        <ul className="-mx-2 grid grid-cols-2 gap-x-2 gap-y-5 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-4 xl:grid-cols-5">
+        <ul className="-mx-4 grid grid-cols-2 gap-x-0.5 gap-y-4 sm:mx-0 sm:grid-cols-3 sm:gap-x-4 sm:gap-y-6 lg:grid-cols-4 xl:grid-cols-5">
           {visible.map((listing) => (
             <li key={listing.id}>
               <ListingCard listing={listing} />

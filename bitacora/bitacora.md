@@ -1101,3 +1101,17 @@ Lo que se sacó, uno por uno:
 **La píldora es la única de la aplicación y es a propósito.** Los campos de los formularios siguen siendo rectángulos de 12px: este no es un campo de formulario sino un buscador, y comparte forma con las fichas de abajo, el corazón de guardar y el botón del asistente. El redondeo completo ya se usaba para esas piezas, así que no es un tercer radio en la escala de las cajas.
 
 **Qué se verificó.** En el navegador, a 375px y en escritorio, con el backend y el catálogo reales: el campo mide 287×48 y el botón 48×48 dentro de los 375 sin desborde horizontal; el texto del campo mide 16px, así que Safari de iPhone no agranda la pantalla al tocarlo; las fichas salen con los nombres del catálogo, tanto las de los filtros comunes como las de la ficha del tipo; sacar una ficha reescribe la dirección y deja las demás; sacar la del tipo de vehículo se lleva también los filtros de su ficha; con el panel abierto, "Aplicar filtros" queda a 754px del borde de arriba, adentro de la pantalla. Sin errores en la consola.
+
+## 2026-09-04 — Las fotos del muro, de borde a borde
+
+La grilla del muro (y la de guardados, que es la misma) pasó a llegar hasta el filo de la pantalla en celular: `-mx-4` en vez de `-mx-2`, 2px de separación entre columnas en vez de 8, y las fotos sin esquinas redondeadas ni sombra. En una pantalla de 375px cada foto pasó de **179 a 187px de lado**.
+
+**Por qué:** lo pidió el cliente con una referencia concreta —Marketplace de Facebook— y una comparación lado a lado con la pantalla nuestra: allá las fotos ocupan el ancho entero y acá quedaban dentro de rectángulos con aire a los costados. Tenía razón en el diagnóstico: en un clasificado, la foto es lo único que hace que alguien se detenga, y todo píxel que gaste el marco se lo saca a la foto.
+
+**Se da vuelta el argumento del 2026-09-01 para no llegar al borde**, que era que el texto de abajo —el precio, el modelo— quedaba apoyado en el filo y se leía incómodo, y que en las pantallas curvas el filo se dobla. El problema era real; lo que estaba mal era la solución. Se arreglaba donde nace: **la foto llega al borde y el texto tiene su propio margen** (`px-2` en la tarjeta, 8px). Es exactamente lo que hace Marketplace, y se ve en la captura que mandó el cliente: la foto arranca en el píxel cero y el precio de abajo, no.
+
+**Las esquinas redondeadas y la sombra se van solo en celular** (`sm:rounded-2xl sm:shadow-card`). Una esquina de 16px contra el borde de la pantalla deja un triangulito blanco que se lee como un error de dibujo, y una sombra no tiene dónde caer si no hay página alrededor. De tablet para arriba la grilla vuelve a tener margen, las fotos vuelven a ser piezas separadas sobre blanco, y las dos cosas vuelven con ella.
+
+**No se tocó el recorte.** La miniatura del muro es cuadrada y recortada (`object-cover`) desde siempre, y así queda: en una grilla de dos columnas, respetar la forma original de cada foto daría filas de alturas distintas. La regla de no recortar sigue valiendo donde importa, que es la foto grande de la ficha del vehículo: ahí el comprador tiene que ver el vehículo entero, y las franjas que sobran se llenan con la misma foto ampliada y desenfocada.
+
+**Qué se verificó.** En el navegador a 375px, con el backend real: las fotos miden 187×187, la primera columna arranca en x=0, la segunda termina en el borde, la separación es de 2px y el precio queda a 8px del filo; sin desborde horizontal. A 1024px la grilla vuelve a cuatro columnas con margen, esquinas de 16px y la sombra `card` puesta.
