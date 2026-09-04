@@ -27,6 +27,11 @@ interface ListingsPage {
   page: number;
   has_more: boolean;
   total: number;
+  /**
+   * El servidor no encontró nada con lo que se escribió y devolvió lo más
+   * parecido. Ver `fallbackPorParecido` en el backend.
+   */
+  approximate?: boolean;
 }
 
 export function Wall() {
@@ -36,6 +41,8 @@ export function Wall() {
 
   const [listings, setListings] = useState<Listing[]>([]);
   const [total, setTotal] = useState(0);
+  /** La búsqueda no encontró nada exacto y lo que se ve es lo más parecido. */
+  const [aproximado, setAproximado] = useState(false);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -127,6 +134,7 @@ export function Wall() {
 
       setListings(data.listings);
       setTotal(data.total);
+      setAproximado(data.approximate === true);
       setPage(0);
       setHasMore(data.has_more);
     } catch (error) {
@@ -290,6 +298,25 @@ export function Wall() {
           {filtered && (
             <p className="text-sm font-medium text-ink">
               {total === 1 ? '1 vehículo encontrado' : `${total} vehículos encontrados`}
+            </p>
+          )}
+
+          {/* CUANDO LO QUE SE MUESTRA NO ES LO QUE SE PIDIÓ, SE DICE.
+
+              El servidor busca por parecido cuando la búsqueda exacta no
+              encontró nada —un error de tipeo, un acento— y devuelve
+              `approximate`. Sin este renglón, alguien que buscó "hilix" ve
+              seis Hilux y se queda pensando que buscó bien; y peor, alguien
+              que buscó una marca que de verdad no está publicada ve otros
+              vehículos y cree que son esa marca.
+
+              Va abajo del contador y no en su lugar: cuántos hay sigue siendo
+              el dato principal. Y con la letra secundaria, porque es una
+              aclaración y no una alarma — la regla de identidad del proyecto
+              dice que un aviso no se pinta de rojo. */}
+          {filtered && aproximado && (
+            <p className="text-xs text-muted">
+              No encontramos nada escrito así. Estos son los más parecidos.
             </p>
           )}
 

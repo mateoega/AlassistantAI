@@ -5,7 +5,11 @@ import { HttpError } from '../lib/http-error.js';
 import { getVehicleTypeById, listVehicleTypes } from './catalog.js';
 import { describeSpecs, type SpecDisplay } from './spec-display.js';
 import { validateSpecs } from '../validation/specs.js';
-import { applyListingFilters, type ListingFilters } from './listing-filters.js';
+import {
+  applyListingFilters,
+  fallbackPorParecido,
+  type ListingFilters,
+} from './listing-filters.js';
 import {
   assertPhotosBelongTo,
   type ListingInput,
@@ -65,50 +69,94 @@ export async function listListings(
   // una segunda consulta contando el total.
   const to = from + PAGE_SIZE;
 
-  // `count: 'exact'` viene en la misma consulta y trae el total de
-  // publicaciones que cumplen los filtros, no las de esta página: es lo
-  // que deja decir "23 vehículos encontrados" sin una segunda consulta.
-  let query = supabase.from('listings').select(LISTING_SELECT, { count: 'exact' });
+  /**
+   * Una pasada del muro con un juego de filtros. Está adentro de una función
+   * porque puede correr dos veces: si la búsqueda exacta no encuentra nada, se
+   * repite con los avisos parecidos. Es la MISMA consulta las dos veces —mismo
+   * recorte de columnas, mismo orden, misma paginación—, y eso es a propósito:
+   * el rescate cambia a qué avisos se mira, no qué es un aviso del muro.
+   */
+  async function pasada(conFiltros: ListingFilters) {
+    // `count: 'exact'` viene en la misma consulta y trae el total de
+    // publicaciones que cumplen los filtros, no las de esta página: es lo
+    // que deja decir "23 vehículos encontrados" sin una segunda consulta.
+    let query = supabase.from('listings').select(LISTING_SELECT, { count: 'exact' });
 
-  if (scope === 'mine') {
-    query = query.eq('seller_id', userId).order('created_at', { ascending: false });
-  } else {
-    // El muro: solo lo que está efectivamente disponible. Un aviso pausado o
-    // ya vendido no tiene por qué ocupar lugar acá.
-    query = query.eq('status', 'published');
+    if (scope === 'mine') {
+      query = query.eq('seller_id', userId).order('created_at', { ascending: false });
+    } else {
+      // El muro: solo lo que está efectivamente disponible. Un aviso pausado o
+      // ya vendido no tiene por qué ocupar lugar acá.
+      query = query.eq('status', 'published');
 
-    // El muro filtrado es el mismo muro, no otra pantalla: la búsqueda del
-    // Sprint 4 recorta este listado en vez de reemplazarlo. Los filtros son
-    // los mismos que usa el asistente — ver `listing-filters.ts`.
-    const filtered = await applyListingFilters(supabase, query, filters);
+      // El muro filtrado es el mismo muro, no otra pantalla: la búsqueda del
+      // Sprint 4 recorta este listado en vez de reemplazarlo. Los filtros son
+      // los mismos que usa el asistente — ver `listing-filters.ts`.
+      const filtered = await applyListingFilters(supabase, query, conFiltros);
 
-    // Un tipo o una provincia que no están en el catálogo: no hay resultados
-    // posibles, y devolver la página vacía es más honesto que ignorar el
-    // filtro y mostrar el muro entero como si nada.
-    if (!filtered) {
-      return { listings: [], page, has_more: false, total: 0 };
+      // Un tipo o una provincia que no están en el catálogo: no hay resultados
+      // posibles, y devolver la página vacía es más honesto que ignorar el
+      // filtro y mostrar el muro entero como si nada.
+      if (!filtered) {
+        return null;
+      }
+
+      query = filtered.query.order('published_at', { ascending: false });
     }
 
-    query = filtered.query.order('published_at', { ascending: false });
+    const { data, error, count } = await query.range(from, to);
+
+    if (error) {
+      throw new Error(`No se pudieron leer las publicaciones: ${error.message}`);
+    }
+
+    return { rows: data ?? [], count: count ?? 0 };
   }
 
-  const { data, error, count } = await query.range(from, to);
+  let resultado = await pasada(filters);
 
-  if (error) {
-    throw new Error(`No se pudieron leer las publicaciones: ${error.message}`);
+  /*
+   * NO ENCONTRÓ NADA: SE BUSCA LO PARECIDO ANTES DE MOSTRAR UNA PANTALLA VACÍA.
+   *
+   * Una letra equivocada o un acento de diferencia devuelven cero, y desde
+   * afuera eso se lee como "no hay ninguno publicado" y no como "escribiste
+   * distinto". Ver `fallbackPorParecido`.
+   *
+   * SOLO EN LA PRIMERA PÁGINA. Que la página 3 de una búsqueda vacía traiga
+   * parecidos sería incoherente: el rescate reemplaza a la lista entera, no la
+   * continúa. Y `aproximado` viaja en la respuesta para que la pantalla pueda
+   * decir que esto no es lo que se pidió — mostrar otra cosa sin avisar es
+   * peor que no encontrar nada.
+   */
+  let aproximado = false;
+
+  if (resultado && resultado.count === 0 && page === 0 && scope !== 'mine') {
+    const parecidos = await fallbackPorParecido(supabase, filters);
+
+    if (parecidos) {
+      const rescate = await pasada(parecidos);
+      if (rescate && rescate.count > 0) {
+        resultado = rescate;
+        aproximado = true;
+      }
+    }
   }
 
-  const rows = data ?? [];
-  const hasMore = rows.length > PAGE_SIZE;
+  if (!resultado) {
+    return { listings: [], page, has_more: false, total: 0, approximate: false };
+  }
+
+  const hasMore = resultado.rows.length > PAGE_SIZE;
   const typesById = await vehicleTypesById();
 
   return {
-    listings: rows
+    listings: resultado.rows
       .slice(0, PAGE_SIZE)
       .map((row) => presentListing(row as unknown as ListingRow, typesById)),
     page,
     has_more: hasMore,
-    total: count ?? rows.length,
+    total: resultado.count,
+    approximate: aproximado,
   };
 }
 

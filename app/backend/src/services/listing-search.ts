@@ -1,5 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { applyListingFilters, type ListingFilters } from './listing-filters.js';
+import {
+  applyListingFilters,
+  fallbackPorParecido,
+  type ListingFilters,
+} from './listing-filters.js';
 
 /**
  * Búsqueda de publicaciones para el asistente.
@@ -87,7 +91,30 @@ export async function searchListings(
     throw new Error(`No se pudo buscar publicaciones: ${error.message}`);
   }
 
-  return ((data ?? []) as unknown as SearchRow[]).map((row) => ({
+  const rows = (data ?? []) as unknown as SearchRow[];
+
+  /*
+   * SI NO ENCONTRÓ NADA, SE BUSCA LO PARECIDO — igual que en el muro.
+   *
+   * La regla del proyecto es que un filtro signifique lo mismo por las dos
+   * puertas: si escribir "hilix" en la barra rescata las Hilux, pedírselo al
+   * asistente tiene que rescatarlas también. Si no, el asistente contesta "no
+   * hay ninguna publicada" por un error de tipeo, que es la peor forma
+   * posible de equivocarse: suena a un dato y es un error de escritura.
+   *
+   * El asistente no recibe un aviso aparte de que estos son aproximados: lo
+   * que le llega es una lista de vehículos, y de ahí en más razona igual. El
+   * cartel es cosa de la pantalla, donde se puede mostrar sin gastar tokens.
+   */
+  if (rows.length === 0) {
+    const parecidos = await fallbackPorParecido(supabase, filters);
+
+    if (parecidos) {
+      return searchListings(supabase, parecidos);
+    }
+  }
+
+  return rows.map((row) => ({
     id: row.id,
     titulo: `${row.brand} ${row.model} ${row.year}`,
     tipo: row.vehicle_type?.name ?? null,

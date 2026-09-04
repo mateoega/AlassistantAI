@@ -1405,3 +1405,70 @@ resultado al revés—, "chevrolet cruze premier" 1, "ruze" 2, "hilux 4x4" 3,
 "toyota hilux" 6, con espacios de más al principio, al final y en el medio 6, y
 "chevrolet,cruze" 0 sin error. En el muro, "toyota hilux" muestra "6 vehículos
 encontrados".
+
+
+## 2026-09-04 — Buscar por parecido: los errores de tipeo dejan de devolver cero
+
+Segunda mitad del arreglo del buscador. La primera resolvió "Toyota Hilux";
+esta resuelve "hilix", "corola" y "toyta hilux" — una letra cambiada, una de
+menos, una de más— y los acentos.
+
+**La decisión de diseño, y es la que importa: el parecido corre SOLO cuando la
+búsqueda exacta devolvió cero.** Es lo que separa una ayuda de un estorbo.
+Quien escribe "Cruze" y tiene Cruze publicados no quiere ver Corollas
+mezclados; el parecido tiene sentido cuando la única alternativa es una
+pantalla vacía. Verificado: "hilux" bien escrito devuelve 6 avisos con
+`approximate: false` —el rescate ni se llama— y "hilix" devuelve 9 con
+`approximate: true`.
+
+**En la base** (migración `20260904000001_busqueda_por_parecido`): `unaccent`
+para que los acentos dejen de contar, `pg_trgm` para medir parecido, un
+envoltorio IMMUTABLE de `unaccent` —la forma de un argumento es STABLE y
+Postgres no indexa lo que no es IMMUTABLE—, un índice GIN de trigramas sobre
+marca y modelo, y la función `buscar_listings_parecidos`.
+
+**`word_similarity` y no `similarity`.** `similarity` compara los textos
+enteros, así que "hilux" contra "toyota hilux srv 2.8 tdi 4x4" da un parecido
+bajísimo: las letras de más del aviso cuentan como diferencia.
+`word_similarity` busca el pedazo del aviso que mejor se parece a lo buscado,
+que es lo que hace una persona leyendo un título.
+
+**El umbral es 0,3 y está elegido con un caso en la mano**: "hilix" contra
+"hilux" da 0,50 medido, pero una palabra corta con una letra cambiada puede
+bajar a 0,33, y un umbral más exigente dejaría afuera justamente el caso que se
+quiere rescatar. Se lo puede permitir porque corre solo sobre una pantalla que
+iba a estar vacía.
+
+**La función es `security invoker`**, así que lee `listings` con la identidad
+de quien pregunta y las políticas se aplican igual. Verificado con la clave
+anónima: de los 9 ids que devuelve "hilix", los 9 se pueden leer sin cuenta y
+ninguno es un aviso que no correspondiera ver.
+
+**Devuelve ids, no avisos, y eso también es a propósito.** El backend usa esos
+ids para volver a correr la MISMA consulta del muro —con sus filtros, su orden
+y su paginación— en vez de armar una consulta aparte. Si devolviera avisos
+habría dos lugares decidiendo qué es un aviso visible, y algún día iban a
+discrepar. Los otros filtros se respetan enteros: "hilix" en Córdoba hasta
+cinco millones sigue siendo en Córdoba y hasta cinco millones.
+
+**Las dos puertas rescatan igual**, que es la regla del proyecto: el muro y la
+herramienta de búsqueda del asistente llaman las dos a `fallbackPorParecido`.
+Si escribir "hilix" en la barra encuentra las Hilux, pedírselo al asistente
+también — si no, contestaría "no hay ninguna publicada" por un error de tipeo,
+que suena a un dato y es un error de escritura.
+
+**Y la pantalla lo dice.** Cuando lo que se muestra no es lo que se pidió, el
+muro agrega un renglón: "No encontramos nada escrito así. Estos son los más
+parecidos." Sin eso, alguien que buscó una marca que de verdad no está
+publicada ve otros vehículos y cree que son esa marca. Va con la letra
+secundaria y no en rojo: es una aclaración, no una alarma.
+
+**Qué se verificó.** La migración se aplicó en el panel de Supabase
+(`Success. No rows returned`) después de comprobar que lo cargado en el editor
+era idéntico al archivo —misma huella, 8.458 caracteres—. Después, desde afuera
+y **con la clave anónima**, no con la de servicio: "hilux" 9 (parecido 1,00),
+"hilix" 9 (0,50), "hilus" 11 (0,67), "toyta hilux" 6 (0,67), "corola" 6 (0,71),
+"chevrolett" 4 (0,82) y "bicicleta" 0 —no inventa parecidos donde no los hay—.
+Por la API: "hilix" 9 con `approximate: true`, "hilux" 6 con `false`. En el
+muro, "hilix" muestra "9 vehículos encontrados", el renglón de aclaración y
+Hilux de verdad. `npm run build` pasa en el backend y en el frontend.

@@ -48,6 +48,14 @@ export interface ListingFilters {
   province_slug?: string;
   /** Filtros sobre la ficha específica del tipo de vehículo. */
   specs?: SpecFilter[];
+  /**
+   * Recorta la búsqueda a estos avisos. **No llega nunca desde la dirección ni
+   * desde el asistente**: lo arma `fallbackPorParecido` con los ids que
+   * devolvió la base, y es lo que le deja al rescate por parecido reusar la
+   * consulta del muro —con sus filtros, su orden y su paginación— en vez de
+   * escribir una segunda.
+   */
+  only_ids?: string[];
 }
 
 /**
@@ -60,6 +68,7 @@ export interface FilterableQuery {
   gte(column: string, value: unknown): this;
   lte(column: string, value: unknown): this;
   ilike(column: string, pattern: string): this;
+  in(column: string, values: readonly unknown[]): this;
   or(filters: string): this;
 }
 
@@ -97,6 +106,17 @@ export async function applyListingFilters<Q extends FilterableQuery>(
       return null;
     }
     result = result.eq('province_id', provinceId);
+  }
+
+  // El rescate por parecido ya eligió a cuáles avisos mirar; todo lo demás
+  // —tipo, provincia, precio, ficha— se sigue aplicando arriba de eso. Una
+  // lista vacía es una búsqueda sin resultados posibles, igual que un slug que
+  // no existe en el catálogo.
+  if (filters.only_ids) {
+    if (filters.only_ids.length === 0) {
+      return null;
+    }
+    result = result.in('id', filters.only_ids);
   }
 
   // La marca se guarda como texto libre, así que se compara sin distinguir
@@ -321,6 +341,58 @@ async function idOf(
  */
 function escapeLike(text: string): string {
   return text.trim().replace(/[%_\\]/g, (match) => `\\${match}`);
+}
+
+/* ---------------------------------------------------------------------------
+ * EL RESCATE POR PARECIDO
+ *
+ * La búsqueda de arriba compara letra por letra, y eso deja afuera dos cosas
+ * que pasan todo el tiempo: una letra equivocada ("hilix" por "hilux") y los
+ * acentos ("citroen" por "Citroën"). Para esas, la base sabe medir CUÁNTO SE
+ * PARECEN dos textos — ver la migración `20260904000001_busqueda_por_parecido`.
+ *
+ * CORRE SOLO CUANDO LA BÚSQUEDA EXACTA DEVOLVIÓ CERO, y eso no es una
+ * optimización: es lo que separa una ayuda de un estorbo. Quien escribe
+ * "Cruze" y tiene Cruze publicados no quiere ver Corollas mezclados; el
+ * parecido tiene sentido cuando la única alternativa es una pantalla vacía.
+ *
+ * DEVUELVE FILTROS, NO RESULTADOS. Lo que arma es el mismo pedido con el texto
+ * reemplazado por la lista de avisos parecidos, para que quien llama vuelva a
+ * correr SU consulta —la del muro o la del asistente, con su forma, su orden y
+ * su paginación—. Si en vez de esto devolviera avisos, habría dos lugares
+ * decidiendo qué es un aviso visible, y algún día iban a discrepar.
+ *
+ * Los otros filtros se respetan enteros: buscar "hilix" en Córdoba hasta cinco
+ * millones sigue siendo en Córdoba y hasta cinco millones.
+ * ------------------------------------------------------------------------- */
+export async function fallbackPorParecido(
+  supabase: SupabaseClient,
+  filters: ListingFilters,
+): Promise<ListingFilters | null> {
+  // Sin texto no hay nada a qué parecerse. Y si ya venía recortado por ids, el
+  // rescate ya corrió: volver a intentarlo sería buscar parecidos de parecidos.
+  if (!filters.text || filters.only_ids) {
+    return null;
+  }
+
+  const { data, error } = await supabase.rpc('buscar_listings_parecidos', {
+    p_texto: filters.text,
+  });
+
+  // Un error acá no es motivo para romper la búsqueda: la exacta ya terminó y
+  // no encontró nada, así que lo peor que puede pasar es que la persona vea la
+  // misma pantalla vacía que habría visto igual.
+  if (error) {
+    console.warn(`No se pudo buscar por parecido: ${error.message}`);
+    return null;
+  }
+
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  if (ids.length === 0) {
+    return null;
+  }
+
+  return { ...filters, text: undefined, only_ids: ids };
 }
 
 /** Cuántas palabras de la búsqueda se miran. Ver el comentario de `filters.text`. */
