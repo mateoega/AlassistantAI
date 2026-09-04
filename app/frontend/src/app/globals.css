@@ -69,18 +69,50 @@
   --color-line: #e4ebf4;
 
   --color-ink: #05070d;
-  --color-body: #3a4353;
-  /**
-   * El gris de los textos secundarios se oscureció (era #5a6472).
+
+  /* ---------------------------------------------------------------------------
+   * EL TEXTO DEJÓ DE SER GRIS (2026-09-04)
    *
-   * En el monitor pasaba; en un celular al sol, a 12 o 13px, el cliente lo
-   * reportó como "poco contraste". Medido de nuevo contra el fondo blanco de
-   * hoy: 7,3:1 sobre el blanco y 6,8:1 sobre el relleno azulado (`mist`) —
-   * bien arriba del 4,5:1 que pide la norma para texto chico, con margen para
-   * una pantalla con brillo de más. Sigue siendo claramente secundario frente
-   * a `ink`, que es lo que tiene que hacer.
+   * `body` era `#3a4353`, un gris azulado, y es el color de casi todo lo que se
+   * lee en la aplicación: la descripción, el análisis de IA, el precio de
+   * referencia, la ficha técnica. El cliente lo miró en el celular y lo dijo
+   * así: "los veo como en grisecito, quiero que sea negro". Es la tercera vez
+   * que el mismo problema vuelve con otro nombre —primero "poco contraste",
+   * después "muy chico", después "poco grueso"—: **el texto no se leía porque
+   * era gris**, y agrandarlo o engrosarlo tapaba el síntoma sin tocar la causa.
+   *
+   * AHORA `body` ES EL MISMO NEGRO QUE `ink`, y eso es deliberado: el texto
+   * normal y los títulos comparten color. Los dos tokens siguen existiendo
+   * porque quieren decir cosas distintas —`ink` es lo que titula, `body` es lo
+   * que se lee— y porque separarlos de nuevo tiene que ser posible sin tocar
+   * cien pantallas. Que hoy valgan lo mismo no es una repetición para limpiar.
+   *
+   * ¿Y LA JERARQUÍA? La sostienen el tamaño y el peso, que es como la sostienen
+   * las aplicaciones que el cliente usa de referencia: un título es más grande
+   * y `font-semibold` (600) contra el 500 del texto normal. Pintar el texto de
+   * gris para que el título se destaque es hacerlo a costa del que lee.
+   *
+   * Contraste sobre el blanco de la página: 20,1:1, y 18,6:1 sobre el
+   * relleno azulado (`mist`).
+   * ------------------------------------------------------------------------- */
+  --color-body: #05070d;
+
+  /**
+   * El secundario se oscureció otra vez: era `#5a6472`, después `#4c5768`, y
+   * hoy es el gris que hasta ayer usaba el texto normal.
+   *
+   * Se corrió con `body`, y por la misma razón: si el texto pasa a negro y el
+   * secundario se queda donde estaba, la distancia entre uno y otro se abre de
+   * más y lo secundario se lee como apagado —el "poco contraste" que el cliente
+   * reportó dos veces, ahora concentrado en las fechas, las ayudas debajo de
+   * los campos y los renglones de kilómetros y ubicación—.
+   *
+   * Medido contra el fondo blanco de hoy: 10,0:1, y 9,2:1 sobre el relleno
+   * azulado (`mist`) — bien arriba del 4,5:1 que pide la norma para texto
+   * chico. Sigue siendo claramente secundario frente al negro, que es lo que
+   * tiene que hacer.
    */
-  --color-muted: #4c5768;
+  --color-muted: #3a4353;
 
   --color-brand: #2e9eff;
   --color-brand-deep: #1565c0;
