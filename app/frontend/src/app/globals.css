@@ -194,8 +194,46 @@ body {
   color: var(--color-body);
 }
 
+/* ---------------------------------------------------------------------------
+ * EL TEXTO NORMAL PESA 500 Y NO 400 (2026-09-04)
+ *
+ * El cliente probó la aplicación en el celular y pidió la letra "en negrita":
+ * la descripción, la ficha técnica, las ayudas, todo. El pedido no es de gusto
+ * tipográfico —es el mismo problema de siempre— y viene después de haber
+ * probado agrandarla y de decir que por ahí no.
+ *
+ * QUÉ SE HIZO, ENTONCES: subir el peso del texto normal un escalón, de 400 a
+ * 500. Inter es una tipografía variable, así que 500 es un peso dibujado de
+ * verdad y no una versión engordada por el navegador. Sobre fondo blanco eso
+ * es lo que cambia: el trazo se ve entero a la luz del sol, que es donde el
+ * 400 con `antialiased` se adelgaza y desaparece.
+ *
+ * POR QUÉ NO 600 NI 700, QUE SERÍA "NEGRITA" DE VERDAD. Porque el cliente
+ * agregó "que no arruine la estética", y ahí está el límite: si el texto
+ * normal pesa lo mismo que un título, no hay títulos. Toda la jerarquía de la
+ * aplicación se apoya en que los títulos y los precios sean visiblemente más
+ * gruesos que lo que los rodea (`font-semibold` 600, `font-bold` 700). El
+ * texto sube un escalón y los otros se quedan donde están, así que la
+ * distancia entre uno y otro se mantiene.
+ *
+ * VA EN EL `body` Y NO CLASE POR CLASE, por lo mismo que la escala de tamaños:
+ * son más de cien lugares, y lo que alguien escriba mañana también tiene que
+ * quedar cubierto. Tailwind hace que los títulos y los campos hereden el peso
+ * salvo que declaren el suyo, así que esta sola línea alcanza.
+ *
+ * EFECTO DE COSTADO A TENER EN CUENTA: `font-medium` también es 500, así que
+ * las clases sueltas de `font-medium` que hay en las pantallas ya no agregan
+ * nada. No estorban y no se sacaron; lo que hay que saber es que **resaltar
+ * algo hoy es `font-semibold`**, no `font-medium`.
+ *
+ * `antialiased` se queda. Sacarlo también engrosaría el texto —de otra
+ * manera, dibujando los bordes con color— pero cambia cómo se ve la
+ * aplicación entera en las pantallas de Apple, y lo que se pidió fue el peso,
+ * no otro dibujo de la letra.
+ * ------------------------------------------------------------------------- */
 body {
   font-family: var(--font-sans);
+  font-weight: 500;
   -webkit-font-smoothing: antialiased;
 }
 

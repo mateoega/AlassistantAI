@@ -7,6 +7,7 @@ import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { AnalysisPanel } from '@/components/AnalysisPanel';
 import { FavoriteButton } from '@/components/FavoriteButton';
+import { PhotoViewer } from '@/components/PhotoViewer';
 import { PriceEstimatePanel } from '@/components/PriceEstimate';
 import { Badge, Button, Card, Notice, RocketIcon, Spinner, StatusBadge } from '@/components/ui';
 import { formatDate, formatKilometers, formatLocation, formatPrice } from '@/lib/format';
@@ -517,10 +518,65 @@ function ChevronIcon({ abierta }: { abierta: boolean }) {
  * LAS FLECHAS APARECEN DE TABLET PARA ARRIBA. En un celular sobran —el dedo ya
  * sabe— y taparían la foto; con mouse, en cambio, no hay forma evidente de
  * pasar de foto, porque la barra de desplazamiento está escondida a propósito.
+ *
+ * LA FOTO SE ABRE A PANTALLA COMPLETA, Y AHÍ SE AGRANDA (2026-09-04). Acá
+ * adentro no se puede: el desplazamiento al costado lo hace el navegador, y un
+ * pellizco sobre esta misma caja pelea con él —un dedo pasando de foto, el otro
+ * intentando agrandar—. Entonces esta caja no agranda nada: abre el visor, con
+ * un toque o con un pellizco, y el zoom vive allá (ver `PhotoViewer`).
+ *
+ * QUE EL PELLIZCO TAMBIÉN ABRA NO ES UN ADORNO: es el gesto con el que se pide
+ * zoom sin pensarlo, y hasta hoy lo que hacía era agrandar la página entera
+ * —barras incluidas, y sin volver sola a su tamaño—, que es exactamente lo que
+ * el cliente reportó. `touch-action: pan-x pan-y` le saca el pellizco al
+ * navegador dejándole los dos desplazamientos, y en Safari de iPhone eso no
+ * alcanza: hay que cancelarle además su propio `gesturestart`.
  */
 function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string }) {
   const [actual, setActual] = useState(0);
+  /** Qué foto está abierta a pantalla completa, o `null` si el visor está cerrado. */
+  const [ampliada, setAmpliada] = useState<number | null>(null);
   const fila = useRef<HTMLDivElement>(null);
+
+  /**
+   * EL PELLIZCO ABRE EL VISOR, Y NO AGRANDA LA PÁGINA.
+   *
+   * Los dos van con `addEventListener` y `passive: false` porque los dos
+   * necesitan cancelarse: React registra `touchstart` como pasivo, así que un
+   * `onTouchStart` no puede frenar nada. `gesturestart` es de Safari de iPhone,
+   * que además de los eventos de toque tiene los suyos propios para el
+   * pellizco, y es el que de verdad agranda la página ahí.
+   *
+   * `actual` está en las dependencias a propósito: el visor tiene que abrir la
+   * foto que se está mirando, no la primera.
+   */
+  useEffect(() => {
+    const caja = fila.current;
+    if (!caja) {
+      return;
+    }
+
+    const alPellizcar = (evento: TouchEvent) => {
+      if (evento.touches.length < 2) {
+        return;
+      }
+      evento.preventDefault();
+      setAmpliada(actual);
+    };
+
+    const alGesto = (evento: Event) => {
+      evento.preventDefault();
+      setAmpliada(actual);
+    };
+
+    caja.addEventListener('touchstart', alPellizcar, { passive: false });
+    caja.addEventListener('gesturestart', alGesto, { passive: false });
+
+    return () => {
+      caja.removeEventListener('touchstart', alPellizcar);
+      caja.removeEventListener('gesturestart', alGesto);
+    };
+  }, [actual]);
 
   if (photos.length === 0) {
     return (
@@ -550,6 +606,35 @@ function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string
     caja.scrollTo({ left: indice * caja.clientWidth, behavior: 'smooth' });
   }
 
+  /**
+   * Deja la fila parada en una foto, SIN ANIMACIÓN.
+   *
+   * Es lo que se usa al cerrar el visor: allá adentro también se pasa de foto,
+   * y volver a la que se había abierto sería perder de dónde viene la persona.
+   *
+   * NO ES `ir()`, y la diferencia no es cosmética: `ir()` desplaza suave, y un
+   * desplazamiento suave pedido en el mismo momento en que el visor se
+   * desmonta no llega a arrancar —se probó: la fila se quedaba en la primera
+   * foto—. Además, una foto que se desliza sola al cerrar se lee como que la
+   * pantalla se movió por su cuenta. Acá el salto es instantáneo y sucede
+   * detrás del visor, así que cuando este se va, la foto ya está puesta.
+   *
+   * Y NO VA ADENTRO DE UN `requestAnimationFrame`: también se probó, y no
+   * corre cuando la pestaña no está a la vista —que es como quedó el navegador
+   * durante la verificación—. No hace falta esperar nada: la fila está montada
+   * y medida mientras el visor está encima, porque el visor es `fixed` y no le
+   * cambia el ancho a nada.
+   */
+  function pararEn(indice: number) {
+    const caja = fila.current;
+    if (!caja) {
+      return;
+    }
+
+    caja.scrollTo({ left: indice * caja.clientWidth, behavior: 'auto' });
+    setActual(indice);
+  }
+
   return (
     <div className="relative -mx-4 sm:mx-0">
       {/*
@@ -563,12 +648,20 @@ function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string
         tabIndex={0}
         role="group"
         aria-label={`Fotos del vehículo (${photos.length})`}
-        className="sin-barra flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain sm:rounded-2xl sm:shadow-card"
+        className="sin-barra flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [touch-action:pan-x_pan-y] sm:rounded-2xl sm:shadow-card"
       >
+        {/* CADA FOTO ES UN BOTÓN, y no un `div`: se toca para abrirla a pantalla
+            completa, y siendo un botón eso también funciona con el teclado y lo
+            anuncia un lector de pantalla. Un `click` no se dispara cuando el
+            toque terminó siendo un deslizamiento, así que pasar de foto no
+            abre nada. */}
         {photos.map((photo, indice) => (
-          <div
+          <button
             key={photo.id}
-            className="relative aspect-4/3 w-full shrink-0 snap-center overflow-hidden bg-mist"
+            type="button"
+            onClick={() => setAmpliada(indice)}
+            aria-label={`Ampliar la foto ${indice + 1} de ${photos.length}`}
+            className="relative block aspect-4/3 w-full shrink-0 snap-center overflow-hidden bg-mist"
           >
             {/* EL RELLENO DE LOS COSTADOS ES LA MISMA FOTO, DESENFOCADA.
 
@@ -607,7 +700,7 @@ function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string
               alt={photos.length > 1 ? `${alt} — foto ${indice + 1} de ${photos.length}` : alt}
               className="relative h-full w-full object-contain"
             />
-          </div>
+          </button>
         ))}
       </div>
 
@@ -640,6 +733,25 @@ function PhotoCarousel({ photos, alt }: { photos: Listing['photos']; alt: string
             onClick={() => ir(actual + 1)}
           />
         </>
+      )}
+
+      {/* EL VISOR SE MONTA RECIÉN CUANDO SE ABRE, y se desmonta al cerrarse:
+          así el estado del zoom vuelve a cero solo, sin que nadie lo reponga, y
+          la ficha no carga con los oyentes de gestos mientras nadie los usa.
+
+          Al cerrar, el carrusel se para en la foto que quedó a la vista allá
+          adentro —se pasan de foto en los dos lados, y volver a la anterior
+          sería perder de dónde venía. */}
+      {ampliada !== null && (
+        <PhotoViewer
+          photos={photos}
+          alt={alt}
+          indiceInicial={ampliada}
+          onClose={(indiceFinal) => {
+            setAmpliada(null);
+            pararEn(indiceFinal);
+          }}
+        />
       )}
     </div>
   );

@@ -1325,3 +1325,39 @@ El cliente la vio al lado del chat de IA y la encontró fea, con un defecto conc
 - **El encabezado queda pegado (`sticky`) exactamente debajo de la barra de arriba**, midiendo su alto en vivo (`useAltoBarraSuperior`, que se extrajo de la barra de búsqueda del muro a `lib/useAltoBarraSuperior.ts` para no repetir la misma medición en dos lugares) — el mismo motivo por el que la barra de búsqueda hace lo mismo: la barra de arriba cambia de alto con sesión y de tablet para arriba.
 
 **Qué se verificó.** Con una conversación real, a 375px y a 1024px: cero píxeles de desborde horizontal (antes lo había), el nombre y el modelo se cortan con puntos suspensivos en vez de salirse de la pantalla, el encabezado queda fijo al bajar por los mensajes, el botón de volver lleva a `/mensajes`, el enlace lleva a la ficha del vehículo, y se pudo escribir y mandar un mensaje nuevo. Sin errores en la consola. `npm run build` pasa.
+
+
+## 2026-09-04 — El texto pesa más, y las fotos se agrandan sin agrandar la página
+
+Dos pedidos del cliente, los dos de la misma prueba en el celular.
+
+### La letra: primero más grande, después más gruesa
+
+El pedido inicial fue "más grande, sobre todo los textos chicos". Se subió la escala un punto —`text-xs` de 14 a 15 y `text-sm` de 15 a 16— y el cliente lo miró y **cambió el pedido: más grande no, más gruesa**. Se dio vuelta el tamaño y quedó como estaba.
+
+**Lo que quedó es el peso: el texto normal pasó de 400 a 500.** Es una sola línea en `globals.css`, en el `body`, por lo mismo que la escala de tamaños: son más de cien lugares y lo que alguien escriba mañana también tiene que quedar cubierto. Inter es variable, así que 500 es un peso dibujado y no una letra engordada por el navegador.
+
+**No es 600 ni 700, que sería "negrita" de verdad**, porque el cliente agregó "que no arruine la estética" y ahí está el límite: si el texto normal pesa lo mismo que un título, no hay títulos. Toda la jerarquía de la aplicación se apoya en que los títulos (`font-semibold`, 600) y los precios (`font-bold`, 700) se vean más gruesos que lo que los rodea; el texto sube un escalón y los otros se quedan donde están, así que la distancia se mantiene.
+
+**Efecto de costado que conviene saber:** `font-medium` también es 500, así que las clases sueltas de `font-medium` que hay en las pantallas dejaron de agregar algo. No estorban y no se sacaron. Lo que cambia es la regla para lo que venga: **resaltar algo hoy es `font-semibold`**, no `font-medium`.
+
+### Las fotos: zoom adentro de la foto, y no de la página
+
+El cliente reportó que en la ficha no se podía agrandar una foto. Se podía —pellizcando— pero lo que se agrandaba era **la página entera**, barras incluidas, y no volvía sola a su tamaño: hay que achicarla a mano. Es el zoom del navegador, no de la aplicación.
+
+**Ahora la foto se abre a pantalla completa y el zoom vive ahí** (`components/PhotoViewer.tsx`, sin librería): se pellizca para agrandar hasta 4x anclado al punto entre los dos dedos, se arrastra con un dedo para recorrerla, dos toques agrandan a 2,5x o vuelven a la foto entera, y con la foto entera un arrastre al costado pasa de foto y uno hacia abajo cierra. Con mouse: Ctrl y rueda agrandan la foto, las flechas pasan de foto, Escape cierra.
+
+**Por qué a pantalla completa y no adentro del carrusel.** El carrusel se pasa deslizando y ese deslizamiento lo hace el navegador; un pellizco en esa misma caja pelea con él —un dedo pasando de foto, el otro intentando agrandar—. El visor, en cambio, se queda con los dedos (`touch-action: none`) y no tiene con qué pelear.
+
+**Qué hace que el navegador no se meta.** `touch-action: none` en el visor y `pan-x pan-y` en el carrusel le sacan el pellizco dejándole los desplazamientos; y en Safari de iPhone eso no alcanza, porque además de los eventos de toque tiene los suyos (`gesturestart`, `gesturechange`), que hay que cancelar a mano. Los dos van con `addEventListener` y `passive: false`: React registra `touchstart` y `wheel` como pasivos, así que desde un `onTouchStart` no se puede frenar nada.
+
+**El pellizco sobre el carrusel abre el visor**, no solo el toque. Es el gesto con el que la gente pide zoom sin pensarlo; si ahí no pasara nada, el visor no existiría para quien no descubrió el toque.
+
+**Dos errores que se encontraron verificando, y valen para cualquier gesto que se escriba después:**
+
+1. **Calcular adentro de un actualizador de estado sale mal.** El zoom se escribía con un `setDesplazamiento` anidado adentro de un `setEscala(prev => …)`. React puede llamar a un actualizador dos veces —en desarrollo lo hace a propósito—, así que el zoom se aplicaba dos veces y un doble toque terminaba pegado contra el borde en vez de centrado donde se tocó. Ahora el zoom y el movimiento viven también en una referencia, que es lo que se lee en el medio de un gesto: un pellizco manda decenas de eventos por segundo y React no vuelve a dibujar entre uno y otro.
+2. **`requestAnimationFrame` no corre con la pestaña oculta.** Al cerrar el visor, el carrusel se para en la foto que quedó a la vista allá adentro; ese salto estaba adentro de un `rAF` y no pasaba nunca mientras el navegador de la verificación estaba escondido. No hacía falta esperar nada: el visor es `fixed` y no le cambia el ancho a la fila, así que la fila está montada y medida. Quedó sincrónico.
+
+**El tope del movimiento se calcula con el tamaño real de la foto dibujada, no con el de la caja.** Una foto apaisada en una pantalla de 375x812 ocupa 375x281 y el resto es negro: midiendo con la caja, la foto se podría arrastrar hasta dejar a la vista una franja vacía, y eso se lee como que la aplicación se rompió.
+
+**Qué se verificó.** A 375px, con el backend real y fotos reales: peso 500 medido en pantalla en el muro y en la ficha; pellizco de 100 a 240px dando 2,4x y el de vuelta volviendo a la foto entera; doble toque a la izquierda del centro dando 2,5x anclado (+101,25px, el número exacto que corresponde); arrastre topeado justo en el borde de la foto (281,25px) sin dejar ver negro; `visualViewport.scale` **en 1 durante todo el zoom** —la página no se agrandó ni una vez—; pellizco sobre el carrusel abriendo el visor y cancelando el gesto del navegador; deslizar de la foto 2 a la 3 y el carrusel quedando parado en la 3 al cerrar; Escape, la cruz y el arrastre hacia abajo cerrando. Sin errores en la consola. `npm run build` pasa.
