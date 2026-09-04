@@ -1259,3 +1259,22 @@ El orden de adentro no cambió: el análisis primero y el precio de referencia d
 **Se fue también el cartel "La conversación queda dentro de AIassistant, junto a este aviso."**, que estaba entre el botón de consultar y el de analizar. Lo pidió el cliente y tiene razón: explicaba algo que se entiende al tocar el botón —la conversación se abre adentro de la aplicación— y ocupaba dos renglones justo entre las dos acciones más importantes de la pantalla.
 
 Medido en el mismo aviso: la ficha cerrada pasó de 1.493px a **1.382px**, y en una pantalla de 812px ahora entran la foto, el precio, el modelo, los datos, las dos acciones, el botón violeta y el principio de la descripción.
+
+## 2026-09-04 — La escala de texto creció un punto
+
+`text-xs` pasó de 13 a 14px y `text-sm` de 14 a 15. Entre las dos llevan casi todo el texto de la aplicación: las ayudas debajo de los campos, las fechas, el último mensaje de cada conversación, la descripción, la ficha técnica, el análisis de IA, el precio de referencia, las conversaciones, los botones y los campos.
+
+**Por qué:** el cliente reportó que no llegaba a leer. No es una preferencia de gusto: quien compra un vehículo no tiene veinte años, y a los cincuenta la vista de cerca ya no es la misma. Es la segunda vez que pasa —el 2026-08-27 `text-xs` había pasado de 12 a 13— y las dos veces se resolvió igual.
+
+**Se cambia en la escala y no clase por clase.** Son más de cien lugares, y el próximo texto que alguien escriba también tiene que quedar cubierto. Los interlineados se recalcularon con los tamaños nuevos: un texto más grande con el interlineado de antes se lee apretado, que es la mitad del problema que se está arreglando.
+
+**Lo que no creció, y por qué:**
+
+- **El precio y el modelo de la ficha** (`text-3xl` y `text-lg`). Ya eran grandes; el cliente los marcó como "no tocar" y tiene razón: si crecen todos, la jerarquía se aplana.
+- **El renglón de las tarjetas del muro**, clavado en 14px. Fue la otra excepción que pidió el cliente y es la más justificada de las dos: ahí el texto se corta con puntos suspensivos, así que cada píxel de más es una letra menos del modelo a la vista, y lo que se cuida en esa pantalla es la densidad.
+
+**Lo que sí creció aunque estaba en la lista de "no tocar":** el renglón de kilómetros y ubicación de la ficha, que pasó de 14 a 15px porque comparte la clase con todo el resto. La jerarquía que el cliente quería conservar queda intacta —precio 30, modelo 18, ese renglón 15— y es información real que alguien tiene que poder leer. Si molesta, se clava en 14 con una línea, igual que la tarjeta del muro.
+
+**Las etiquetas de la barra de abajo pasaron de 11 a 12px.** No estaban en el pedido, pero eran el texto más chico que quedaba en pantalla y la barra es lo que más se toca. A 12px "Guardados" y "Mis avisos" siguen entrando enteros en su espacio, medido a 375px.
+
+**Qué se verificó.** A 375px, con sesión: el muro, la ficha con el análisis abierto, notificaciones, mis publicaciones y el login. El precio quedó en 30px, el modelo en 18, el título de cada tarjeta de la ficha en 16 y el cuerpo en 15; el renglón del muro sigue en 14. Sin desborde horizontal en ninguna de las cinco pantallas.

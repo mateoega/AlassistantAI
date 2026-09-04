@@ -136,7 +136,7 @@ function AssistantItem() {
         onClick={() => setOpen(true)}
         aria-label="Abrir el chat del asistente de IA"
         aria-expanded={open}
-        className="flex w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-ai py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-ai/90 active:bg-ai/80"
+        className="flex w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-ai py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-ai/90 active:bg-ai/80"
       >
         <RocketIcon className="h-[22px] w-[22px]" />
         Chat IA
@@ -168,7 +168,7 @@ function Item({
         href={href}
         aria-current={active ? 'page' : undefined}
         className={[
-          'flex flex-col items-center gap-0.5 py-2 text-[11px] transition-colors',
+          'flex flex-col items-center gap-0.5 py-2 text-[12px] transition-colors',
           active ? 'font-semibold text-brand-deep' : 'text-muted',
         ].join(' ')}
       >

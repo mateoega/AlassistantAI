@@ -129,7 +129,13 @@ export function ListingCard({ listing }: { listing: Listing }) {
             El punto medio (`·`) es el separador y no un guión ni una coma: es
             lo que usa Marketplace, y es lo que hace que se lean como dos datos
             distintos y no como una frase cortada. */}
-        <p className="truncate text-sm">
+        {/* CLAVADO EN 14px, y no `text-sm`. La escala de texto creció un punto
+            el 2026-09-04 porque el cliente no llegaba a leer; el muro fue la
+            excepción que él mismo pidió, y con razón: acá el renglón se corta
+            con puntos suspensivos, así que cada píxel de más es una letra
+            menos del modelo a la vista. La densidad del listado es lo que se
+            está cuidando en esta pantalla. */}
+        <p className="truncate text-[14px] leading-5">
           <span className="font-bold text-ink">
             {formatPrice(listing.price, listing.currency)}
           </span>

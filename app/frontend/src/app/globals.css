@@ -148,26 +148,38 @@
    */
   --shadow-ai: 0 2px 6px rgb(5 7 13 / 0.08), 0 14px 30px -12px rgb(109 40 217 / 0.55);
 
-  /**
-   * EL TEXTO CHICO MIDE 13px, NO 12.
+  /* ---------------------------------------------------------------------------
+   * LA ESCALA DE TEXTO CRECIÓ UN PUNTO (2026-09-04)
    *
-   * `text-xs` es la clase de todo lo secundario de la aplicación: las ayudas
-   * debajo de los campos, la fecha de publicación, el último mensaje de cada
-   * conversación. A 12px el cliente lo reportó como "demasiado chico para leer
-   * cómodamente desde el teléfono", y tenía razón: 12px es un tamaño de
-   * etiqueta, no de lectura.
+   * `text-xs` pasó de 13 a 14px y `text-sm` de 14 a 15. Son las dos clases que
+   * llevan casi todo el texto de la aplicación: lo secundario —las ayudas
+   * debajo de los campos, la fecha, el último mensaje de cada conversación— y
+   * el texto normal —la descripción, la ficha técnica, el análisis de IA, las
+   * conversaciones, los botones—.
    *
-   * Se cambia acá, en la escala, y no clase por clase: son más de veinte
-   * lugares y el próximo texto secundario que alguien escriba también tiene que
-   * quedar cubierto. Es la misma idea que la regla de los 16px en los campos,
-   * unas líneas más abajo.
+   * POR QUÉ. El cliente reportó que no llegaba a leer. No es una preferencia
+   * de gusto: quien compra un vehículo no tiene veinte años, y a los cincuenta
+   * la vista de cerca ya no es la misma. Un punto no suena a nada hasta que se
+   * mira una ficha entera al sol.
    *
-   * Un punto no suena a nada hasta que se mira al sol; y sigue siendo
-   * claramente más chico que los 14px del texto normal, así que la jerarquía
-   * no se pierde.
-   */
-  --text-xs: 0.8125rem;
-  --text-xs--line-height: calc(1.125 / 0.8125);
+   * SE CAMBIA ACÁ Y NO CLASE POR CLASE. Son más de cien lugares, y el próximo
+   * texto que alguien escriba también tiene que quedar cubierto. Es la misma
+   * decisión que se tomó el 2026-08-27, cuando `text-xs` pasó de 12 a 13.
+   *
+   * LO QUE NO CRECIÓ, a pedido del cliente y porque la jerarquía ya funcionaba:
+   * el precio (`text-3xl`), el modelo en la ficha (`text-lg`), el renglón de
+   * kilómetros y ubicación de la ficha, y el texto de las tarjetas del muro,
+   * que quedó clavado en 14px para no perder densidad — ver `ListingCard`.
+   *
+   * Los interlineados se recalculan con los tamaños nuevos: un texto más
+   * grande con el interlineado de antes se lee apretado, que es la mitad del
+   * problema que se está arreglando.
+   * ------------------------------------------------------------------------- */
+  --text-xs: 0.875rem;
+  --text-xs--line-height: calc(1.25 / 0.875);
+
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: calc(1.375 / 0.9375);
 
   /* Inter la carga el layout con `next/font` y la deja en `--font-inter`. La
      lista que sigue es la red por si el archivo no llegó: la pantalla se ve
@@ -273,8 +285,9 @@ h3 {
  * error de tamaño de pantalla, pero no hay nada que se desborde: la aplicación
  * mide 375 de ancho en una pantalla de 375, verificado en el sitio online.
  *
- * Todos los campos de la aplicación usan `text-sm` (14px), así que el problema
- * estaba en todas las pantallas que tienen uno.
+ * Todos los campos de la aplicación usan `text-sm` —14px hasta el 2026-09-04 y
+ * 15 desde entonces—, así que el problema estaba en todas las pantallas que
+ * tienen uno, y sigue estando: 15 también es menos de 16.
  *
  * Va acá y no campo por campo a propósito: son más de treinta, y un campo nuevo
  * que alguien agregue mañana también tiene que quedar cubierto.
