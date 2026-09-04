@@ -1302,3 +1302,26 @@ Es un **amarillo dorado y no un naranja**, y la diferencia no es un capricho: la
 **Los globitos cambiaron de color.** El del asistente pasó del gris al violeta suave y el de la persona sigue en azul suave: los dos lados de la conversación se distinguen por color y no solo por de qué lado están.
 
 **Qué se verificó.** A 375px, con el backend real: el encabezado de vidrio violeta con el título en dorado (`rgb(252, 211, 77)` medido en pantalla), los puntitos y "Escribiendo…" al abrir, el saludo llegando a los cinco segundos en un globito violeta, una pregunta de verdad al modelo —con sus puntitos de "Pensando…" y la respuesta— y el botón de enviar en violeta con las letras doradas. Sin errores en la consola.
+
+## 2026-09-04 — Se saca el dorado, y la conversación se rehace con el formato del chat
+
+Dos cambios, los dos pedidos por el cliente el mismo día que se sumó el dorado.
+
+### El dorado duró unas horas
+
+El cliente lo vio y no le convenció. Todo lo que decía `text-ai-gold` volvió a blanco: el botón "Chat IA" de la barra, "Analizar con IA", "Analizar esta publicación", el flotante de escritorio, el título y el botón de enviar del chat. Se borró también el token `--color-ai-gold` de `globals.css` y los párrafos que explicaban por qué era dorado y no naranja — quedaba documentando un color que ya no está, y eso es peor que no documentar nada. Lo que queda escrito, en la bitácora y en la paleta, es que se probó y se sacó, para que a nadie se le ocurra reponerlo sin que el cliente lo pida.
+
+### La pantalla de una conversación, rehecha con el formato del chat de IA
+
+El cliente la vio al lado del chat de IA y la encontró fea, con un defecto concreto: el nombre del vehículo se salía del cuadro que lo contenía, cortado por el borde de la pantalla.
+
+**La causa del desborde era un `truncate` sobre un enlace, y los enlaces son `inline` por omisión.** La utilidad `truncate` de Tailwind pone `overflow: hidden; text-overflow: ellipsis; white-space: nowrap`, pero ninguna de esas tres reglas hace nada si el elemento no tiene un ancho contra el cual recortar — y un elemento `inline` no tiene ancho propio, fluye. Le faltaba `block` (o `inline-block`) al lado de `truncate`. Es un error fácil de repetir: cualquier `<Link>` o `<a>` con `truncate` y sin `block` va a hacer lo mismo, tarde o temprano, en cualquier pantalla nueva.
+
+**El resto era el formato.** La pantalla eran piezas sueltas: un enlace de "← Volver" flotando solo, una tarjeta con borde y sombra para el vehículo, otra tarjeta aparte para los mensajes. El cliente pidió calcarle el formato al chat de IA, así que ahora:
+
+- **El vehículo vive en un encabezado de vidrio pegado arriba** de la conversación, en el mismo lugar donde el chat de IA tiene su título — y es **azul** (`.glass`), no violeta: el violeta es la etiqueta de lo que llama al modelo, y esta pantalla es una conversación entre dos personas. Pintarla de violeta diría que la IA está leyendo, que es justamente lo que este proyecto no hace.
+- **Todo el bloque del vehículo es un solo enlace a su ficha** — antes eran tres renglones sueltos y solo uno llevaba a la ficha. El botón de volver quedó aparte, al lado y no adentro del enlace, para no anidar un botón dentro de un `<a>`.
+- **Los mensajes fluyen directo sobre la página**, sin la tarjeta con borde que los envolvía: es lo que hace que se lea como una conversación y no como un documento con una lista adentro.
+- **El encabezado queda pegado (`sticky`) exactamente debajo de la barra de arriba**, midiendo su alto en vivo (`useAltoBarraSuperior`, que se extrajo de la barra de búsqueda del muro a `lib/useAltoBarraSuperior.ts` para no repetir la misma medición en dos lugares) — el mismo motivo por el que la barra de búsqueda hace lo mismo: la barra de arriba cambia de alto con sesión y de tablet para arriba.
+
+**Qué se verificó.** Con una conversación real, a 375px y a 1024px: cero píxeles de desborde horizontal (antes lo había), el nombre y el modelo se cortan con puntos suspensivos en vez de salirse de la pantalla, el encabezado queda fijo al bajar por los mensajes, el botón de volver lleva a `/mensajes`, el enlace lleva a la ficha del vehículo, y se pudo escribir y mandar un mensaje nuevo. Sin errores en la consola. `npm run build` pasa.

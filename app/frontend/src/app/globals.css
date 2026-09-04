@@ -116,25 +116,6 @@
   --color-ai: #6d28d9;
   --color-ai-soft: #f1ecfe;
 
-  /**
-   * EL DORADO QUE VA ENCIMA DEL VIOLETA (2026-09-04).
-   *
-   * Es el color de las letras y los íconos de todo lo que está pintado de
-   * violeta: los botones de IA, el título del panel del chat. No se usa en
-   * ningún otro lado, y sobre todo NO SE USA SOBRE BLANCO — ahí no se lee: da
-   * 1,5:1 de contraste, que es prácticamente invisible.
-   *
-   * Es un amarillo dorado y no un naranja, y la diferencia importa: la regla
-   * de identidad del proyecto sigue siendo que no hay rojo ni naranja en
-   * ningún estado. Esto no es un estado ni una alarma, es la tipografía de una
-   * sola pieza de la marca.
-   *
-   * Contraste medido sobre el violeta: 4,9:1, arriba del 4,5:1 de la norma.
-   * Un dorado más oscuro daría más contraste pero se leería marrón; uno más
-   * claro se acerca al blanco y deja de ser dorado.
-   */
-  --color-ai-gold: #fcd34d;
-
   /* ---------------------------------------------------------------------------
    * LAS SOMBRAS: LO QUE REEMPLAZA AL GRIS DE FONDO
    *

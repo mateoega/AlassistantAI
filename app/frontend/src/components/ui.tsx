@@ -66,10 +66,10 @@ export function Button({
     quiet: 'border border-line bg-surface text-body shadow-soft hover:border-brand',
     // Violeta: lo usa SOLO lo que llama al modelo de IA. Ver el porqué del
     // color en `globals.css`. Un botón de IA pintado del azul de la marca se
-    // lee como una acción más entre guardar, publicar y enviar.
-    // Letras doradas y no blancas: es la tipografía de la IA en toda la
-    // aplicación. Ver `--color-ai-gold` en `globals.css`.
-    ia: 'bg-ai text-ai-gold font-semibold shadow-ai hover:bg-ai/90',
+    // lee como una acción más entre guardar, publicar y enviar. Las letras
+    // van en blanco: se probó dorado el 2026-09-04 y se volvió a blanco el
+    // mismo día, a pedido del cliente.
+    ia: 'bg-ai text-white font-semibold shadow-ai hover:bg-ai/90',
   };
 
   return (

@@ -7,6 +7,7 @@ import { api, ApiError } from '@/lib/api';
 import { useSession } from '@/components/SessionProvider';
 import { useMessages } from '@/components/MessagesProvider';
 import { Notice, Spinner } from '@/components/ui';
+import { useAltoBarraSuperior } from '@/lib/useAltoBarraSuperior';
 import { BlockedNotice, ModerationControls } from '@/components/ModerationControls';
 import { formatDayLabel, formatPrice, formatTime } from '@/lib/format';
 import type { ConversationMessage, ConversationThread } from '@/lib/types';
@@ -23,7 +24,28 @@ import type { ConversationMessage, ConversationThread } from '@/lib/types';
  * el frontend no tiene conexión abierta con la base. Adentro del hilo se
  * pregunta más seguido que afuera —cada 10 segundos— porque acá sí hay alguien
  * esperando una respuesta.
- */
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ * EL MISMO FORMATO QUE EL CHAT DE IA, EN AZUL Y NO EN VIOLETA (2026-09-04)
+ *
+ * Antes esta pantalla eran piezas sueltas sobre la página: un enlace de
+ * "← Volver" flotando solo, una tarjeta con borde y sombra para el vehículo,
+ * otra tarjeta aparte para los mensajes. El cliente la vio así al lado del
+ * chat de IA y pidió que se pareciera: una sola pantalla, no varios
+ * cuadraditos.
+ *
+ * Ahora el vehículo vive en un encabezado de vidrio pegado arriba —el mismo
+ * lugar donde el chat de IA tiene su título—, y los mensajes fluyen
+ * directamente sobre el fondo blanco, sin tarjeta alrededor. Es la misma idea
+ * que `AssistantChat`: el encabezado adentro de la caja que se desplaza, para
+ * que el vidrio deje ver los mensajes pasando por debajo.
+ *
+ * Es AZUL (`.glass`) y no violeta (`.glass-ai`) a propósito: el violeta es la
+ * etiqueta de lo que llama al modelo de IA, y esta conversación es entre dos
+ * personas. Pintarla de violeta diría que la IA está leyendo, que es
+ * justamente lo que este proyecto no hace — ver la regla de "la IA no entra en
+ * los mensajes" en `app/CLAUDE.md`.
+ * ───────────────────────────────────────────────────────────────────────── */
 
 const REFRESH_MS = 10_000;
 
@@ -41,6 +63,7 @@ export default function ConversacionPage() {
 
   const conversationId = params.id;
   const endOfThread = useRef<HTMLDivElement | null>(null);
+  const altoBarraSuperior = useAltoBarraSuperior();
 
   /**
    * Quién está mirando, y no el objeto de sesión entero.
@@ -175,19 +198,19 @@ export default function ConversacionPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <Link
-        href="/mensajes"
-        className="inline-block text-sm font-medium text-brand-deep hover:underline"
-      >
-        ← Volver a los mensajes
-      </Link>
+    <div className="mx-auto flex max-w-3xl flex-col">
+      <ThreadHeader thread={thread} top={altoBarraSuperior} onBack={() => router.push('/mensajes')} />
 
-      <ThreadHeader thread={thread} />
+      {problem && (
+        <div className="pt-3">
+          <Notice tone="alert" title={problem} />
+        </div>
+      )}
 
-      {problem && <Notice tone="alert" title={problem} />}
-
-      <div className="space-y-1 rounded-2xl border border-line bg-surface p-4 shadow-card">
+      {/* LOS MENSAJES FLUYEN DIRECTO SOBRE LA PÁGINA, sin tarjeta ni borde
+          alrededor: es lo que hace que esto se lea como una conversación y no
+          como un documento con una lista adentro. */}
+      <div className="min-h-[50vh] space-y-1 py-4">
         {thread.messages.length === 0 ? (
           <p className="py-10 text-center text-sm text-muted">
             Todavía no hay mensajes. Escribí el primero.
@@ -227,18 +250,20 @@ export default function ConversacionPage() {
         />
       )}
 
-      <ModerationControls
-        conversationId={conversationId}
-        counterpartName={thread.counterpart.display_name}
-        moderation={thread.moderation}
-        onChanged={(cambio) => {
-          // Lo que ya se sabe se aplica en el acto; el hilo que vuelve manda.
-          setThread((current) =>
-            current ? { ...current, moderation: { ...current.moderation, ...cambio } } : current,
-          );
-          void load(true);
-        }}
-      />
+      <div className="py-3">
+        <ModerationControls
+          conversationId={conversationId}
+          counterpartName={thread.counterpart.display_name}
+          moderation={thread.moderation}
+          onChanged={(cambio) => {
+            // Lo que ya se sabe se aplica en el acto; el hilo que vuelve manda.
+            setThread((current) =>
+              current ? { ...current, moderation: { ...current.moderation, ...cambio } } : current,
+            );
+            void load(true);
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -274,59 +299,119 @@ function Bubble({ message }: { message: ConversationMessage }) {
 }
 
 /**
- * El vehículo del que se está hablando.
+ * El vehículo del que se está hablando, en un encabezado de vidrio pegado
+ * arriba de la conversación.
  *
- * Puede no estar: el vendedor lo pausó o lo borró. Son dos cosas distintas y
- * se dicen distinto — hacer desaparecer el vehículo sin explicación dejaría la
- * conversación hablando de la nada.
+ * PEGADO ARRIBA Y NO SUELTO. Es el mismo recurso que el título del chat de
+ * IA: mientras la charla pasa por debajo, este renglón se queda fijo, así que
+ * nunca hay que scrollear hacia arriba para acordarse de qué vehículo se
+ * habla. `top` es el alto medido de la barra de arriba (`useAltoBarraSuperior`),
+ * no un número escrito a mano — esa barra cambia de alto con sesión y de
+ * tablet para arriba.
+ *
+ * TODO EL BLOQUE DEL VEHÍCULO ES UN SOLO ENLACE A SU FICHA. Antes el nombre
+ * del vendedor, el modelo y el precio eran tres renglones sueltos y solo el
+ * modelo llevaba a la ficha; ahora ver de qué se habla y poder ir a mirarlo es
+ * la misma acción. El botón de volver es un elemento aparte, al lado del
+ * enlace y no adentro, para no anidar un `<button>` dentro de un `<a>`.
+ *
+ * `min-w-0` en cada nivel y `block truncate` en el texto son las dos piezas
+ * que hacen falta para que el nombre se corte con puntos suspensivos en vez
+ * de desbordar la pantalla. Faltaba el `block`: `truncate` no hace nada sobre
+ * un `<a>`, que por omisión es `inline` y no tiene un ancho propio para
+ * recortar contra él — así se veía el texto saliéndose del encabezado.
+ *
+ * Puede no haber vehículo: el vendedor lo pausó o lo borró. Son dos cosas
+ * distintas y se dicen distinto — hacer desaparecer el vehículo sin
+ * explicación dejaría la conversación hablando de la nada.
  */
-function ThreadHeader({ thread }: { thread: ConversationThread }) {
+function ThreadHeader({
+  thread,
+  top,
+  onBack,
+}: {
+  thread: ConversationThread;
+  top: number;
+  onBack: () => void;
+}) {
   const listing = thread.listing;
 
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4 shadow-card">
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
-        {listing?.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={listing.photo_url} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-[10px] text-muted">
-            sin foto
+    <header
+      className="glass -mx-4 sticky z-10 flex items-center gap-2 border-b border-line px-2 py-2 shadow-soft sm:mx-0 sm:rounded-2xl sm:border sm:px-3"
+      style={{ top }}
+    >
+      <button
+        type="button"
+        onClick={onBack}
+        aria-label="Volver a los mensajes"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-body transition-colors hover:bg-mist"
+      >
+        <BackIcon />
+      </button>
+
+      {listing ? (
+        <Link
+          href={`/vehiculo/${listing.id}`}
+          className="flex min-w-0 flex-1 items-center gap-2.5 rounded-xl px-1 py-1 transition-colors hover:bg-mist"
+        >
+          <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl border border-line bg-mist">
+            {listing.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={listing.photo_url} alt="" className="h-full w-full object-cover" />
+            ) : (
+              <div className="flex h-full items-center justify-center text-[10px] text-muted">
+                sin foto
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-semibold text-ink">
-          {thread.counterpart.display_name ?? 'Usuario sin nombre'}
-        </p>
-
-        {listing ? (
-          <>
-            <Link
-              href={`/vehiculo/${listing.id}`}
-              className="truncate text-sm text-brand-deep hover:underline"
-            >
+          <div className="min-w-0 flex-1">
+            <p className="block truncate text-sm font-semibold text-ink">
+              {thread.counterpart.display_name ?? 'Usuario sin nombre'}
+            </p>
+            <p className="block truncate text-xs text-brand-deep">
               {listing.brand} {listing.model} {listing.year}
-            </Link>
-            <p className="text-xs text-muted">
-              {listing.price !== null && formatPrice(listing.price, listing.currency)}
+              {listing.price !== null && ` · ${formatPrice(listing.price, listing.currency)}`}
               {listing.status === 'sold' && ' · ya vendido'}
               {listing.status === 'paused' && ' · pausado'}
             </p>
-          </>
-        ) : (
-          <>
-            <p className="truncate text-sm text-body">{thread.listing_title}</p>
-            <p className="text-xs text-muted">
+          </div>
+        </Link>
+      ) : (
+        <div className="flex min-w-0 flex-1 items-center gap-2.5 px-1 py-1">
+          <div className="h-11 w-11 shrink-0 rounded-xl border border-line bg-mist" />
+          <div className="min-w-0 flex-1">
+            <p className="block truncate text-sm font-semibold text-ink">
+              {thread.counterpart.display_name ?? 'Usuario sin nombre'}
+            </p>
+            <p className="block truncate text-xs text-muted">
               {thread.listing_id
                 ? 'El vendedor pausó este aviso, así que no se puede abrir.'
                 : 'El aviso ya no existe.'}
             </p>
-          </>
-        )}
-      </div>
-    </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+}
+
+function BackIcon() {
+  return (
+    <svg
+      width={20}
+      height={20}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="m15 6-6 6 6 6" />
+    </svg>
   );
 }
 
@@ -351,7 +436,7 @@ function Composer({
 }) {
   return (
     <form
-      className="flex items-end gap-2"
+      className="flex items-end gap-2 border-t border-line py-3"
       onSubmit={(event) => {
         event.preventDefault();
         onSend();

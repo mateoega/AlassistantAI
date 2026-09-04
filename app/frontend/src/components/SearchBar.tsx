@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { api } from '@/lib/api';
 import { Button, Field, NumberInput, inputClass } from '@/components/ui';
 import { digitsOnly, groupThousands } from '@/lib/format';
+import { useAltoBarraSuperior } from '@/lib/useAltoBarraSuperior';
 import { SpecFilters } from './SpecFilters';
 import type { Province, VehicleType, VehicleTypeField } from '@/lib/types';
 
@@ -466,37 +467,6 @@ export function SearchBar({
  * aparezca exactamente donde estaba y el cambio no se vea.
  */
 const AIRE_AL_DESPEGARSE = 8;
-
-/**
- * Cuánto mide la barra de arriba, que es donde se para la barra de búsqueda
- * cuando se despega.
- *
- * Se mide y no se escribe el número: la barra de arriba mide 61px sin sesión y
- * cambia de alto con sesión y de tablet para arriba, donde le entran los
- * botones de navegación. Un `top-[61px]` escrito a mano dejaría la barra
- * flotante montada sobre la de arriba, o con un hueco por donde se ven pasar
- * las fotos, según quién esté mirando.
- *
- * El 61 del arranque es solo para el primer dibujo, antes de poder medir.
- */
-function useAltoBarraSuperior(): number {
-  const [alto, setAlto] = useState(61);
-
-  useEffect(() => {
-    const medir = () => {
-      const barra = document.querySelector('header');
-      if (barra) {
-        setAlto(Math.round(barra.getBoundingClientRect().height));
-      }
-    };
-
-    medir();
-    window.addEventListener('resize', medir);
-    return () => window.removeEventListener('resize', medir);
-  }, []);
-
-  return alto;
-}
 
 /**
  * Si la barra de búsqueda ya se fue de su lugar y tiene que quedar flotando.

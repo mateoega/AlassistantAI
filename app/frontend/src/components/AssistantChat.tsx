@@ -309,7 +309,7 @@ export function AssistantChat() {
           // `shadow-float` es la única sombra con brillo azul fuerte de la
           // aplicación, y este botón es lo único que flota de verdad por
           // encima de la página: la sombra es lo que lo despega del listado.
-          'text-ai-gold shadow-ai transition-colors hover:bg-ai/90 active:scale-95',
+          'text-white shadow-ai transition-colors hover:bg-ai/90 active:scale-95',
           // CELULAR: un círculo de 56px, sin la palabra. El cartel con texto
           // medía 140px de ancho y se apoyaba sobre tres o cuatro renglones de
           // cualquier pantalla — campos, precios, tarjetas del listado. Un
@@ -361,11 +361,13 @@ export function AssistantChat() {
           detrás que dejar ver, y el vidrio sería un color más. */}
       <div className="flex-1 overflow-y-auto">
         <header className="glass-ai sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3">
-          {/* DICE "CHAT CON IA", EN DORADO SOBRE EL VIOLETA. Antes decía
+          {/* DICE "CHAT CON IA", EN BLANCO SOBRE EL VIOLETA. Antes decía
               "Asistente AI" con una bajada que explicaba qué sabía hacer; el
               cliente pidió sacarla. El nombre alcanza: lo que el asistente
-              sabe se ve en lo que contesta, no en un renglón de letra chica. */}
-          <h2 className="font-semibold text-ai-gold">Chat con IA</h2>
+              sabe se ve en lo que contesta, no en un renglón de letra chica.
+              (El título se probó en dorado el mismo día y se volvió a blanco:
+              el cliente no lo quiso.) */}
+          <h2 className="font-semibold text-white">Chat con IA</h2>
 
           {/* Sobre el violeta, el botón de cerrar se dibuja en blanco
               translúcido: el borde gris y el texto oscuro de antes quedaban
@@ -453,7 +455,7 @@ export function AssistantChat() {
           <button
             type="submit"
             disabled={!draft.trim()}
-            className="rounded-xl bg-ai px-4 py-2.5 text-sm font-semibold text-ai-gold shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
+            className="rounded-xl bg-ai px-4 py-2.5 text-sm font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:shadow-none"
           >
             Enviar
           </button>
