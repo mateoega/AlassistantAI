@@ -1189,3 +1189,15 @@ Un color nuevo, `#6D28D9`, con su relleno suave y su propia sombra, y **una sola
 **Dice "IA" y no "Asistente"**: es la palabra que la gente busca, entra en el ancho sin achicar la letra, y el nombre completo está en el encabezado del panel apenas se abre.
 
 **Qué se verificó.** En el navegador a 375px con una sesión de prueba real (enlace de un solo uso, sin contraseñas): la barra muestra los cuatro lugares con el violeta centrado en 188 de 375, el botón abre el panel del asistente, el flotante queda en `display: none`, y el encabezado muestra el corazón y el perfil juntos arriba a la derecha. En la ficha de un vehículo, "Analizar de nuevo" quedó violeta con la sombra violeta. A 1024px: la barra de abajo no se dibuja, el flotante sí y en violeta, y el encabezado sigue con sus enlaces de texto, "Guardados" incluido. Sin errores en la consola.
+
+### Ajuste del mismo día: el lugar de la IA se pinta entero
+
+La píldora violeta del medio pasó a ser un lugar como los demás —cohete arriba, la palabra abajo— pero con el espacio **completo** pintado de violeta, de piso a techo de la barra.
+
+**Por qué:** el cliente lo vio y pidió que ocupara todo. Tenía razón y el motivo se ve al mirarlo: una píldora chica adentro de un espacio transparente se lee como un botón **metido** en la barra, no como parte de ella, y encima quedaba más chica que los otros tres lugares cuando es la que más se quiere que se toque. Ahora lo que la distingue no es la forma sino el color, que es más fuerte y molesta menos.
+
+Se le fueron con eso la sombra violeta, las esquinas redondeadas y el hundido del dos por ciento: no flota sobre la barra, es un pedazo de la barra —encogerla dejaría ver la barra por los costados—. El acuse de recibo al toque lo da el violeta, que se oscurece mientras el dedo está apoyado.
+
+**Dice "Chat"**, como lo pidió el cliente. Queda anotado que al lado está "Mensajes", que también son conversaciones —las que se tienen con el vendedor—: en la pantalla, lo que separa a una de la otra es el violeta y el cohete, no la palabra. El nombre completo lo dice el `aria-label` ("Abrir el chat del asistente de IA") y el encabezado del panel.
+
+Medido: el violeta ocupa 75 × 57px, arranca a un píxel del borde de arriba de la barra —ese píxel es la línea de la barra— y llega hasta abajo; su centro cae en 188 de una pantalla de 375, el eje exacto.

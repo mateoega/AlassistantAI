@@ -58,7 +58,10 @@ export function MobileNav() {
       // Respeta la franja de gestos de los celulares sin botón físico.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto flex max-w-lg items-center">
+      {/* `items-stretch` y no `items-center`: el lugar de la IA se pinta
+          entero de violeta, de piso a techo de la barra, y para eso su celda
+          tiene que medir lo que mide la barra. */}
+      <ul className="mx-auto flex max-w-lg items-stretch">
         <Item href="/" label="Inicio" active={pathname === '/'} icon={<HomeIcon />} />
         <Item
           href="/mensajes"
@@ -109,36 +112,46 @@ export function useMobileNavVisible(): boolean {
 }
 
 /**
- * El botón del asistente, en el medio de la barra y en violeta.
+ * El asistente, en el medio de la barra: un lugar más, pero todo violeta.
+ *
+ * TIENE LA MISMA FORMA QUE LOS DEMÁS —ícono arriba, palabra abajo— y ocupa su
+ * lugar entero, de piso a techo de la barra. Antes era una píldora chica
+ * flotando adentro de su espacio, con el resto en transparente; se veía como un
+ * botón metido adentro de la barra en vez de ser parte de ella. Ahora lo que
+ * cambia no es la forma sino el COLOR: el violeta ocupa el lugar completo y es
+ * lo único de la pantalla que está pintado, así que se ve de entrada sin
+ * romper la fila.
+ *
+ * Por eso tampoco lleva sombra ni esquinas redondeadas: no flota sobre la
+ * barra, es un pedazo de la barra.
  *
  * NO ES UN ENLACE: el asistente no es una pantalla, es un panel que se abre
  * encima de la que se está mirando —así puede hablar del aviso que hay abajo—.
  * Por eso es el único de la barra que no lleva `href` ni marca "página actual".
  *
- * ES LO ÚNICO PINTADO DE OTRO COLOR, y es a propósito: la IA es lo que
- * diferencia a esta plataforma de un clasificado común, y tiene que verse
- * desde la primera pantalla, sin leer nada. El violeta y su sombra son los de
- * `globals.css`, reservados para lo que llama al modelo.
- *
- * DICE "IA" Y NO "ASISTENTE". Es la palabra que la gente busca, entra en el
- * ancho de un quinto de pantalla sin achicar la letra, y el nombre completo
- * está en el encabezado del panel apenas se abre. El cohete lo pidió el
- * cliente y hace la mitad del trabajo: se reconoce antes de leer.
+ * DICE "CHAT" Y EL NOMBRE COMPLETO LO DICE `aria-label`. Lo pidió así el
+ * cliente. Vale saber que al lado está "Mensajes", que también son
+ * conversaciones —esas con el vendedor—: lo que separa a uno del otro en la
+ * pantalla es el violeta y el cohete, no la palabra.
  */
 function AssistantItem() {
   const { open, setOpen } = useAssistant();
 
   return (
-    <li className="flex flex-1 justify-center">
+    <li className="flex flex-1">
       <button
         type="button"
         onClick={() => setOpen(true)}
-        aria-label="Abrir el asistente de IA"
+        aria-label="Abrir el chat del asistente de IA"
         aria-expanded={open}
-        className="my-1.5 flex items-center gap-1.5 rounded-full bg-ai px-4 py-2 text-[13px] font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-95"
+        // Sin el hundido del 2% de los demás botones: esto no es un botón
+        // apoyado sobre algo, es un pedazo de la barra, y encogerlo dejaría
+        // ver la barra por los costados. El acuse de recibo al toque lo da el
+        // violeta, que se oscurece mientras el dedo está apoyado.
+        className="flex w-full flex-col items-center justify-center gap-0.5 bg-ai py-2 text-[11px] font-semibold text-white transition-colors hover:bg-ai/90 active:bg-ai/80"
       >
-        <RocketIcon />
-        IA
+        <RocketIcon className="h-[22px] w-[22px]" />
+        Chat
       </button>
     </li>
   );
