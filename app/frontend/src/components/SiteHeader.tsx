@@ -74,7 +74,7 @@ export function SiteHeader() {
                 + Publicar
               </Link>
               <TopLink href="/mensajes" active={pathname.startsWith('/mensajes')}>
-                Mensajes
+                Notificaciones
                 <UnreadBadge count={unread} />
               </TopLink>
               <TopLink href="/guardados" active={pathname === '/guardados'}>
@@ -88,25 +88,36 @@ export function SiteHeader() {
               </TopLink>
             </nav>
 
-            {/* GUARDADOS Y PERFIL, JUNTOS Y SOLO EN CELULAR (2026-09-04).
+            {/* NOTIFICACIONES Y PERFIL, SOLO EN CELULAR (2026-09-04).
 
-                Los dos son lo propio de cada uno —lo que guardé, quién soy— y
-                por eso viven en la misma esquina. El corazón bajó de la barra
-                de abajo para dejarle el lugar del medio al botón de IA; el
-                perfil ya estaba acá desde el Sprint 5, por la misma razón de
-                falta de lugar. De tablet para arriba los dos son enlaces con
-                texto en la navegación de al lado.
+                "Mensajes" salió de la barra de abajo y subió acá convertido en
+                NOTIFICACIONES. La sección es la misma —las conversaciones con
+                quien vende y con quien pregunta— pero el lugar pasa a ser el de
+                todo lo que LLEGA: cuando existan los avisos que no son
+                conversaciones (un vehículo guardado que bajó de precio, por
+                ejemplo), van a aparecer en esta misma lista y en este mismo
+                botón. Por eso el ícono es una campana y no un globo de diálogo.
+
+                Abajo quedó "Guardados", que es lo que se toca mientras se
+                recorre el listado —trabajo de pulgar—, y el chat de IA en el
+                medio. Lo ordenó así el cliente después de probarlo.
 
                 Van adentro de una caja propia y no sueltos: el encabezado
                 reparte con `justify-between`, así que dos hijos sueltos se
                 irían uno a cada punta con el logo en el medio. */}
             <div className="flex items-center gap-2 md:hidden">
               <IconLink
-                href="/guardados"
-                label="Guardados"
-                active={pathname === '/guardados'}
+                href="/mensajes"
+                label={
+                  unread
+                    ? `Notificaciones (${unread} sin leer)`
+                    : 'Notificaciones'
+                }
+                active={pathname.startsWith('/mensajes')}
+                aviso={Boolean(unread)}
               >
-                <path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z" />
+                <path d="M6 9a6 6 0 0 1 12 0c0 4 1.5 5.5 1.5 5.5h-15S6 13 6 9z" />
+                <path d="M10 18a2 2 0 0 0 4 0" />
               </IconLink>
 
               <IconLink href="/perfil" label="Mi perfil" active={pathname === '/perfil'}>
@@ -130,12 +141,30 @@ function IconLink({
   href,
   label,
   active,
+  aviso,
   children,
 }: {
   href: string;
   /** Lo que dice un lector de pantalla: el ícono solo no dice nada. */
   label: string;
   active: boolean;
+  /**
+   * El puntito de "hay algo nuevo", apoyado en la esquina del ícono.
+   *
+   * ES UN PUNTO Y NO UN NÚMERO. Acá no entra: el botón mide 38px y el número
+   * ya está adentro de la pantalla, en cada conversación. Lo que este botón
+   * tiene que contestar desde afuera es una sola pregunta —¿hay algo para
+   * mirar?—, y para eso alcanza un punto.
+   *
+   * ES AZUL Y NO ROJO. La regla de identidad del proyecto —ver
+   * `diseño/paleta_colores.md`— dice que no se usa rojo ni naranja en ningún
+   * estado, ni siquiera en errores; el rojo de las notificaciones de otras
+   * aplicaciones dice "algo anda mal" y acá casi siempre es alguien
+   * contestando un mensaje. El azul secundario sobre el blanco del encabezado
+   * se ve igual de bien, y es el mismo globito que ya usa la navegación de
+   * escritorio.
+   */
+  aviso?: boolean;
   /** El dibujo del ícono, adentro de un lienzo de 24×24. */
   children: React.ReactNode;
 }) {
@@ -145,10 +174,18 @@ function IconLink({
       aria-label={label}
       aria-current={active ? 'page' : undefined}
       className={[
-        'rounded-xl border p-2 transition-colors',
+        'relative rounded-xl border p-2 transition-colors',
         active ? 'border-brand bg-brand-soft text-brand-deep' : 'border-line text-body',
       ].join(' ')}
     >
+      {aviso && (
+        <span
+          aria-hidden
+          // El anillo blanco lo separa del borde del botón: sin él, el punto se
+          // apoya sobre la línea y se lee como una mancha.
+          className="absolute -right-1 -top-1 h-3 w-3 rounded-full bg-brand-deep ring-2 ring-white"
+        />
+      )}
       <svg
         width={22}
         height={22}

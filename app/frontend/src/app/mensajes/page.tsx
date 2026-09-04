@@ -11,7 +11,8 @@ import { formatRelativeTime } from '@/lib/format';
 import type { Conversation } from '@/lib/types';
 
 /**
- * La bandeja de entrada: todas las conversaciones, las últimas primero.
+ * La bandeja de entrada —"Notificaciones"—: todas las conversaciones, las
+ * últimas primero.
  *
  * Las de comprar y las de vender van juntas en una sola lista, y no en dos
  * pestañas. La misma persona hace las dos cosas —se vende un auto para
@@ -71,7 +72,17 @@ export default function MensajesPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-ink">Mensajes</h1>
+        {/* SE LLAMA "NOTIFICACIONES" AUNQUE HOY SOLO HAYA CONVERSACIONES
+            (2026-09-04). Es el lugar de todo lo que llega, y las conversaciones
+            son lo primero que llega. Cuando existan los avisos que no son
+            mensajes —un vehículo guardado que bajó de precio, por ejemplo— van
+            a aparecer en esta misma lista, sin tener que mudar a nadie de
+            pantalla ni enseñarle un lugar nuevo.
+
+            La dirección sigue siendo `/mensajes` a propósito: cada
+            conversación cuelga de ella (`/mensajes/[id]`) y ese enlace ya está
+            compartido y guardado en el historial de la gente. */}
+        <h1 className="text-2xl font-bold tracking-tight text-ink">Notificaciones</h1>
         <p className="mt-1 text-sm text-muted">
           Tus conversaciones por cada vehículo, con quien vende y con quien te pregunta.
         </p>

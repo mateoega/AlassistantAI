@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from './SessionProvider';
-import { useMessages } from './MessagesProvider';
 import { useAssistant } from './AssistantProvider';
 import { RocketIcon } from './ui';
 
@@ -19,27 +18,26 @@ import { RocketIcon } from './ui';
  * en esa franja intermedia. El corte de las dos barras es el mismo número, así
  * que siempre hay exactamente una navegación visible.
  *
- * SON CUATRO, Y EL DEL MEDIO NO ES UNA PANTALLA (2026-09-04). Inicio,
- * Mensajes, IA y Mis avisos. Antes eran cinco pantallas; salieron dos y entró
- * el asistente:
+ * SON CUATRO: Inicio, Guardados, Chat IA y Mis avisos (2026-09-04). Eran
+ * cinco pantallas y hoy son tres más el asistente:
  *
- *   - "Publicar" se fue porque estaba dos veces. "Mis avisos" ya es la
- *     pantalla de lo que uno publica y ya tiene arriba su botón "+ Publicar
- *     vehículo": el de la barra llevaba al mismo lugar desde un renglón más
- *     abajo.
- *   - "Guardados" se fue arriba, al lado del perfil, en la barra superior. Es
- *     lo propio de cada uno, igual que el perfil, y ahí lo busca la mano.
- *   - "IA" ocupó el lugar del medio, que era el del corazón. Era el botón
- *     flotante que andaba esquivando el contenido; acá tiene un lugar fijo y
- *     no le tapa nada a nadie.
+ *   - "Publicar" salió: estaba dos veces, porque `/mis-publicaciones` ya es la
+ *     pantalla de lo que uno publica y ya tiene arriba su "+ Publicar
+ *     vehículo".
+ *   - "Mensajes" subió al encabezado, convertido en "Notificaciones": ahí van
+ *     a llegar también los avisos que no son conversaciones. Ver `SiteHeader`.
+ *   - "Guardados" es lo que más se toca mientras se recorre el listado, así
+ *     que se queda abajo, que es donde llega el pulgar.
+ *   - El chat de IA ocupa el medio, en violeta. Era el botón flotante que
+ *     andaba esquivando el contenido; acá tiene un lugar fijo y no le tapa
+ *     nada a nadie.
  *
- * SIN CUENTA NO SE DIBUJA, y eso no cambió. Dos de los cuatro botones llevan a
- * pantallas que necesitan sesión. El asistente no —se puede usar sin cuenta—,
- * pero mientras no hay barra sigue estando el botón flotante, que aparece
- * justamente cuando esta barra no está. Ver `AssistantChat`.
+ * SIN CUENTA NO SE DIBUJA, y eso no cambió. Tres de los cuatro botones llevan
+ * a pantallas que necesitan sesión y el cuarto es donde ya está parada la
+ * persona: una barra donde casi todo manda a iniciar sesión no es navegación,
+ * es un cartel repetido cuatro veces.
  */
 export function MobileNav() {
-  const { unread } = useMessages();
   const pathname = usePathname();
   const visible = useMobileNavVisible();
 
@@ -58,26 +56,24 @@ export function MobileNav() {
       // Respeta la franja de gestos de los celulares sin botón físico.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      {/* `items-stretch` y no `items-center`: el lugar de la IA se pinta
+      {/* `items-stretch` y no `items-center`: el lugar del chat de IA se pinta
           entero de violeta, de piso a techo de la barra, y para eso su celda
           tiene que medir lo que mide la barra. */}
       <ul className="mx-auto flex max-w-lg items-stretch">
         <Item href="/" label="Inicio" active={pathname === '/'} icon={<HomeIcon />} />
         <Item
-          href="/mensajes"
-          label="Mensajes"
-          active={pathname.startsWith('/mensajes')}
-          icon={<ChatIcon />}
-          badge={unread}
+          href="/guardados"
+          label="Guardados"
+          active={pathname === '/guardados'}
+          icon={<HeartIcon />}
         />
         <AssistantItem />
-        {/* EL DOBLE DE ANCHO, PARA QUE LA IA QUEDE EN EL MEDIO DE VERDAD.
-            A la izquierda del botón violeta hay dos destinos y a la derecha
-            uno solo; con todos los espacios iguales, el centro del botón caía
-            46px corrido hacia la derecha. Dándole a este el ancho de dos, los
-            dos lados pesan lo mismo y el violeta queda en el eje de la
-            pantalla, que es donde lo pidió el cliente y donde lo busca el
-            pulgar. */}
+        {/* EL DOBLE DE ANCHO, PARA QUE EL CHAT QUEDE EN EL MEDIO DE VERDAD.
+            A la izquierda del violeta hay dos destinos y a la derecha uno
+            solo; con todos los espacios iguales, su centro caía 46px corrido
+            hacia la derecha. Dándole a este el ancho de dos, los dos lados
+            pesan lo mismo y el violeta queda en el eje de la pantalla, que es
+            donde lo pidió el cliente y donde lo busca el pulgar. */}
         <Item
           href="/mis-publicaciones"
           label="Mis avisos"
@@ -112,46 +108,38 @@ export function useMobileNavVisible(): boolean {
 }
 
 /**
- * El asistente, en el medio de la barra: un lugar más, pero todo violeta.
+ * El chat de IA, en el medio de la barra: un lugar más, pero todo violeta.
  *
  * TIENE LA MISMA FORMA QUE LOS DEMÁS —ícono arriba, palabra abajo— y ocupa su
- * lugar entero, de piso a techo de la barra. Antes era una píldora chica
- * flotando adentro de su espacio, con el resto en transparente; se veía como un
- * botón metido adentro de la barra en vez de ser parte de ella. Ahora lo que
- * cambia no es la forma sino el COLOR: el violeta ocupa el lugar completo y es
- * lo único de la pantalla que está pintado, así que se ve de entrada sin
- * romper la fila.
- *
- * Por eso tampoco lleva sombra ni esquinas redondeadas: no flota sobre la
- * barra, es un pedazo de la barra.
+ * lugar entero, de piso a techo. Lo que lo distingue no es la forma sino el
+ * COLOR: es lo único pintado de la pantalla, así que se ve de entrada sin
+ * romper la fila. Las esquinas van redondeadas —los mismos 12px de todo lo
+ * chico de la aplicación— porque un rectángulo de esquinas vivas adentro de
+ * una barra de vidrio se ve puntiagudo, que fue lo que el cliente marcó.
  *
  * NO ES UN ENLACE: el asistente no es una pantalla, es un panel que se abre
  * encima de la que se está mirando —así puede hablar del aviso que hay abajo—.
  * Por eso es el único de la barra que no lleva `href` ni marca "página actual".
  *
- * DICE "CHAT" Y EL NOMBRE COMPLETO LO DICE `aria-label`. Lo pidió así el
- * cliente. Vale saber que al lado está "Mensajes", que también son
- * conversaciones —esas con el vendedor—: lo que separa a uno del otro en la
- * pantalla es el violeta y el cohete, no la palabra.
+ * NO LLEVA SOMBRA Y NO SE HUNDE AL TOCARLO. No flota sobre la barra: es un
+ * pedazo de la barra, y encogerlo dejaría ver la barra por los costados. El
+ * acuse de recibo lo da el violeta, que se oscurece mientras el dedo está
+ * apoyado.
  */
 function AssistantItem() {
   const { open, setOpen } = useAssistant();
 
   return (
-    <li className="flex flex-1">
+    <li className="flex flex-1 p-1">
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Abrir el chat del asistente de IA"
         aria-expanded={open}
-        // Sin el hundido del 2% de los demás botones: esto no es un botón
-        // apoyado sobre algo, es un pedazo de la barra, y encogerlo dejaría
-        // ver la barra por los costados. El acuse de recibo al toque lo da el
-        // violeta, que se oscurece mientras el dedo está apoyado.
-        className="flex w-full flex-col items-center justify-center gap-0.5 bg-ai py-2 text-[11px] font-semibold text-white transition-colors hover:bg-ai/90 active:bg-ai/80"
+        className="flex w-full flex-col items-center justify-center gap-0.5 rounded-xl bg-ai py-1.5 text-[11px] font-semibold text-white transition-colors hover:bg-ai/90 active:bg-ai/80"
       >
         <RocketIcon className="h-[22px] w-[22px]" />
-        Chat
+        Chat IA
       </button>
     </li>
   );
@@ -239,6 +227,14 @@ function ChatIcon() {
   return (
     <svg {...iconProps}>
       <path d="M20 15a3 3 0 0 1-3 3H8l-4 3V6a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3z" />
+    </svg>
+  );
+}
+
+function HeartIcon() {
+  return (
+    <svg {...iconProps}>
+      <path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z" />
     </svg>
   );
 }

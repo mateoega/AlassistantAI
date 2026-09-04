@@ -1201,3 +1201,21 @@ Se le fueron con eso la sombra violeta, las esquinas redondeadas y el hundido de
 **Dice "Chat"**, como lo pidió el cliente. Queda anotado que al lado está "Mensajes", que también son conversaciones —las que se tienen con el vendedor—: en la pantalla, lo que separa a una de la otra es el violeta y el cohete, no la palabra. El nombre completo lo dice el `aria-label` ("Abrir el chat del asistente de IA") y el encabezado del panel.
 
 Medido: el violeta ocupa 75 × 57px, arranca a un píxel del borde de arriba de la barra —ese píxel es la línea de la barra— y llega hasta abajo; su centro cae en 188 de una pantalla de 375, el eje exacto.
+
+### Segundo ajuste del mismo día: dónde queda cada cosa
+
+Quedó así, después de que el cliente lo probara en el teléfono:
+
+| Antes de hoy | Ahora |
+|---|---|
+| Barra: Inicio, Publicar, Guardados, Mensajes, Mis avisos | Barra: Inicio, **Guardados**, **Chat IA**, Mis avisos |
+| Encabezado en celular: perfil | Encabezado: **Notificaciones** (campana) y perfil |
+| Asistente: botón flotante | Asistente: el lugar violeta del medio de la barra |
+
+**"Guardados" se quedó abajo y "Mensajes" subió.** El criterio es qué hace la mano: el corazón se toca **mientras** se recorre el listado, decenas de veces por sesión, y eso es trabajo de pulgar; los mensajes se miran cuando se los va a buscar, una o dos veces por día, y para eso el encabezado alcanza y sobra.
+
+**"Mensajes" pasó a llamarse "Notificaciones", y el ícono es una campana.** No es solo un cambio de nombre: es reservar el lugar de **todo lo que llega**. Hoy lo que llega son conversaciones; cuando existan los avisos que no son conversaciones —un vehículo guardado que bajó de precio, una función nueva— van a aparecer en la misma lista y en el mismo botón, sin tener que mudar a nadie de pantalla ni enseñarle un lugar nuevo. **La dirección sigue siendo `/mensajes`** a propósito: cada conversación cuelga de ella (`/mensajes/[id]`) y esos enlaces ya están guardados en el historial de la gente.
+
+**El aviso de "hay algo nuevo" es un punto y es azul.** Un punto y no un número porque el botón mide 38px y desde afuera la única pregunta que hay que contestar es "¿hay algo para mirar?". Azul y no rojo —el cliente lo pidió "rojo o algo"— por la regla de identidad del proyecto, que no usa rojo ni naranja en ningún estado: el rojo de las notificaciones de otras aplicaciones dice "algo anda mal", y acá casi siempre es alguien contestando un mensaje. Lleva un anillo blanco para que no se apoye sobre el borde del botón y se lea como una mancha. Cambiarlo a rojo es una línea, si el cliente lo prefiere igual.
+
+**Al violeta se le redondearon las esquinas** (`rounded-xl`, los mismos 12px de todo lo chico de la aplicación, con cuatro píxeles de aire alrededor). Un rectángulo de esquinas vivas adentro de una barra de vidrio se veía puntiagudo; el cliente lo marcó y tenía razón. Medido: 73 × 53px, centrado en 188 de una pantalla de 375.
