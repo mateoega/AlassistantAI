@@ -185,14 +185,17 @@ export function AnalysisPanel({ listingId }: { listingId: string }) {
       {!running && !session && (
         <Link
           href="/login"
-          className="block w-full rounded-xl bg-brand-deep px-5 py-2.5 text-center text-sm font-semibold text-white shadow-soft transition-all duration-150 hover:bg-brand-deep/90 active:scale-[0.98]"
+          className="block w-full rounded-xl bg-ai px-5 py-2.5 text-center text-sm font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-[0.98]"
         >
           {result ? 'Iniciá sesión para analizarlo de nuevo' : 'Iniciá sesión para analizarlo'}
         </Link>
       )}
 
       {!running && session && (
-        <Button onClick={() => void run()} disabled={starting} full={!result}>
+        /* Violeta y no azul: es una llamada al modelo, igual que el
+           asistente, y las dos puertas a la IA se pintan del mismo color en
+           toda la aplicación. Ver `globals.css`. */
+        <Button variant="ia" onClick={() => void run()} disabled={starting} full={!result}>
           {starting
             ? 'Un momento…'
             : result

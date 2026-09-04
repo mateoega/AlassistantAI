@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from './SessionProvider';
 import { useMessages } from './MessagesProvider';
+import { useAssistant } from './AssistantProvider';
+import { RocketIcon } from './ui';
 
 /**
  * Navegación inferior, solo en celular.
@@ -17,16 +19,24 @@ import { useMessages } from './MessagesProvider';
  * en esa franja intermedia. El corte de las dos barras es el mismo número, así
  * que siempre hay exactamente una navegación visible.
  *
- * SON CINCO Y SIGUEN SIENDO CINCO. "Mensajes" entró en el Sprint 5 en el lugar
- * de "Perfil", que se fue a la barra de arriba. Seis botones en 375px son 62px
- * cada uno: entran a la fuerza y con el texto cortado. El perfil es lo que
- * menos se toca de los seis, así que es el que se va.
+ * SON CUATRO, Y EL DEL MEDIO NO ES UNA PANTALLA (2026-09-04). Inicio,
+ * Mensajes, IA y Mis avisos. Antes eran cinco pantallas; salieron dos y entró
+ * el asistente:
  *
- * SIN CUENTA NO SE DIBUJA. Cuatro de los cinco botones llevan a pantallas que
- * necesitan sesión, y el quinto es la pantalla donde ya está parada la
- * persona. Una barra donde todo manda a iniciar sesión no es navegación, es un
- * cartel repetido cinco veces: quien no tiene cuenta la ve en el encabezado,
- * una sola vez y donde la espera.
+ *   - "Publicar" se fue porque estaba dos veces. "Mis avisos" ya es la
+ *     pantalla de lo que uno publica y ya tiene arriba su botón "+ Publicar
+ *     vehículo": el de la barra llevaba al mismo lugar desde un renglón más
+ *     abajo.
+ *   - "Guardados" se fue arriba, al lado del perfil, en la barra superior. Es
+ *     lo propio de cada uno, igual que el perfil, y ahí lo busca la mano.
+ *   - "IA" ocupó el lugar del medio, que era el del corazón. Era el botón
+ *     flotante que andaba esquivando el contenido; acá tiene un lugar fijo y
+ *     no le tapa nada a nadie.
+ *
+ * SIN CUENTA NO SE DIBUJA, y eso no cambió. Dos de los cuatro botones llevan a
+ * pantallas que necesitan sesión. El asistente no —se puede usar sin cuenta—,
+ * pero mientras no hay barra sigue estando el botón flotante, que aparece
+ * justamente cuando esta barra no está. Ver `AssistantChat`.
  */
 export function MobileNav() {
   const { unread } = useMessages();
@@ -48,20 +58,8 @@ export function MobileNav() {
       // Respeta la franja de gestos de los celulares sin botón físico.
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
-      <ul className="mx-auto flex max-w-lg">
+      <ul className="mx-auto flex max-w-lg items-center">
         <Item href="/" label="Inicio" active={pathname === '/'} icon={<HomeIcon />} />
-        <Item
-          href="/publicar"
-          label="Publicar"
-          active={pathname === '/publicar'}
-          icon={<PlusIcon />}
-        />
-        <Item
-          href="/guardados"
-          label="Guardados"
-          active={pathname === '/guardados'}
-          icon={<HeartIcon />}
-        />
         <Item
           href="/mensajes"
           label="Mensajes"
@@ -69,11 +67,20 @@ export function MobileNav() {
           icon={<ChatIcon />}
           badge={unread}
         />
+        <AssistantItem />
+        {/* EL DOBLE DE ANCHO, PARA QUE LA IA QUEDE EN EL MEDIO DE VERDAD.
+            A la izquierda del botón violeta hay dos destinos y a la derecha
+            uno solo; con todos los espacios iguales, el centro del botón caía
+            46px corrido hacia la derecha. Dándole a este el ancho de dos, los
+            dos lados pesan lo mismo y el violeta queda en el eje de la
+            pantalla, que es donde lo pidió el cliente y donde lo busca el
+            pulgar. */}
         <Item
           href="/mis-publicaciones"
           label="Mis avisos"
           active={pathname.startsWith('/mis-publicaciones')}
           icon={<ListIcon />}
+          doble
         />
       </ul>
     </nav>
@@ -83,12 +90,12 @@ export function MobileNav() {
 /**
  * Si la barra de abajo está montada en esta pantalla.
  *
- * La preguntan el botón flotante del asistente —que se tiene que apoyar encima
- * de la barra, no sobre ella ni levantado en el aire cuando no está— y el pie,
- * que le reserva el lugar. Vive acá para que la condición se escriba una sola
- * vez: estaba copiada como un `bottom-20` fijo en el botón, así que mirar el
- * muro sin cuenta lo dejaba flotando a 80px del borde esquivando una barra que
- * no existía, justo encima del contenido.
+ * La preguntan el botón flotante del asistente —que aparece justamente cuando
+ * esta barra NO está, porque con barra el asistente vive adentro de ella— y el
+ * pie, que le reserva el lugar. Vive acá para que la condición se escriba una
+ * sola vez: estaba copiada como un `bottom-20` fijo en el botón, así que mirar
+ * el muro sin cuenta lo dejaba flotando a 80px del borde esquivando una barra
+ * que no existía, justo encima del contenido.
  *
  * DICE SI ESTÁ MONTADA, NO SI SE VE. La barra además se esconde de 768px para
  * arriba con `md:hidden`, y eso lo sabe solo el CSS. Quien use este dato tiene
@@ -101,12 +108,49 @@ export function useMobileNavVisible(): boolean {
   return Boolean(session) && pathname !== '/login';
 }
 
+/**
+ * El botón del asistente, en el medio de la barra y en violeta.
+ *
+ * NO ES UN ENLACE: el asistente no es una pantalla, es un panel que se abre
+ * encima de la que se está mirando —así puede hablar del aviso que hay abajo—.
+ * Por eso es el único de la barra que no lleva `href` ni marca "página actual".
+ *
+ * ES LO ÚNICO PINTADO DE OTRO COLOR, y es a propósito: la IA es lo que
+ * diferencia a esta plataforma de un clasificado común, y tiene que verse
+ * desde la primera pantalla, sin leer nada. El violeta y su sombra son los de
+ * `globals.css`, reservados para lo que llama al modelo.
+ *
+ * DICE "IA" Y NO "ASISTENTE". Es la palabra que la gente busca, entra en el
+ * ancho de un quinto de pantalla sin achicar la letra, y el nombre completo
+ * está en el encabezado del panel apenas se abre. El cohete lo pidió el
+ * cliente y hace la mitad del trabajo: se reconoce antes de leer.
+ */
+function AssistantItem() {
+  const { open, setOpen } = useAssistant();
+
+  return (
+    <li className="flex flex-1 justify-center">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Abrir el asistente de IA"
+        aria-expanded={open}
+        className="my-1.5 flex items-center gap-1.5 rounded-full bg-ai px-4 py-2 text-[13px] font-semibold text-white shadow-ai transition-all duration-150 hover:bg-ai/90 active:scale-95"
+      >
+        <RocketIcon />
+        IA
+      </button>
+    </li>
+  );
+}
+
 function Item({
   href,
   label,
   active,
   icon,
   badge,
+  doble,
 }: {
   href: string;
   label: string;
@@ -114,9 +158,11 @@ function Item({
   icon: React.ReactNode;
   /** Mensajes sin leer. `null` mientras no se sabe: ahí no se dibuja nada. */
   badge?: number | null;
+  /** Que ocupe el ancho de dos. Ver el comentario en la lista de arriba. */
+  doble?: boolean;
 }) {
   return (
-    <li className="flex-1">
+    <li className={doble ? 'flex-2' : 'flex-1'}>
       <Link
         href={href}
         aria-current={active ? 'page' : undefined}
@@ -163,23 +209,6 @@ function HomeIcon() {
     <svg {...iconProps}>
       <path d="M3 10.5 12 3l9 7.5" />
       <path d="M5 9.5V21h14V9.5" />
-    </svg>
-  );
-}
-
-function PlusIcon() {
-  return (
-    <svg {...iconProps}>
-      <rect x="3" y="3" width="18" height="18" rx="5" />
-      <path d="M12 8v8M8 12h8" />
-    </svg>
-  );
-}
-
-function HeartIcon() {
-  return (
-    <svg {...iconProps}>
-      <path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z" />
     </svg>
   );
 }

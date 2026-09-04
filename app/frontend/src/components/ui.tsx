@@ -54,7 +54,7 @@ export function Button({
   full,
 }: {
   children: ReactNode;
-  variant?: 'primary' | 'secondary' | 'quiet';
+  variant?: 'primary' | 'secondary' | 'quiet' | 'ia';
   type?: 'button' | 'submit';
   disabled?: boolean;
   onClick?: () => void;
@@ -64,6 +64,10 @@ export function Button({
     primary: 'bg-brand-deep text-white font-semibold shadow-soft hover:bg-brand-deep/90',
     secondary: 'bg-brand-soft text-brand-deep font-semibold hover:bg-brand-soft/70',
     quiet: 'border border-line bg-surface text-body shadow-soft hover:border-brand',
+    // Violeta: lo usa SOLO lo que llama al modelo de IA. Ver el porqué del
+    // color en `globals.css`. Un botón de IA pintado del azul de la marca se
+    // lee como una acción más entre guardar, publicar y enviar.
+    ia: 'bg-ai text-white font-semibold shadow-ai hover:bg-ai/90',
   };
 
   return (
@@ -239,5 +243,37 @@ export function Card({
     >
       {children}
     </section>
+  );
+}
+
+/**
+ * EL COHETE ES EL SÍMBOLO DE LA IA, y es uno solo en toda la aplicación.
+ *
+ * Lo llevan las dos puertas al asistente —el botón violeta del medio de la
+ * barra de abajo y el botón flotante de escritorio—, que nunca se ven las dos
+ * a la vez: son la misma función en dos lugares, y con dos dibujos distintos
+ * se leerían como dos cosas. Vive acá y no adentro de una de las dos por eso.
+ *
+ * Va con el trazo más grueso que el resto de los íconos (2 contra 1,8) porque
+ * siempre va en blanco sobre violeta, donde un trazo fino se deshace.
+ */
+export function RocketIcon({ className = 'h-4 w-4' }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M12 2.5c2.4 2.3 3.8 5.3 3.8 8.6v3.4H8.2v-3.4C8.2 7.8 9.6 4.8 12 2.5z" />
+      <path d="M8.2 11.5 5.2 14.5v3.6l3-2.1" />
+      <path d="M15.8 11.5 18.8 14.5v3.6l-3-2.1" />
+      <path d="M10.6 18.4c.3 1.4.8 2.4 1.4 3.1.6-.7 1.1-1.7 1.4-3.1" />
+      <circle cx="12" cy="9.5" r="1.7" />
+    </svg>
   );
 }

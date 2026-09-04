@@ -87,6 +87,36 @@
   --color-brand-soft: #e8f2fd;
 
   /* ---------------------------------------------------------------------------
+   * EL VIOLETA DE LA IA (2026-09-04)
+   *
+   * Un solo color, y para una sola cosa: TODO LO QUE ES INTELIGENCIA
+   * ARTIFICIAL. Hoy son dos puertas —el botón del asistente en la barra de
+   * abajo y "Analizar esta publicación"—, y la que se agregue mañana usa este
+   * mismo violeta. Si aparece violeta en algo que no llama al modelo, el
+   * código de color se rompió y deja de querer decir algo.
+   *
+   * POR QUÉ UN COLOR NUEVO Y NO EL AZUL DE LA MARCA. La IA es lo que
+   * diferencia a esta plataforma de un clasificado común, y pintada del mismo
+   * azul que los botones de guardar, publicar y enviar no se distingue de
+   * ellos: se lee como una acción más. Un acento aparte la hace reconocible de
+   * un vistazo en cualquier pantalla.
+   *
+   * POR QUÉ VIOLETA Y NO NARANJA NI AMARILLO. La regla de identidad del
+   * proyecto es que no se usa rojo ni naranja en ningún estado; esos colores
+   * significan alarma, y un botón naranja sobre azul y blanco se lee como una
+   * advertencia o como una oferta, no como una función. El violeta es vecino
+   * del azul en el círculo cromático, así que convive con la marca en vez de
+   * pelearle, y es el color con el que hoy se nombra la IA en casi todas las
+   * aplicaciones: se entiende sin leer.
+   *
+   * Contraste medido: 7,1:1 con texto blanco encima, bien arriba del 4,5:1 que
+   * pide la norma; y el mismo violeta como texto sobre el relleno suave da
+   * 6,4:1.
+   * ------------------------------------------------------------------------- */
+  --color-ai: #6d28d9;
+  --color-ai-soft: #f1ecfe;
+
+  /* ---------------------------------------------------------------------------
    * LAS SOMBRAS: LO QUE REEMPLAZA AL GRIS DE FONDO
    *
    * Con la página blanca y las tarjetas blancas, si no hay sombra no hay
@@ -108,6 +138,15 @@
   --shadow-soft: 0 1px 2px rgb(5 7 13 / 0.04), 0 4px 14px -6px rgb(21 101 192 / 0.14);
   --shadow-card: 0 1px 3px rgb(5 7 13 / 0.05), 0 10px 26px -12px rgb(21 101 192 / 0.28);
   --shadow-float: 0 2px 6px rgb(5 7 13 / 0.08), 0 16px 36px -12px rgb(21 101 192 / 0.45);
+
+  /**
+   * La cuarta sombra, y la única que no es azul: el brillo violeta de la IA.
+   *
+   * Es `float` teñida con `--color-ai`, y existe por lo mismo que el color: un
+   * botón violeta con un halo azul se ve como un botón violeta apoyado sobre
+   * otra cosa. La usa solo lo que lleva el violeta.
+   */
+  --shadow-ai: 0 2px 6px rgb(5 7 13 / 0.08), 0 14px 30px -12px rgb(109 40 217 / 0.55);
 
   /**
    * EL TEXTO CHICO MIDE 13px, NO 12.

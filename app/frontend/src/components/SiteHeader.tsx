@@ -88,37 +88,81 @@ export function SiteHeader() {
               </TopLink>
             </nav>
 
-            {/* Solo en celular: abajo ya no había lugar para el perfil. */}
-            <Link
-              href="/perfil"
-              aria-label="Mi perfil"
-              aria-current={pathname === '/perfil' ? 'page' : undefined}
-              className={[
-                'rounded-xl border p-2 transition-colors md:hidden',
-                pathname === '/perfil'
-                  ? 'border-brand bg-brand-soft text-brand-deep'
-                  : 'border-line text-body',
-              ].join(' ')}
-            >
-              <svg
-                width={22}
-                height={22}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.8}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
+            {/* GUARDADOS Y PERFIL, JUNTOS Y SOLO EN CELULAR (2026-09-04).
+
+                Los dos son lo propio de cada uno —lo que guardé, quién soy— y
+                por eso viven en la misma esquina. El corazón bajó de la barra
+                de abajo para dejarle el lugar del medio al botón de IA; el
+                perfil ya estaba acá desde el Sprint 5, por la misma razón de
+                falta de lugar. De tablet para arriba los dos son enlaces con
+                texto en la navegación de al lado.
+
+                Van adentro de una caja propia y no sueltos: el encabezado
+                reparte con `justify-between`, así que dos hijos sueltos se
+                irían uno a cada punta con el logo en el medio. */}
+            <div className="flex items-center gap-2 md:hidden">
+              <IconLink
+                href="/guardados"
+                label="Guardados"
+                active={pathname === '/guardados'}
               >
+                <path d="M12 20s-7-4.6-7-9.5A4 4 0 0 1 12 7a4 4 0 0 1 7 3.5C19 15.4 12 20 12 20z" />
+              </IconLink>
+
+              <IconLink href="/perfil" label="Mi perfil" active={pathname === '/perfil'}>
                 <circle cx="12" cy="8" r="4" />
                 <path d="M4 21c0-4 3.6-6 8-6s8 2 8 6" />
-              </svg>
-            </Link>
+              </IconLink>
+            </div>
           </>
         )}
       </div>
     </header>
+  );
+}
+
+/**
+ * Un botón cuadrado con un ícono adentro, para la esquina de la derecha en
+ * celular. Los dos que hay —guardados y perfil— se dibujaban con el mismo
+ * bloque de veinte líneas copiado dos veces.
+ */
+function IconLink({
+  href,
+  label,
+  active,
+  children,
+}: {
+  href: string;
+  /** Lo que dice un lector de pantalla: el ícono solo no dice nada. */
+  label: string;
+  active: boolean;
+  /** El dibujo del ícono, adentro de un lienzo de 24×24. */
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      aria-current={active ? 'page' : undefined}
+      className={[
+        'rounded-xl border p-2 transition-colors',
+        active ? 'border-brand bg-brand-soft text-brand-deep' : 'border-line text-body',
+      ].join(' ')}
+    >
+      <svg
+        width={22}
+        height={22}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.8}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        {children}
+      </svg>
+    </Link>
   );
 }
 

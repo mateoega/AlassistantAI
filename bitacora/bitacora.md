@@ -1162,3 +1162,30 @@ Al bajar por el muro, la píldora de búsqueda se suelta de su lugar y queda flo
 **El alto de la barra de arriba se mide, no se escribe.** Son 61px sin sesión, y cambia con sesión y de tablet para arriba, donde le entran los botones de navegación. Un número escrito a mano dejaría la píldora montada sobre la barra, o con un hueco, según quién esté mirando.
 
 **Qué se verificó.** En el navegador a 375px y a 1024px: la píldora se despega a los pocos píxeles de scroll y queda en y=69 —61 de la barra más 8—, alineada con el margen de la página (x=16) en los dos anchos; el desenfoque se resuelve de verdad (`saturate(1.8) blur(20px)`); escribir y tocar la lupa con la barra despegada busca y trae los resultados; al volver arriba, la píldora vuelve a su lugar con el botón azul afuera. Sin errores en la consola.
+
+## 2026-09-04 — La IA sale del rincón: barra de abajo de cuatro lugares y un violeta propio
+
+La barra inferior pasó de cinco destinos a cuatro lugares —Inicio, Mensajes, **IA** y Mis avisos—, el botón flotante del asistente desapareció de donde hay barra, y todo lo que llama al modelo se pinta de un violeta nuevo.
+
+**Por qué:** lo pidió el cliente y el motivo es de producto, no de estética: que se entienda desde la primera pantalla que esta aplicación tiene IA, porque es lo que la diferencia de un clasificado común. El asistente estaba escondido en un botón flotante que además andaba esquivando el contenido.
+
+### Qué se movió
+
+- **"Publicar" salió de la barra.** Estaba dos veces: `/mis-publicaciones` ya es la pantalla de lo que uno publica y ya tiene arriba su "+ Publicar vehículo". El de la barra llevaba al mismo lugar desde un renglón más abajo.
+- **"Guardados" subió al encabezado**, al lado del perfil y solo en celular. Los dos son lo propio de cada uno —lo que guardé, quién soy— y por eso viven en la misma esquina. De tablet para arriba siguen siendo enlaces con texto, como estaban.
+- **El botón flotante del asistente ya no se dibuja donde hay barra.** Queda en dos lugares: de tablet para arriba, y en celular sin sesión —ahí la barra no se dibuja y al asistente se lo puede usar sin cuenta—. Dos accesos a lo mismo, uno encima del otro, es el problema que el cliente ya había reportado. De paso, el botón dejó de depender del alto de la barra: ese `calc(4.25rem…)` que lo apoyaba encima ya no puede pasar.
+- **"Mis avisos" ocupa el ancho de dos lugares.** Con los cuatro iguales, el centro del botón violeta caía en 234 de una pantalla de 375: 46px corrido del eje. Se midió y se corrigió; ahora cae en 188, que es el centro exacto.
+
+### El violeta
+
+Un color nuevo, `#6D28D9`, con su relleno suave y su propia sombra, y **una sola función: marcar lo que llama al modelo**. Hoy son el botón "IA" y "Analizar esta publicación"; el que se sume mañana usa el mismo. Si aparece violeta en algo que no es IA, el código de color deja de querer decir algo.
+
+**Se evaluó el naranja, que era una de las tres opciones que puso el cliente sobre la mesa, y se descartó.** La regla de identidad del proyecto —no se usa rojo ni naranja en ningún estado, ni siquiera en errores— no es un capricho: sobre azul y blanco, un botón naranja se lee como advertencia o como oferta, que es el tono de "marketplace agresivo" que este proyecto viene evitando desde el primer día. El violeta es vecino del azul, así que convive con la marca, y es con lo que hoy se nombra la IA en casi todas las aplicaciones: se entiende sin leer. Contraste medido: 7,1:1 con blanco encima.
+
+**El cohete es el símbolo, y es uno solo** (`RocketIcon` en `ui.tsx`), compartido por el botón de la barra y el flotante. Nunca se ven los dos a la vez —uno es de celular y el otro de escritorio—, y con dos dibujos distintos se leerían como dos funciones distintas.
+
+**El botón de la barra no es un enlace.** El asistente no es una pantalla: es un panel que se abre encima de la que se está mirando, y por eso puede hablar del aviso que hay abajo. Es el único de la barra sin `href` y sin marca de "página actual".
+
+**Dice "IA" y no "Asistente"**: es la palabra que la gente busca, entra en el ancho sin achicar la letra, y el nombre completo está en el encabezado del panel apenas se abre.
+
+**Qué se verificó.** En el navegador a 375px con una sesión de prueba real (enlace de un solo uso, sin contraseñas): la barra muestra los cuatro lugares con el violeta centrado en 188 de 375, el botón abre el panel del asistente, el flotante queda en `display: none`, y el encabezado muestra el corazón y el perfil juntos arriba a la derecha. En la ficha de un vehículo, "Analizar de nuevo" quedó violeta con la sombra violeta. A 1024px: la barra de abajo no se dibuja, el flotante sí y en violeta, y el encabezado sigue con sus enlaces de texto, "Guardados" incluido. Sin errores en la consola.

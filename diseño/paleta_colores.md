@@ -73,6 +73,20 @@ El logo tiene cuatro íconos que representan "confianza" — escudo, lupa, alert
 
 El componente `Notice` de `app/frontend/src/components/ui.tsx` ya resuelve esto. Conviene usarlo en lugar de inventar estilos nuevos para cada aviso.
 
+## El violeta de la IA (2026-09-04)
+
+Hay **un color fuera de la paleta de la marca, y es uno solo**: el violeta `#6D28D9`, con `#F1ECFE` como su relleno suave. No es un color de marca: es una **etiqueta**. Marca todo lo que llama al modelo de inteligencia artificial — hoy el botón "IA" del medio de la barra inferior, su gemelo flotante en escritorio, y "Analizar esta publicación" —, y nada más.
+
+**Por qué hace falta.** La IA es lo que diferencia a esta plataforma de un clasificado común. Pintada del mismo azul que guardar, publicar y enviar, se lee como una acción más entre otras; con un acento propio se reconoce de un vistazo en cualquier pantalla, sin leer.
+
+**Por qué violeta y no naranja ni amarillo.** Se evaluaron los tres. El naranja y el amarillo chocan con la regla de identidad de más arriba —no se usa rojo ni naranja en ningún estado— y no por capricho: sobre azul y blanco, un botón naranja se lee como una advertencia o como una oferta, que es exactamente el tono de "marketplace agresivo" que este proyecto evita. El violeta es vecino del azul en el círculo cromático, así que convive con la marca en vez de pelearle, y es el color con el que hoy se nombra la IA en casi todas las aplicaciones: se entiende sin explicación.
+
+**Contraste medido:** 7,1:1 con texto blanco encima, y 6,4:1 como texto sobre su relleno suave. Los dos bien arriba del 4,5:1 de la norma.
+
+**Su símbolo es un cohete**, y es uno solo para toda la aplicación (`RocketIcon` en `ui.tsx`). Lo eligió el cliente. Las dos puertas al asistente nunca se ven a la vez —una es de celular y la otra de escritorio—, y con dos dibujos distintos se leerían como dos cosas.
+
+**Su sombra es propia:** `--shadow-ai`, que es la sombra de lo que flota pero teñida de violeta. Un botón violeta con halo azul se ve como un botón violeta apoyado sobre otra cosa.
+
 ## El nombre de la marca
 
 El logotipo se escribe **AIassistant** (de *inteligencia artificial*), pero en la mayoría de las tipografías sin serifa la **I** mayúscula es idéntica a una **l** minúscula, y el nombre se lee "Alassistant". Ya pasó: la carpeta del repositorio quedó con ese error.

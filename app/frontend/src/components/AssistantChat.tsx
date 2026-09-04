@@ -10,7 +10,7 @@ import {
   type ChatMessage,
 } from '@/components/AssistantProvider';
 import { useMobileNavVisible } from '@/components/MobileNav';
-import { inputClass } from '@/components/ui';
+import { RocketIcon, inputClass } from '@/components/ui';
 import { formatPrice, formatKilometers } from '@/lib/format';
 import type { ListingSearchResult } from '@/lib/types';
 
@@ -257,27 +257,30 @@ export function AssistantChat() {
         onClick={() => setOpen(true)}
         aria-label="Abrir el asistente"
         style={{
-          // Dónde se apoya el botón en celular. Es una variable y no una clase
-          // fija porque depende de si abajo hay barra de navegación, y eso
-          // cambia de pantalla en pantalla. `env(safe-area-inset-bottom)` es la
-          // franja de gestos de los celulares sin botón físico.
+          // A un dedo del borde de abajo, respetando la franja de gestos de los
+          // celulares sin botón físico.
           //
-          //   con barra:  4.25rem — justo encima de ella, sin pisarla
-          //   sin barra:  1rem    — a un dedo del borde
-          //
-          // El corte de `md:bottom-6` de abajo tiene que ser el mismo que el
-          // `md:hidden` de la barra: entre 640 y 768 la barra existe, y con el
-          // `sm:` que había antes el botón le caía encima.
-          '--assistant-bottom': navVisible
-            ? 'calc(4.25rem + env(safe-area-inset-bottom))'
-            : 'calc(1rem + env(safe-area-inset-bottom))',
+          // ANTES ESTE NÚMERO DEPENDÍA DE LA BARRA DE ABAJO (4,25rem para
+          // apoyarse encima de ella). Ya no puede pasar: donde hay barra, el
+          // asistente vive ADENTRO de la barra y este botón no se dibuja.
+          '--assistant-bottom': 'calc(1rem + env(safe-area-inset-bottom))',
         } as CSSProperties}
         className={[
-          'fixed right-4 z-40 flex items-center justify-center rounded-full bg-brand-deep',
+          'fixed right-4 z-40 items-center justify-center rounded-full bg-ai',
+          // DÓNDE APARECE ESTE BOTÓN (2026-09-04). Solo donde no hay barra de
+          // abajo: de tablet para arriba siempre, y en celular únicamente sin
+          // sesión —ahí la barra no se dibuja, y al asistente se lo puede usar
+          // sin cuenta—. Con la barra puesta, el lugar del asistente es el
+          // botón violeta del medio: dos accesos a lo mismo, uno encima del
+          // otro, es lo que el cliente ya reportó una vez.
+          //
+          // El corte `md` es el mismo `md:hidden` de la barra. Si cambia allá,
+          // cambia acá: entre 640 y 768 la barra existe.
+          navVisible ? 'hidden md:flex' : 'flex',
           // `shadow-float` es la única sombra con brillo azul fuerte de la
           // aplicación, y este botón es lo único que flota de verdad por
           // encima de la página: la sombra es lo que lo despega del listado.
-          'text-white shadow-float transition-colors hover:bg-brand-deep/90 active:scale-95',
+          'text-white shadow-ai transition-colors hover:bg-ai/90 active:scale-95',
           // CELULAR: un círculo de 56px, sin la palabra. El cartel con texto
           // medía 140px de ancho y se apoyaba sobre tres o cuatro renglones de
           // cualquier pantalla — campos, precios, tarjetas del listado. Un
@@ -300,7 +303,7 @@ export function AssistantChat() {
             : 'pointer-events-none translate-y-28 opacity-0',
         ].join(' ')}
       >
-        <SparkIcon />
+        <RocketIcon className="h-6 w-6 sm:h-[18px] sm:w-[18px]" />
         <span className="hidden sm:inline">Asistente</span>
       </button>
     );
@@ -535,27 +538,5 @@ function Bubble({ message }: { message: ChatMessage }) {
         )}
       </div>
     </div>
-  );
-}
-
-function SparkIcon() {
-  return (
-    <svg
-      width={18}
-      height={18}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      // Adentro del círculo de 56px un ícono de 18 queda perdido; en el cartel
-      // de tablet para arriba vuelve a su tamaño, al lado del texto.
-      className="h-6 w-6 sm:h-[18px] sm:w-[18px]"
-      aria-hidden
-    >
-      <path d="M12 3v4M12 17v4M3 12h4M17 12h4" />
-      <path d="M12 8.5 13.6 12 12 15.5 10.4 12z" />
-    </svg>
   );
 }
