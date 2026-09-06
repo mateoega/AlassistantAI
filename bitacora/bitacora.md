@@ -1472,3 +1472,40 @@ y **con la clave anónima**, no con la de servicio: "hilux" 9 (parecido 1,00),
 Por la API: "hilix" 9 con `approximate: true`, "hilux" 6 con `false`. En el
 muro, "hilix" muestra "9 vehículos encontrados", el renglón de aclaración y
 Hilux de verdad. `npm run build` pasa en el backend y en el frontend.
+
+## 2026-09-06 — Vuelve el asistente 3.6, y aparece medido lo que cuesta
+
+Mateo pidió volver al asistente anterior. `GEMINI_MODEL` vuelve a
+`gemini-3.6-flash` en los dos lugares que lo definen —`config/env.ts` y
+`render.yaml`, que es el que manda en producción—, y el parche del 2026-08-27
+queda documentado en los dos como lo que hay que hacer si vuelve el 429.
+
+**La cuota contesta hoy, y eso no quiere decir que esté resuelta.** Se probó
+3.6-flash contra la API con la clave del proyecto: HTTP 200. Pero el límite del
+tramo gratuito era de veinte llamadas por día, así que un 200 puede ser
+simplemente que las veinte de hoy no estaban gastadas. **No se verificó que
+haya facturación activa en el proyecto de Google**, que era la condición que el
+2026-08-27 se había escrito para volver. Queda anotado en los dos archivos.
+
+**Lo que sí se midió, y es lo que importa.** Contra el backend local, misma
+pregunta, mismo día:
+
+| Pregunta | 3.6-flash | 3.5-flash |
+|---|---|---|
+| Saludo, sin buscar nada | 11,3 s | 503 a los 47 s |
+| "¿Tenés alguna Hilux publicada?" | 47,9 s | — |
+| "¿Qué camionetas hay hasta 30.000 dólares?" | 64,0 s | 8,2 s |
+
+**Sesenta y cuatro segundos es exactamente el punto rojo número 4 del
+cliente**: "una respuesta de IA tardó cerca de un minuto". El 2026-08-27 la
+misma pregunta con búsqueda se había medido en 11,5 s, así que esto no es una
+propiedad fija del modelo: el tramo gratuito responde cuando puede. El 503 de
+3.5 en el saludo dice lo mismo desde el otro lado — la variabilidad es de
+Google, no del código.
+
+**Las dos respuestas son correctas**: 3.6 encontró las seis Hilux publicadas
+con precio, año y ubicación. Lo que está en discusión es cuánto tarda, no qué
+contesta.
+
+Queda para que lo decida Mateo: 3.6 es el modelo que la aplicación quiere y hoy
+tarda lo que el cliente reportó como roto. `npm run build` pasa.

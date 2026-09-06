@@ -76,30 +76,33 @@ export const env = {
    * Modelo de la familia Flash con capacidad de visión. Se deja configurable
    * para poder cambiarlo sin tocar código cuando Google publique uno nuevo.
    *
-   * POR QUÉ HOY DICE 3.5 Y NO 3.6 — ES TEMPORAL.
+   * VOLVIÓ A 3.6 EL 2026-09-06, y conviene saber de dónde viene.
    *
    * El 2026-08-27 el asistente dejó de contestar en producción con un
-   * 429 RESOURCE_EXHAUSTED. La causa no era saturación sino la cuota del
-   * tramo gratuito de `gemini-3.6-flash`:
+   * 429 RESOURCE_EXHAUSTED. No era saturación sino la cuota del tramo
+   * gratuito de `gemini-3.6-flash`:
    *
    *   quotaId : GenerateRequestsPerDayPerProjectPerModel-FreeTier
    *   limit   : 20
    *
    * **Veinte llamadas por día**, no por minuto — el `quotaId` dice `PerDay` y
-   * se confirmó esperando: sigue en 429 después de 90 segundos limpios. Una
+   * se confirmó esperando: seguía en 429 después de 90 segundos limpios. Una
    * sola pregunta que hace buscar publicaciones cuesta entre 2 y 4 llamadas,
    * así que una prueba de veinte minutos la agota. Y afecta también al
    * análisis de fotos, que usa este mismo valor.
    *
-   * `gemini-3.5-flash` tiene su propia cuota diaria y responde con la misma
-   * clave — probado el mismo día. Es un parche, no una solución: también se
-   * agota, y es un modelo anterior.
+   * Como parche se pasó a `gemini-3.5-flash`, que tiene su propia cuota
+   * diaria. Se vuelve a 3.6 porque es el modelo que la aplicación quiere: el
+   * análisis de fotos y el chat son mejores con él.
    *
-   * SE VUELVE A 3.6 cuando el proyecto de Google tenga facturación activa.
-   * Cambiar este valor y el de `render.yaml`, que es el que manda en
-   * producción.
+   * LO QUE NO ESTÁ RESUELTO: el 2026-09-06 se verificó que 3.6 contesta con
+   * la clave del proyecto, pero eso NO prueba que haya facturación activa —
+   * puede ser simplemente que las veinte del día no estaban gastadas. Si el
+   * chat vuelve a caer con 429, la causa es esta y no la demanda. El parche
+   * conocido es volver a poner `gemini-3.5-flash` acá y en `render.yaml`; la
+   * salida de fondo es activar facturación en el proyecto de Google.
    */
-  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.5-flash',
+  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.6-flash',
 
   /**
    * Clave de servicio: se saltea las reglas de acceso de la base. Su ÚNICO uso
