@@ -68,7 +68,7 @@ services:
       # Este archivo es el que manda en producción: el valor de acá pisa al
       # que tenga el panel de Render cuando se vuelve a desplegar.
       - key: GEMINI_MODEL
-        value: gemini-3.6-flash
+        value: gemini-3.5-flash
 
       # PORT lo pone Render solo, y `config/env.ts` ya lo lee de process.env.
       # No hace falta declararlo.

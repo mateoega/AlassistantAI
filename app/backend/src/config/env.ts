@@ -102,7 +102,7 @@ export const env = {
    * conocido es volver a poner `gemini-3.5-flash` acá y en `render.yaml`; la
    * salida de fondo es activar facturación en el proyecto de Google.
    */
-  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.6-flash',
+  geminiModel: optional('GEMINI_MODEL') ?? 'gemini-3.5-flash',
 
   /**
    * Clave de servicio: se saltea las reglas de acceso de la base. Su ÚNICO uso

@@ -1509,3 +1509,38 @@ contesta.
 
 Queda para que lo decida Mateo: 3.6 es el modelo que la aplicación quiere y hoy
 tarda lo que el cliente reportó como roto. `npm run build` pasa.
+
+**Decidido el mismo día: queda 3.5-flash.** Mateo eligió el modelo rápido con
+los números a la vista. Ocho segundos contra sesenta y cuatro en la pregunta
+que hace buscar es la diferencia entre una herramienta y un cartel de espera, y
+el punto rojo 4 del cliente era justamente la demora. Se pierde calidad en el
+análisis de fotos y en el chat, y eso se asume. La vuelta a 3.6 queda para
+cuando el proyecto de Google tenga facturación activa y el tramo pago responda
+distinto — la condición no cambió, y ahora además hay una medición contra la
+cual comparar.
+
+## 2026-09-06 — La referencia de mercado no se ve sin cuenta, y hace once días que nadie la mira
+
+Mateo preguntó qué tan potente es la fuente externa y dijo que no la ve en la
+pantalla. **No la ve porque no está**: navegando sin cuenta, la referencia de
+Arg Autos es `null` en todos los avisos.
+
+**La causa es una regla de acceso que quedó vieja.** La migración
+`20260821000002` le dio a `market_references` una sola política de lectura,
+`to authenticated`, con el argumento de que no hay nada privado ahí. Era cierto
+y era inofensivo mientras el muro pedía cuenta. **El 2026-08-26 el muro se
+abrió a las visitas** y esa política se quedó como estaba, así que la capa 2 de
+la estimación se apaga sola justo para el que todavía no se registró — que es
+como recorrió la aplicación el cliente.
+
+Verificado de las dos puntas: con la clave anónima, `market_references`
+devuelve `[]`; con la de servicio, la fila existe (`toyota hilux 2018`, USD
+23.184, entre 13.659 y 31.244, 20 versiones). Y por la API, sin sesión, el
+aviso de la Hilux 2018 estima bien —USD 26.700 a 31.400, "dentro"— pero con
+`referencia_externa: null`.
+
+**Lo que la fuente da hoy, medido:** 141 filas, 21 familias de modelo, de 2012
+a 2025, cargadas de una sola vez el 2026-08-21. Precio promedio en dólares,
+mínimo y máximo entre versiones, y cuántas versiones promedió. Cubre autos,
+camionetas y utilitarios; no hay una sola fila de motos, camiones, buses ni
+cuatriciclos, como estaba previsto.
