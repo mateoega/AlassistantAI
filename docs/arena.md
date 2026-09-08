@@ -1,6 +1,6 @@
 # La Arena — nota de concepto
 
-**Estado: idea en discusión. No hay nada construido ni comprometido.** Este archivo existe para que la idea se pueda discutir escrita, no para planificar un sprint. Si algo de acá se decide hacer, se anota en el [roadmap](roadmap.md) y recién ahí es un compromiso.
+**Estado: idea en discusión, segunda vuelta. No hay nada construido ni comprometido.** Este archivo existe para que la idea se pueda discutir escrita, no para planificar un sprint. Si algo de acá se decide hacer, se anota en el [roadmap](roadmap.md) y recién ahí es un compromiso.
 
 La idea, en una frase: **un evento con nombre, fecha y hora, donde un puñado de vehículos de la plataforma se presentan en público, y donde entrar a mirar no cuesta nada ni pide cuenta.**
 
@@ -184,3 +184,168 @@ Todo lo demás —visitas, avisos abiertos, mensajes al vendedor, publicaciones 
 2. **Cada cuánto.** Semanal es un compromiso de producción que hoy no sé si el equipo puede sostener; mensual da margen y hace la fecha más importante. Con setenta avisos, mensual.
 3. **Si la Arena es marketing o es el motor de altas.** Cambia todo lo demás, incluido si conviene cobrar por entrar un vehículo —que además sería la primera respuesta concreta al pendiente más viejo del proyecto, cómo monetiza la plataforma.
 4. **Si se muestra algún contador,** y cómo se concilia con la decisión de los favoritos privados.
+
+---
+
+# Parte II — Segunda vuelta (2026-09-08)
+
+El cliente leyó la parte I y tomó tres decisiones, más una idea de nombre. Esta parte las anota, y después las rompe donde hay que romperlas.
+
+**Lo decidido:**
+
+1. **Qué pasa a las 20:00:** se revela el análisis del vehículo estelar —qué cierra, qué genera dudas, qué no se puede comprobar por fotos, qué preguntarle al vendedor— y el vendedor contesta ahí. Nombre en exploración: **"El Veredicto"**.
+2. **El pronóstico cambia de forma:** en vez de adivinar el precio final —que puede no existir, porque el vehículo puede no venderse esa noche— la pregunta pasa a ser **"¿Cuánto vale para vos?"**, y se muestran tres números: lo que dijo la gente, lo que estima AIassistant y lo que pide el vendedor. **El dueño vs la gente vs la IA.**
+3. **La gatera:** los vehículos se postulan, y solo se anuncian los seleccionados. Sin contadores, sin presión.
+4. **Arena 0 manual primero**, y recién con evidencia se decide qué programar.
+
+Las tres son mejores que lo que había en la parte I. Lo que sigue es lo que les falta.
+
+---
+
+## 11. El Veredicto tiene un problema de fábrica: hoy no se puede reservar
+
+Esto no es una objeción de diseño, es cómo está construida la plataforma.
+
+**El análisis sigue la visibilidad de su publicación.** La política de acceso de `listing_analyses` dice exactamente eso: quien puede ver el aviso puede ver su análisis. Y **cualquiera con cuenta puede pedirlo** — el botón está en la ficha, y el mecanismo de `claim_listing_analysis` existe justamente porque dos personas pueden pedirlo a la vez.
+
+Entonces, si el vehículo estelar es un aviso publicado:
+
+- si el análisis ya existe, **está a la vista desde antes del evento**, y no hay nada que revelar;
+- si no existe, **cualquiera con una cuenta lo dispara en un click** y se lo spoilea a sí mismo y a quien quiera contarle.
+
+Guardarlo obligaría a **tapar información en un aviso publicado durante tres días** para que el evento tenga sorpresa. Eso es empeorar el producto para mejorar el show, y es exactamente al revés de como tiene que ser.
+
+Hay dos salidas, y las dos son mejores que tapar:
+
+**Salida A — el estelar estrena en la Arena.** El vehículo no está publicado antes: se publica a las 20:00. No hay nada que ocultar porque no existe todavía. "Primera vez que se ve esta moto" es una promesa más fuerte que "el análisis está tapado", y de paso convierte a la Arena en **un motivo para publicar**, que es el problema de stock del punto 7.
+
+**Salida B — el show no es el análisis, es el vendedor.** Y esta es, me parece, la buena.
+
+El análisis es la salida de un programa: está disponible a demanda, se puede pedir de nuevo, no es escaso y no se puede volver escaso sin hacer trampa. **Lo único genuinamente irrepetible de las 20:00 es que el vendedor esté ahí contestando.** Eso no se puede spoilear, no se puede adelantar y no lo tiene ninguna otra plataforma del rubro.
+
+Dicho de otra forma: **el análisis es el guion, el vendedor es la función.** Si mañana alguien lee el análisis antes de tiempo, no arruinó nada — igual va a querer ver qué contesta el dueño cuando le pregunten por la soldadura del chasis.
+
+Eso reordena una regla y conviene escribirla ahora: **si el vendedor no puede estar, no hay Arena — se posterga.** Sin él, lo que queda es una publicación con horario, y una publicación con horario no necesita horario.
+
+---
+
+## 12. El Veredicto no puede necesitar un culpable
+
+El riesgo del formato es simétrico y los dos lados son malos:
+
+- Si el análisis destroza al vehículo estelar, hay un señor con nombre y apellido humillado en público por un programa, con la plataforma haciendo de escenario. Después de esa Arena no se postula nadie más.
+- Si para evitarlo se suaviza el análisis, el público lo va a oler en el primer evento y ahí se termina lo único que teníamos de valioso, que es que el análisis dice lo que ve.
+
+**Un formato que necesita un culpable se queda sin vehículos.** Y uno que necesita que todos salgan bien es publicidad.
+
+La salida está adentro del propio análisis, y ya está construida: el análisis no devuelve un aprobado o un reprobado, devuelve **tres cosas** — lo que se ve, lo que no cierra y **lo que no se puede evaluar con estas fotos**. Esa tercera parte está en todos los vehículos, siempre, sin excepción, y no acusa a nadie. El Veredicto estable no es "esta moto tiene un problema": es **"esto es lo que se puede saber mirando fotos, y esto es lo que no se puede saber ni con las mejores fotos del mundo"**.
+
+Eso además es lo más honesto que puede decir la plataforma sobre sí misma, y es lo que la separa de una certificación mecánica — que es justamente lo que dijimos que el Veredicto no es.
+
+Y una regla que hace que el formato sea sostenible: **el vendedor ve su análisis antes de aceptar entrar.** Sabe qué se va a leer y va igual. Ahí el "se anima a ponerlo bajo la lupa" pasa a ser cierto en vez de ser una frase: no es una emboscada, es alguien que sabe lo que dice el informe y lo banca. Nadie es juzgado sin derecho a réplica en el mismo evento, y el que queda expuesto siempre habla último.
+
+---
+
+## 13. Sobre el nombre "El Veredicto"
+
+Como concepto interno para discutir, sirve y se entiende. Como cartel en pantalla tiene dos problemas.
+
+Un veredicto es, en castellano y sin vueltas, **una decisión sobre culpabilidad**. Podemos aclarar en la bajada que no es un aprobado ni una certificación; el público va a leer la palabra grande y no la bajada. Y una captura de pantalla que diga "EL VEREDICTO — Honda XR 250" es, a los tres días, un vendedor usándola como certificado. La plataforma tiene escrito en `/legales` que el análisis no es un peritaje: el nombre del momento no debería estar tirando para el otro lado.
+
+El segundo problema es de acumulación: **"Arena" ya es una metáfora de combate.** Arena + Veredicto es juicio y coliseo en la misma pantalla, y el producto se apoya en un argumento sobrio.
+
+Una alternativa que conserva el drama sin afirmar nada: **LA LUPA**. Es literal —es lo que hace el análisis—, no dictamina, y encima **dibuja sola la estética que buscábamos**: un haz de luz sobre un vehículo en la oscuridad es una lupa y es un foco de escenario al mismo tiempo. "La Lupa sobre la XR 250, domingo 20:00" se entiende sin explicación y no promete un fallo.
+
+Otras en la misma línea, por si sirven para elegir: **Bajo la Lupa**, **La Revisión**, **La Pasada**, **Lo que muestran las fotos**. Es una decisión del cliente; lo que sí recomiendo es que la palabra no afirme un juicio.
+
+---
+
+## 14. El orden importa más que el contenido: los tres números van ANTES
+
+Este es el punto que más cambia el evento y no cuesta nada.
+
+La tentación es cerrar con los tres números, porque parecen el final. Pero si "¿Cuánto vale para vos?" se resuelve **antes** de la revelación, pasa esto:
+
+1. La gente estima mirando fotos y lo que declara el vendedor. Es decir: **estima como se compra hoy en cualquier clasificado.**
+2. Se muestran los tres números.
+3. Recién ahí se abre la lupa: esto muestran las fotos, esto no cierra, esto no se puede saber.
+4. Y la reacción de todo el que estimó es la misma: *"ah, entonces no valía lo que puse"*.
+
+Ese instante es el pico del evento y, además, **es la demostración más convincente del producto que se puede hacer**: la gente comprueba en carne propia que mirar fotos sin ayuda no alcanza. No lo decimos nosotros en un banner, lo descubre cada uno con su propio número equivocado en la pantalla.
+
+Y hay una vuelta de tuerca casi gratis: **dejar estimar de nuevo después de la lupa.** Dos números de la misma gente, antes y después de saber. La distancia entre esos dos números es, literalmente, **cuánto vale el análisis, medido en pesos, en público y por el propio público**. Es el mejor material de publicidad que este proyecto puede producir, y sale del evento sin filmar nada:
+
+> "La gente dijo que valía $X. Después de ver lo que muestran las fotos, dijo $Y."
+
+---
+
+## 15. Detalles de los tres números que conviene resolver antes de la Arena 0
+
+**El estelar tiene que ser un vehículo donde la estimación funcione.** La estimación necesita comparables: si no hay al menos dos avisos parecidos y el tipo no está cubierto por la fuente externa —camiones, buses y cuatriciclos no lo están—, **no hay número**. Un evento cuyo momento central es "el dueño vs la gente vs la IA" no puede empezar con la IA en blanco. Es un criterio de selección del estelar, no un problema a resolver: se verifica antes de elegirlo.
+
+**Mostrar la mediana, no el promedio.** Sin cuenta, una sola persona puede dejar doscientas estimaciones. La mediana aguanta eso; el promedio no. Además conviene mostrar dónde cae la mitad del medio en vez de un número solo, que es más honesto y más difícil de romper.
+
+**Nada de contador de participantes en vivo.** Por el mismo motivo que los favoritos son privados: un número que sube en pantalla es presión, y de paso muestra si la Arena está vacía.
+
+**El que pide el precio habla último.** "La gente dice que pedís de más" es, para el vendedor, una humillación con público si no puede contestar. Con derecho a réplica en el mismo momento, es una conversación. Es la misma regla del punto 12.
+
+**Qué queda pegado al aviso después.** Recomiendo que **no quede nada**: el registro del evento vive en la página de la Arena, que se puede leer siempre, y el aviso vuelve a ser un aviso. Si el resultado del evento queda clavado en la publicación, entrar a la Arena pasa a ser un riesgo permanente y deja de postularse cualquiera.
+
+**Y si después se vende, hay un final de verdad.** La base ya guarda la fecha de venta. "La XR de la Arena 1 se vendió en $X" es el cierre real del pronóstico, llega solo, se publica cuando pasa, y le da a la gente un motivo para volver que no depende de que hagamos nada esa noche.
+
+---
+
+## 16. Lo que hoy está vacío: los tres días de antes
+
+La cuenta regresiva, tal como está pensada, es un número que baja y nada más. Tres días de "falta poco" sin nada para hacer es tiempo muerto, y es justo cuando la gente está más enganchada.
+
+Dos acciones lo llenan, las dos alimentan el evento y ninguna necesita cuenta:
+
+- **Dejá tu estimación** (el "¿cuánto vale para vos?" del punto 14, que se juega antes por definición).
+- **Dejá tu pregunta para el vendedor.** Se juntan durante los tres días y a las 20:00 hay una lista para contestar.
+
+Lo segundo resuelve además el riesgo más concreto de la Arena 0: **que llegue la hora, el vendedor esté listo para contestar y no pregunte nadie**, porque somos quince personas y a nadie le gusta hablar primero. Con preguntas juntadas de antes, el evento arranca con material aunque el chat esté mudo.
+
+---
+
+## 17. La gatera: que decir que no sirva para algo
+
+La idea está bien y resuelve el stock. Le faltan dos cosas.
+
+**El criterio se publica; el marcador no.** Si la selección es invisible y arbitraria, el que se postula tres veces y nunca entra se va en silencio. Si en cambio está escrito qué hace falta —fotos de tal, tal y tal ángulo, kilometraje declarado, tipo de vehículo con estimación disponible—, entonces **postularse mejora el aviso aunque no entre**. La gatera deja de ser un sorteo y pasa a ser una lista de control que sube la calidad de las publicaciones de toda la plataforma. Ese efecto secundario vale más que el evento.
+
+**Al que no entra se le contesta en privado.** No hace falta explicar la decisión: alcanza con que no sea silencio. El anuncio público sigue siendo solo de los seleccionados, como estaba decidido.
+
+---
+
+## 18. Cómo se llenan cuarenta minutos
+
+Un problema práctico que aparece recién cuando uno lo escribe: **la revelación dura noventa segundos.** Si el evento es "a las 20:00 se abre el análisis", a las 20:03 no queda nada y la gente se va con la sensación de haber llegado tarde a algo que duró poco.
+
+Un orden posible, para la Arena 0, con los tiempos como referencia y no como libreto:
+
+| Hora | Qué pasa |
+|---|---|
+| 20:00 | Abre la cartelera. El estelar y los participantes. Se ve quién más está en la Arena. |
+| 20:05 | La ficha del estelar: lo que declara el vendedor, las fotos, su historia contada por él. |
+| 20:15 | Cierra "¿cuánto vale para vos?" y se muestran los tres números. El vendedor contesta al suyo. |
+| 20:25 | **La lupa.** Lo que muestran las fotos, lo que no cierra, y lo que no se puede saber por fotos. |
+| 20:35 | Las preguntas: las juntadas en los tres días previos y las del momento. El vendedor contesta. |
+| 20:50 | Se vuelve a preguntar cuánto vale, ahora sabiendo. Se muestra cuánto se movió. |
+| 20:55 | La gatera: quién entra a la próxima Arena, y cuándo es. |
+
+Lo importante de ese orden no son los minutos: es que **la revelación va en el medio y no al final**, y que el evento cierra anunciando el siguiente.
+
+---
+
+## 19. Qué quedó decidido y qué sigue abierto
+
+**Decidido:** qué pasa a las 20:00 (revelación del análisis + el vendedor contestando), la forma del pronóstico (tres números, sin precio final obligatorio), la gatera con postulación y sin contadores, y que la Arena 0 se hace a mano.
+
+**Abierto, en orden de urgencia:**
+
+1. **Cómo se resuelve que el análisis hoy no se puede reservar** (punto 11): estrena en la Arena, o el show pasa a ser el vendedor. Sin esto no hay Veredicto posible.
+2. **El nombre del momento** (punto 13), sabiendo que "veredicto" afirma un juicio que el producto tiene escrito que no hace.
+3. **Si los tres números van antes de la revelación** (punto 14) — mi recomendación es que sí, y con segunda vuelta después.
+4. **Qué queda pegado al aviso cuando el evento termina** (punto 15).
+5. **Cada cuánto**, y **si la Arena es marketing o el motor de altas** — las dos siguen abiertas desde la parte I.
