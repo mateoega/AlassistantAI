@@ -1,6 +1,6 @@
 # La Arena — nota de concepto
 
-**Estado: idea en discusión, segunda vuelta. No hay nada construido ni comprometido.** Este archivo existe para que la idea se pueda discutir escrita, no para planificar un sprint. Si algo de acá se decide hacer, se anota en el [roadmap](roadmap.md) y recién ahí es un compromiso.
+**Estado: idea en discusión, tercera vuelta. No hay nada construido ni comprometido.** Este archivo existe para que la idea se pueda discutir escrita, no para planificar un sprint. Si algo de acá se decide hacer, se anota en el [roadmap](roadmap.md) y recién ahí es un compromiso.
 
 La idea, en una frase: **un evento con nombre, fecha y hora, donde un puñado de vehículos de la plataforma se presentan en público, y donde entrar a mirar no cuesta nada ni pide cuenta.**
 
@@ -349,3 +349,146 @@ Lo importante de ese orden no son los minutos: es que **la revelación va en el 
 3. **Si los tres números van antes de la revelación** (punto 14) — mi recomendación es que sí, y con segunda vuelta después.
 4. **Qué queda pegado al aviso cuando el evento termina** (punto 15).
 5. **Cada cuánto**, y **si la Arena es marketing o el motor de altas** — las dos siguen abiertas desde la parte I.
+
+---
+
+# Parte III — La Lupa, y la voz que la abre (2026-09-11)
+
+**Lo decidido en esta vuelta:**
+
+1. **El análisis no se oculta.** La Lupa está disponible como está hoy, en cualquier aviso y a cualquier hora. Lo irrepetible de la Arena es **que el vendedor esté presente para conversar sobre lo que muestra**.
+2. **El momento se llama La Lupa**, no "El Veredicto".
+3. **El vendedor ve su análisis antes de aceptar.** No se expone a nadie.
+4. **La estimación va antes y después**, y la gente comprueba sola cuánto se movió.
+5. **La primera prueba es el circuito básico y nada más:** estimación inicial → La Lupa → el vendedor responde → segunda estimación → resultado.
+
+Y una pregunta nueva: **que la IA esté personificada dentro de la Arena** — identidad visual, una manera propia de hablar, y eventualmente voz. Una especie de conductor que abre La Lupa, presenta lo encontrado y le da paso al vendedor.
+
+**Respuesta honesta a la pregunta: no, no la estaba imaginando así.** La estaba imaginando como el análisis de siempre mostrado en un momento elegido, con el peso puesto en la presencia del vendedor. La personificación es una idea del cliente, no estaba en la parte II ni implícita. Puede funcionar, y abre algo que el análisis solo no da. Pero tiene un riesgo que va justo contra lo que la plataforma dice ser, y hay una sola versión que lo esquiva.
+
+---
+
+## 20. Lo que gana y lo que arriesga
+
+**Lo que gana, y no es poco.** Un informe no conduce un evento. Hoy La Lupa, tal cual sale, es un texto: está bien escrito, es claro, y no tiene tiempo. Un evento en vivo necesita alguien que diga "empezamos", que ordene, que marque cuándo se pasa de una cosa a la otra y que le dé pie al vendedor. Sin eso, el evento es una página que se actualiza. **Una voz reconocible también es lo único que se puede reconocer entre una Arena y la siguiente**: los vehículos cambian, los vendedores cambian, el público cambia. Lo que puede volver igual todos los meses es quién abre.
+
+**Lo que arriesga.** Todo el producto se apoya en que la IA **no aparente saber más de lo que sabe**. `/legales` dice que es un programa que se puede equivocar; el análisis devuelve explícitamente lo que no puede evaluar; la estimación aclara contra qué comparó. Un conductor con nombre, color y voz empuja exactamente al revés: **un personaje carismático suena a que sabe.** Cuanto mejor le salga el papel, más autoridad se atribuye, y la autoridad es justo lo que dijimos que no queríamos que se atribuya.
+
+Y hay una versión peor, más sutil: **un presentador quiere adjetivos.** "Miren esta preciosura", "esta moto está impecable". El análisis hoy tiene la disciplina de no decir si conviene comprar. Un personaje es exactamente la cosa que erosiona esa disciplina, porque el encanto se hace con adjetivos y los adjetivos acá son una recomendación de compra disfrazada. Con una captura de pantalla, eso es la plataforma avalando una venta puntual.
+
+---
+
+## 21. La salida: una personalidad construida sobre el límite, no sobre la autoridad
+
+Hay una forma de personificar que no solo evita el riesgo sino que usa el riesgo a favor.
+
+**El rasgo de carácter no es la seguridad. Es admitir hasta dónde llega.**
+
+La frase característica de este conductor no es "encontré un problema". Es **"esto no lo puedo saber"**. Su momento propio no es la acusación, es el inventario de lo que no se ve en una foto: si el motor arranca en frío, si la caja entra bien, si el ruido está o no está, si los papeles existen. Ese material está en todos los vehículos, en todas las Arenas, sin excepción y sin víctima — es el punto 12 de la parte II, ahora con una voz que lo hace suyo.
+
+Eso hace cuatro cosas a la vez:
+
+- **Es coherente con `/legales`** en vez de pelearse con él. El personaje dice en vivo lo mismo que el texto legal dice por escrito, y encima lo dice de una forma que la gente sí escucha.
+- **Desarma el conflicto.** Una máquina que reconoce su límite no está atacando a nadie. El vendedor no queda enfrentado a un fiscal, queda invitado a completar lo que falta.
+- **Le da el pie natural al vendedor**, que es exactamente la estructura acordada: la IA marca el borde de lo que se puede saber mirando, y del otro lado del borde está el que tiene el vehículo en la mano.
+- **Es distinto.** Comentaristas seguros de sí mismos hay en todos lados. Uno cuya marca registrada es decir qué no puede ver, no.
+
+Dicho corto: **la IA no es el juez del programa, es el que abre el expediente y reconoce dónde se le termina la vista.**
+
+---
+
+## 22. Quién habla, cuándo, y por qué la IA no contesta
+
+El reparto tiene que estar decidido antes de escribir una sola línea de personaje, porque de acá sale casi todo lo demás.
+
+| Quién | Cuándo | Qué hace |
+|---|---|---|
+| La IA | Antes | Abre, presenta la ficha, lee lo que se ve y lo que no se puede saber, y le da paso. |
+| El vendedor | Después | Contesta, completa, explica, discute si quiere. **Habla último.** |
+| El público | En el medio y al final | Pregunta, estima, vuelve a estimar. |
+
+**La regla que sostiene todo: la IA no responde al vendedor.** No hay ida y vuelta, no hay réplica, no hay "el vendedor dice que el motor está bien, pero las fotos muestran otra cosa". En el momento en que el personaje contesta, deja de ser el que abre el expediente y pasa a ser un fiscal con micrófono discutiendo en público con un usuario de la plataforma que aceptó venir de buena fe. Ahí vuelve por la ventana la humillación que sacamos por la puerta.
+
+La IA lee, el vendedor contesta, **nadie refuta**. El que saca conclusiones es el que mira, que para eso vino, y que después va a poner un número en la segunda estimación. Esa segunda estimación **es** la conclusión del público, y es mucho más potente que cualquier remate que pudiera decir un personaje.
+
+---
+
+## 23. Es el mismo asistente del chat, no un personaje nuevo
+
+Recomendación fuerte: **no inventar una identidad nueva para la Arena.**
+
+El asistente ya existe, está en toda la aplicación y ya tiene una voz decidida, escrita en los prompts: español rioplatense, de "vos", simple y directo, sin tecnicismos de taller, y sin explicar mecánica que alguien sin conocimientos no entienda. Eso no es poco: es media personalidad ya definida y ya usada. Lo que falta es **nombre, cara y un puñado de gestos fijos**.
+
+Dos identidades de IA en el mismo producto es peor en las tres dimensiones que importan: confunde al usuario, duplica el trabajo de mantener una voz coherente, y desperdicia el activo. Con una sola, en cambio, **el trabajo de personaje sirve todos los días y no una vez por mes**: el mismo que te ayuda un martes cualquiera mirando una Hilux es el que el domingo abre la Arena. "El de siempre, arriba del escenario" es mejor historia que un presentador que aparece de la nada y desaparece a las 21:00.
+
+Un antecedente que conviene tener presente: el chat ya se vistió una vez —vidrio violeta, letras doradas, un saludo que se escribía solo— y **se revirtió a los pocos días**. La conclusión de esa vuelta no fue "nada de personalidad": fue que la personalidad no puede ser la decoración. Un nombre, una marca visual y una forma de hablar consistente son personalidad. Un degradé no.
+
+---
+
+## 24. Carta de la voz — siete reglas
+
+Si se personifica, esto es lo que hay que dejar escrito antes de escribir el primer parlamento. Son reglas de producto, no de estilo.
+
+1. **Nunca dice si conviene comprar.** Ya es regla del análisis; el personaje la hereda entera.
+2. **Nunca califica el vehículo con adjetivos de valor.** Nada de "impecable", "una joya", "está para llevárselo". Describe, no vende.
+3. **Su frase propia es el límite, no el hallazgo.** Toda intervención termina marcando qué no se puede saber por fotos.
+4. **Habla antes que el vendedor y no le contesta.** Punto 22.
+5. **De precio, solo dice lo que ya calcula**: el rango y contra qué comparó. No opina si el vendedor pide de más.
+6. **Es el asistente de siempre**, no un personaje nuevo. Punto 23.
+7. **No se disfraza de persona.** Sin biografía inventada, sin emociones simuladas, sin "yo creo". Que sea un programa con voz propia no es una limitación del personaje: **es el personaje**. Y además hay que poder decir siempre, sin incomodidad, que del otro lado hay un programa — una plataforma cuyo argumento es la transparencia no puede empezar su evento con una ambigüedad sobre quién está hablando.
+
+La regla 7 es la que separa "personificación" de "engaño", y son dos cosas distintas que se confunden fácil. Identidad visual y manera de hablar, sí. Fingir que hay alguien, no.
+
+---
+
+## 25. La identidad visual ya está escrita en el nombre
+
+Una ventaja del cambio de nombre que apareció sola: **la lupa es el personaje**. No hace falta inventarle una cara.
+
+Un círculo de luz sobre una parte del vehículo, en la oscuridad, es al mismo tiempo la lupa, el foco del escenario y la marca visual de quien habla. Se mueve de la rueda al tablero al número de motor y va mostrando lo que se mira mientras se lee. Y lo que queda **afuera** del círculo —lo que la luz no alcanza— es literalmente lo que la IA no puede saber. Esa es la imagen completa del punto 21 sin decir una palabra, y se hace con un texto, una foto y un círculo.
+
+Eso resuelve además la tensión de la parte I entre el clima oscuro de la Arena y la aplicación blanca: la oscuridad no es una decisión estética suelta, es **el fondo necesario para que se vea el haz**. La Arena es oscura porque hay una lupa encendida; cuando salís, se prende la luz y volvés a la aplicación de siempre.
+
+---
+
+## 26. La voz hablada: después, y por qué
+
+Empezar por texto, y no por falta de ambición.
+
+- **El costo del audio es por evento y se paga siempre**, aunque no entre nadie. El proyecto ya tiene anotado en la bitácora que la cuota del modelo se nota; sumar una cuenta fija por un formato que todavía no sabemos si funciona es gastar antes de la señal, que es exactamente lo que `para_mas_adelante.md` decidió no hacer.
+- **El texto se puede leer a destiempo, citar, capturar y compartir.** El audio obliga a estar. En la Arena 0, con público chico y gente que llega tarde, eso es una desventaja concreta.
+- **Una voz sintética mal lograda es peor que ninguna**, y la diferencia entre "suena bien" y "suena a robot leyendo" se nota en dos segundos.
+
+Dónde sí vale desde temprano: **en el Reel**. Treinta segundos de voz sobre una foto y un haz de luz es material de publicidad, se produce una vez, se mira mil veces y no depende de que nadie esté conectado a las 20:00. La voz conviene que nazca ahí, donde se amortiza, y no en la plataforma.
+
+---
+
+## 27. Cómo se prueba la personificación en la Arena 0, sin programar nada
+
+Es de las pocas cosas del proyecto que se testean con decisiones de escritura y cero código:
+
+- un **nombre**;
+- la **marca visual** (el círculo de luz);
+- **cuatro o cinco frases fijas**: cómo abre, cómo pasa de la ficha a la lupa, cómo enuncia lo que no puede saber, cómo le da paso al vendedor, cómo cierra;
+- y **la lista de lo que nunca dice**, que es el punto 24.
+
+Con eso alcanza para conducir la Arena 0 a mano. Y lo que hay que mirar después es una sola cosa, bastante fácil de ver: **¿la gente lo nombra?** Si al día siguiente alguien lo cita, lo repite o se ríe de una frase suya, el personaje existe. Si nadie lo menciona y hablan solo de la moto, no existe — y no pasa nada: el evento igual funcionó, y la Lupa sigue siendo un informe bien puesto en un momento bien elegido.
+
+Un detalle de producción para no tropezar: **si conduce a mano, que lo escriba una sola persona.** Una voz escrita por tres es tres voces.
+
+---
+
+## 28. El circuito mínimo, y lo que queda abierto
+
+**Confirmado para la primera prueba**, sin agregarle nada:
+
+> estimación inicial → La Lupa → el vendedor responde → segunda estimación → resultado
+
+Sobre eso, dos cosas de las partes anteriores que siguen valiendo y no lo complican: las **preguntas se juntan durante los días previos** (si no, a las 20:00 no pregunta nadie), y el **estelar tiene que ser un vehículo con comparables**, o la estimación arranca en blanco justo en el momento central.
+
+**Abierto:**
+
+1. **El nombre del conductor**, y si se personifica ya en la Arena 0 o recién en la 1. Se puede probar el circuito sin personaje y agregarlo después; lo que no se puede es agregarlo a medias.
+2. **Si la voz del personaje vuelve al chat de todos los días** una vez que exista. Mi recomendación es que sí, pero es una decisión aparte y más grande que la Arena.
+3. **Qué queda pegado al aviso** cuando el evento termina (punto 15).
+4. **Cada cuánto**, y **si la Arena es marketing o el motor de altas** — abiertas desde la parte I.
