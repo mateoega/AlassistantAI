@@ -492,3 +492,97 @@ Sobre eso, dos cosas de las partes anteriores que siguen valiendo y no lo compli
 2. **Si la voz del personaje vuelve al chat de todos los días** una vez que exista. Mi recomendación es que sí, pero es una decisión aparte y más grande que la Arena.
 3. **Qué queda pegado al aviso** cuando el evento termina (punto 15).
 4. **Cada cuánto**, y **si la Arena es marketing o el motor de altas** — abiertas desde la parte I.
+
+---
+
+# Parte IV — Cuánto cuesta cada cosa (2026-09-11)
+
+Las tres partes anteriores discutieron el concepto sin poner un solo número, y eso deja la decisión sin base. Esta parte pone los números.
+
+**Cómo leer las cifras.** Van como **orden de magnitud** y hay que verificarlas el día que se contrate algo: los precios de los servicios cambian seguido y este asistente tiene fecha de corte. Las horas son de una persona que ya conoce este código; alguien de afuera tarda más. Y el contexto que manda: el proyecto decidió **no gastar en nada que solo valga la pena si la aplicación se usa**, así que todo **costo fijo mensual nuevo** está en conflicto con esa decisión hasta que haya señales.
+
+---
+
+## 29. El titular
+
+**Casi nada de la Arena necesita plata nueva. Necesita horas.** Con lo que el proyecto ya tiene —Next.js en Vercel, Express en Render, Supabase y Gemini— se hace todo el circuito acordado sin contratar un solo servicio más. Lo único que obliga a una herramienta externa es la **voz hablada**, y es opcional y barata. Lo caro es **el tiempo de las personas**, antes y sobre todo después de construirlo.
+
+---
+
+## 30. Qué se hace con lo que ya hay, y qué cuesta construirlo
+
+| Pieza | ¿Herramienta nueva? | Construirlo una vez | Costo fijo | Costo por uso |
+|---|---|---|---|---|
+| Página `/arena` con cartelera (contenido cargado a mano) | No | 8 – 16 h | $0 | $0 |
+| Cuenta regresiva + botón "agregar al calendario" (`.ics`) | No | 4 – 8 h | $0 | $0 |
+| "¿Cuánto vale para vos?" con las dos rondas y la mediana | No | 16 – 24 h | $0 | $0 |
+| Preguntas públicas + moderación mínima | No | 24 – 40 h | $0 | $0 |
+| La gatera (postularse, seleccionar, avisar) | No | 8 – 16 h | $0 | $0 |
+| Sala oscura: la estética de la Arena, bien hecha en celular | No | 16 – 24 h | $0 | $0 |
+| La Lupa (el análisis) | **Ya está construido** | 0 h | $0 | centavos por análisis |
+| Personificación en texto: nombre, marca, frases fijas, reglas | No | 4 – 8 h (escritura y diseño, **cero código**) | $0 | $0 |
+
+**Arena 1 completa, todo junto: del orden de 80 a 140 horas.** Es decir, entre dos y cuatro semanas de una persona a tiempo completo. No es un sprint chico.
+
+**Arena 0 manual: 0 horas de código.** Esa es la diferencia que justifica hacerla primero, y no es una diferencia de grado.
+
+Tres aclaraciones sobre la tabla:
+
+- **Las preguntas públicas son la pieza más cara y la que menos se parece a lo que ya existe.** La mensajería del Sprint 5 es privada por diseño y no se reusa: esto es una conversación pública, con moderación, que hay que poder cortar en vivo. Si hay que recortar algo del alcance, es lo primero.
+- **El "en vivo" no necesita infraestructura nueva.** Con un público de decenas de personas, la pantalla puede simplemente preguntar cada pocos segundos si hay algo nuevo. Websockets, canales en tiempo real y colas son la solución de un problema que la Arena no tiene todavía, y agregan cosas que se rompen.
+- **El almacenamiento de los votos y las preguntas es despreciable.** Miles de filas de texto no mueven la aguja del plan gratuito de la base. Lo que sí hay que resolver no es el costo sino el **abuso**: sin cuenta, una persona puede dejar doscientas estimaciones. Por eso la mediana y no el promedio (punto 15), más un límite por navegador. Es diseño, no dinero.
+
+---
+
+## 31. Lo que sí cuesta plata
+
+| Qué | Cuánto, en orden de magnitud | Veredicto |
+|---|---|---|
+| **Las llamadas al modelo** (La Lupa) | Centavos por análisis. Un evento usa **uno**. | Irrelevante para la Arena. La cuota del modelo importa en el uso diario de la plataforma, no acá. |
+| **Voz hablada (texto a voz)** para el Reel | Unidades de dólares por mes en el escalón de entrada; un guion de 30 segundos son unos cientos de caracteres. Decenas de Reels entran en el plan más barato. | **Es barato, y no es donde está el problema.** El problema es que suene bien y que alguien escriba el guion. |
+| **Voz hablada dentro del evento en vivo** | Mismo precio, pero obliga a tener el guion cerrado antes de las 20:00. | Innecesario en la Arena 0 y la 1. El texto se lee, se cita y se captura; el audio obliga a estar. |
+| **Avatar en video** (cara que habla, tipo HeyGen/Synthesia) | Decenas de dólares por mes, con minutos limitados, **más** el tiempo de producción de cada clip. | **No lo recomiendo hoy.** Costo fijo nuevo, para un formato sin señal todavía. |
+| **Mail o notificación para recordar el evento** | El envío es gratis en los escalones de entrada; lo caro es configurar el dominio y pelear con el correo no deseado. | **Evitable.** El botón de calendario da el 90% del resultado con 4 horas y sin proveedor. |
+| **Publicidad para llenar la Arena** | Lo que se decida gastar. | **Acá está la plata de verdad**, y es la única partida que no tiene sustituto técnico. Ver punto 33. |
+
+---
+
+## 32. Lo que hoy no se puede hacer bien, y conviene decirlo ahora
+
+Cuatro cosas de las que se hablaron, con el veredicto de frente:
+
+**Un avatar que reaccione en vivo a lo que dice el vendedor: no.** Existe la tecnología para animar una cara, pero hacerlo **en vivo, reaccionando a una conversación real**, con calidad que no dé vergüenza y a un costo sensato, hoy no está al alcance de este proyecto. Y hay un motivo mejor para no hacerlo: contradice la regla que sostiene el formato entero, que la IA **no le contesta al vendedor** (punto 22). Lo que sí se puede es un clip corto **grabado antes**, que no reacciona a nada.
+
+**Una conversación hablada entre la IA y el vendedor: se puede, y no conviene.** Técnicamente existe. Pero suma latencia, costo por minuto, una cosa más que se puede romper en vivo, y convierte al conductor en contrincante. No aporta nada que el texto no dé.
+
+**La estética de cámaras, movimientos y sonidos tipo videojuego: se puede, y es cara.** Son decenas de horas de diseño y desarrollo, pesa en celular —donde va a estar la mayoría del público— y pelea con la aplicación blanca. **El círculo de luz sobre la foto da el 80% del efecto con el 5% del trabajo** (punto 25). Ese es el canje que recomiendo.
+
+**Que la IA improvise el guion en vivo, sin que nadie lo lea antes: se puede técnicamente, y es el riesgo más caro del proyecto.** Un modelo generando texto en público sobre el vehículo de una persona real, con su nombre al lado, puede afirmar algo falso, y queda capturado en tres segundos. **Regla: los parlamentos del conductor se escriben a partir del análisis y se revisan antes de las 20:00.** Es un vivo con guion, como todos los vivos. Cuesta cero pesos y evita el único problema del formato que no se arregla con una disculpa.
+
+---
+
+## 33. El costo que nadie presupuesta
+
+Esto es lo que hay que mirar antes que cualquier tabla de arriba.
+
+Cada Arena, aunque esté todo programado, pide: elegir los vehículos, **convencer a un vendedor de que vaya y esté disponible a esa hora**, preparar las fichas, escribir los parlamentos, hacer la publicidad, moderar en vivo, y publicar el resumen después. Del orden de **8 a 15 horas de persona por evento**, para siempre.
+
+Mensual, eso es **un par de días de alguien, todos los meses**. Semanal es un empleo. No es una función que se termina: es una **obligación de producción recurrente**, y es la razón por la que la mayoría de los formatos de evento se apagan al tercero, no por falta de tecnología.
+
+Y hay una dependencia que no se compra con horas ni con plata: **si el vendedor del estelar no aparece a las 20:00, no hay Arena.** El formato descansa en una persona que no cobra por estar.
+
+Por eso la recomendación de la parte I no cambia y ahora tiene número al lado: **Arena 0 a mano, 0 horas de código, unas 10 a 15 horas de producción**, y recién con la evidencia se decide si se invierten las 80 a 140 horas de construirla.
+
+---
+
+## 34. Si hubiera que construir solo una cosa
+
+Si después de la Arena 0 hay señal y el presupuesto alcanza para una sola pieza, la respuesta es **"¿Cuánto vale para vos?" con las dos rondas** (16 – 24 h).
+
+Es la única del listado que:
+
+- da un motivo concreto para volver, sin depender de que alguien esté conectado;
+- produce el número que sirve para la publicidad del mes siguiente —cuánto se movió la gente después de ver la Lupa—;
+- y **alimenta el producto**: es la fuente de estimaciones de precio que hoy falta para calcular los coeficientes de depreciación con datos propios ([`para_mas_adelante.md`](para_mas_adelante.md), punto 3).
+
+Es la pieza con mejor relación entre lo que devuelve y lo que cuesta. La sala oscura, el personaje y las preguntas públicas mejoran el evento; esta, además, mejora la plataforma.
